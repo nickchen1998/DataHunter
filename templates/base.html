@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}資料獵人 - DataHunter{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="{% url 'home' %}">資料獵人 - DataHunter</a></h1>
+            {% if user.is_authenticated %}
+                <p>嗨，{{ user.username }}｜<a href="{% url 'logout' %}">登出</a></p>
+            {% else %}
+                <p><a href="{% url 'login' %}">登入</a></p>
+            {% endif %}
+        </div>
+    </header>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>© 2025 資料獵人 - DataHunter</p>
+        </div>
+    </footer>
+</body>
+</html>

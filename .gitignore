@@ -2,6 +2,7 @@
 *.env
 MediGuide/.streamlit/secrets.toml
 poetry.lock
+db.sqlite3
 
 # 目錄名稱
 venv/

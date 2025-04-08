@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}症狀列表{% endblock %}
+{% block content %}
+<h2>常見症狀資料</h2>
+
+<form method="get" action="{% url 'symptom_list' %}">
+    <input type="text" name="q" placeholder="搜尋症狀..." value="{{ request.GET.q }}">
+    <button type="submit">搜尋</button>
+</form>
+
+<ul class="symptom-list">
+    {% for item in symptom_list %}
+    <li class="symptom-item">
+        <a href="{% url 'symptom_detail' item.id %}">
+            <h3>{{ item.symptom }} - {{ item.department }}</h3>
+            <p><strong>提問者：</strong>{{ item.gender }}｜{{ item.question_time|date:"Y-m-d" }}</p>
+            <p>{{ item.question|truncatechars:60 }}</p>
+        </a>
+    </li>
+    {% empty %}
+    <li>找不到資料。</li>
+    {% endfor %}
+</ul>
+{% endblock %}
