@@ -1,44 +1,131 @@
+* {
+    box-sizing: border-box;
+}
+
 body {
-    font-family: "Noto Sans TC", sans-serif;
-    background-color: #f9f9f9;
     margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f5f6f7;
+    display: flex;
+    height: 100vh;
+}
+
+.sidebar {
+    width: 240px;
+    background-color: #2e3b4e;
+    color: #fff;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    font-size: 14px;
+}
+
+.sidebar .section {
+    background-color: #3e4d61;
+    margin-bottom: 16px;
+    padding: 14px 12px;
+    border-radius: 6px;
+    line-height: 1.6;
+}
+
+.sidebar .logo {
+    background: none;
     padding: 0;
+    margin-bottom: 24px;
 }
-header, footer {
-    background-color: #2c3e50;
-    color: white;
-    padding: 1em 0;
-    text-align: center;
+
+.sidebar .logo h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+    color: #00ed64;
 }
-.container {
-    width: 90%;
-    max-width: 900px;
-    margin: auto;
+
+.sidebar .subtitle {
+    margin: 0;
+    font-size: 13px;
+    color: #b0bec5;
 }
-.symptom-list {
-    list-style: none;
-    padding: 0;
+
+.sidebar .dropdown {
+    width: 100%;
+    padding: 6px;
+    margin-top: 8px;
+    border-radius: 4px;
+    border: none;
+    font-size: 13px;
 }
-.symptom-item {
+
+.sidebar .description p {
+    margin: 4px 0;
+    color: #e0f7fa;
+    font-size: 13px;
+}
+
+
+.main-content {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.card {
     background-color: #fff;
-    margin: 1em 0;
-    padding: 1em;
     border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 20px;
 }
-.symptom-item a {
-    text-decoration: none;
-    color: #333;
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
 }
-.symptom-detail {
-    background-color: #fff;
-    padding: 1em;
+
+.header .input-group {
+    flex: 1;
+    display: flex;
+    gap: 20px;
+}
+
+.data-table {
+    height: 500px;
+    overflow-y: scroll;
+    border: 1px solid #ddd;
     border-radius: 8px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    padding: 20px;
+    background-color: #fafafa;
 }
-.question-box, .answer-box {
-    margin-top: 1em;
-    background-color: #eef2f7;
-    padding: 1em;
-    border-left: 5px solid #3498db;
+
+.btn {
+    background-color: #00ed64;
+    color: #000;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn:hover {
+    background-color: #00d95a;
+}
+
+.doc-card {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.doc-card .doc-meta {
+    color: #888;
+    font-size: 12px;
+    margin-top: 8px;
 }
