@@ -1,0 +1,9 @@
+# 單個檔案
+*.env
+MediGuide/.streamlit/secrets.toml
+poetry.lock
+
+# 目錄名稱
+venv/
+.idea/
+__pycache__/
