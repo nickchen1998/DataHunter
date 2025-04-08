@@ -12,7 +12,6 @@
 <div class="sidebar">
     <div class="section logo">
         <h2>📑 資料獵人 - DataHunter</h2>
-        <p class="subtitle">DataHunter</p>
     </div>
 
     <div class="section">
@@ -26,7 +25,7 @@
 
     <div class="section description">
         <p><strong>說明：</strong></p>
-        <p>這個資料來源提供過去三年的疾病通報紀錄，支援症狀關鍵字查詢與性別篩選。</p>
+        {% block source-description %}{% endblock %}
     </div>
     <div class="section description">
         <p><strong>注意事項：</strong></p>
@@ -38,46 +37,16 @@
 <!-- 主內容區 -->
 <div class="main-content">
     <div class="header">
-        <div class="input-group">
-            <h2>資料來源名稱</h2>
-        </div>
+        {% block source-name %}{% endblock %}
         <label>
             <input type="text" placeholder="過濾器" style="flex: 2;"/>
         </label>
         <button class="btn">搜尋</button>
     </div>
 
+    <!-- 資料呈現區塊 -->
     <div class="data-table">
-        <!-- 假資料區塊 -->
-        <div class="doc-card">
-            <div><strong>_id：</strong>ObjectId("123abc456def")</div>
-            <div><strong>subject_id：</strong>182526</div>
-            <div><strong>symptom：</strong>咳嗽</div>
-            <div><strong>gender：</strong>女</div>
-            <div><strong>question：</strong>最近咳得很厲害，晚上咳到睡不著。</div>
-            <div><strong>answer：</strong>建議多喝溫開水，可搭配化痰藥物。</div>
-            <div class="doc-meta">2024-06-01 10:24</div>
-        </div>
-
-        <div class="doc-card">
-            <div><strong>_id：</strong>ObjectId("456def789ghi")</div>
-            <div><strong>subject_id：</strong>214855</div>
-            <div><strong>symptom：</strong>胸悶</div>
-            <div><strong>gender：</strong>男</div>
-            <div><strong>question：</strong>運動後常常覺得胸口不舒服，是心臟的問題嗎？</div>
-            <div><strong>answer：</strong>建議先做心電圖與胸部X光檢查。</div>
-            <div class="doc-meta">2024-06-02 09:18</div>
-        </div>
-
-        <div class="doc-card">
-            <div><strong>_id：</strong>ObjectId("789ghi012jkl")</div>
-            <div><strong>subject_id：</strong>217389</div>
-            <div><strong>symptom：</strong>頭暈</div>
-            <div><strong>gender：</strong>女</div>
-            <div><strong>question：</strong>最近起床時常常覺得頭暈，站不起來。</div>
-            <div><strong>answer：</strong>可能為低血壓或貧血，建議抽血檢查。</div>
-            <div class="doc-meta">2024-06-03 08:55</div>
-        </div>
+        {% block data-table %}{% endblock %}
     </div>
 
 </div>

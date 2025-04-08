@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block source-description %}
+    <p>當前資料源的來源網站為 “衛生福利部 - 台灣 e 院”。</p>
+    <p>資料來源網址：<a href="https://sp1.hso.mohw.gov.tw/doctor/" target="_blank">衛生福利部 - 台灣 e 院</a></p>
+{% endblock %}
+
+{% block source-name %}
+<h2>衛生福利部 - 台灣 e 院</h2>
+{% endblock %}
+
+{% block data-table %}
+    <div class="doc-card">
+        <div><strong>_id：</strong>ObjectId("123abc456def")</div>
+        <div><strong>subject_id：</strong>182526</div>
+        <div><strong>symptom：</strong>咳嗽</div>
+        <div><strong>gender：</strong>女</div>
+        <div><strong>question：</strong>最近咳得很厲害，晚上咳到睡不著。</div>
+        <div><strong>answer：</strong>建議多喝溫開水，可搭配化痰藥物。</div>
+        <div class="doc-meta">2024-06-01 10:24</div>
+    </div>
+{% endblock %}
