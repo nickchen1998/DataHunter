@@ -2,17 +2,18 @@ import random
 import re
 import time
 import json
-import utils
 import pathlib
 from datetime import datetime
 from selenium.webdriver import Chrome
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from fake_useragent import UserAgent
+from symptoms.models import Symptom
+from langchain_openai import OpenAIEmbeddings
 
 
-def get_paragraph(chrome: Chrome):
-    for paragraph in chrome.find_elements(By.CSS_SELECTOR, "ul.QAunit"):
+def get_paragraph(browser: Chrome, symptom: str, department: str):
+    for paragraph in browser.find_elements(By.CSS_SELECTOR, "ul.QAunit"):
         try:
             subject = paragraph.find_element(By.CSS_SELECTOR, "li.subject").text
 
@@ -34,7 +35,7 @@ def get_paragraph(chrome: Chrome):
                 gender=gender,
                 question_time=question_time,
                 answer=answer,
-                department=dataset["department"],
+                department=department,
                 answer_time=answer_time,
             )
             yield data
@@ -43,41 +44,61 @@ def get_paragraph(chrome: Chrome):
             continue
 
 
-if __name__ == '__main__':
-
+def period_send_symptom_crawler_task():
     dataset_path = pathlib.Path(__file__).parent / "datasets.json"
     with open(dataset_path, "r", encoding="utf-8") as f:
-        datasets = json.load(f)
+        for dataset in json.load(f):
+            symptom_crawler_task(
+                department=dataset["department"],
+                start_url=dataset["start_url"],
+            )
 
+
+def symptom_crawler_task(department: str, start_url: str):
     options = Options()
     options.add_argument("--headless")
     options.add_argument(f'user-agent={UserAgent().random}')
     browser = Chrome(options=options)
     browser.maximize_window()
 
-    for dataset in datasets:
-        browser.get(dataset["start_url"])
+    browser.get(start_url)
 
-        symptom_select_menu = browser.find_element(By.CSS_SELECTOR, "select[name='q_type']")
-        symptom_list = [tmp.get_attribute("value") for tmp in symptom_select_menu.find_elements(
-            By.TAG_NAME, "option") if tmp.get_attribute("value")]
+    symptom_select_menu = browser.find_element(By.CSS_SELECTOR, "select[name='q_type']")
+    symptom_list = [tmp.get_attribute("value") for tmp in symptom_select_menu.find_elements(
+        By.TAG_NAME, "option") if tmp.get_attribute("value")]
 
-        for symptom in symptom_list:
-            url = (f"https://sp1.hso.mohw.gov.tw/doctor/Often_question/type_detail.php?"
-                   f"q_type={symptom}&UrlClass={dataset['department']}")
-            browser.get(url)
-            datas = []
-            page = 1
+    for symptom in symptom_list:
+        url = (f"https://sp1.hso.mohw.gov.tw/doctor/Often_question/type_detail.php?"
+               f"q_type={symptom}&UrlClass={department}")
+        browser.get(url)
+        datas = []
+        page = 1
 
-            while browser.find_elements(By.CSS_SELECTOR, "ul.QAunit"):
-                datas.extend(list(get_paragraph(browser)))
+        while browser.find_elements(By.CSS_SELECTOR, "ul.QAunit"):
+            datas.extend(list(get_paragraph(
+                browser=browser, department=department, symptom=symptom)))
 
-                page += 1
-                tmp_url = url + f"&PageNo={page}"
-                time.sleep(random.randint(4, 8))
-                browser.get(tmp_url)
+            page += 1
+            tmp_url = url + f"&PageNo={page}"
+            time.sleep(random.randint(4, 8))
+            browser.get(tmp_url)
 
-            if datas:
-                utils.insert_symptom_subject_datas(datas)
+        for data in datas:
+            if Symptom.objects.filter(subject_id=data["subject_id"]).exists():
+                continue
+
+            Symptom.objects.create(
+                subject_id=data["subject_id"],
+                department=data["department"],
+                symptom=data["symptom"],
+                question=data["question"],
+                answer=data["answer"],
+                gender=data["gender"],
+                question_time=data["question_time"],
+                answer_time=data["answer_time"],
+                question_embeddings=OpenAIEmbeddings(
+                    model="text-embedding-3-small",
+                ).embed_query(data["question"].replace(" ", "").replace("\n", "")),
+            )
 
     browser.quit()
