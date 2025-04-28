@@ -49,6 +49,16 @@ python manage.py runserver
 
 ---
 
-## 💡 延伸方向（可選擇實作）
+## 💿 Postgres Database 啟動方式 (Based on Docker)
 
+```bash
+docker run --name postgres-vector \
+  -e POSTGRES_USER=root \
+  -e POSTGRES_PASSWORD=Ac0933521 \
+  -e POSTGRES_DB=DataHunter \
+  -p 5432:5432 \
+  -d \
+  -v ./Datas/PostgresVector:/var/lib/postgresql/data \
+  ankane/pgvector
+```
 ---
