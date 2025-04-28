@@ -1,8 +1,5 @@
-from django.shortcuts import render
 from django.views.generic import ListView
-from django.contrib.auth.models import User
 from symptoms.models import Symptom
-from django.core.paginator import Paginator
 from django.http import JsonResponse
 from symptoms.serializers import SymptomSerializer
 
@@ -16,15 +13,26 @@ class SymptomListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # print(context.values())
 
         return context
 
     def render_to_response(self, context, **response_kwargs):
         if (self.request.headers.get('Accept') == 'application/json' or
                 self.request.GET.get('format') == 'json'):
+            data = {
+                'count': context['page_obj'].paginator.count,
+                'total_pages': context['page_obj'].paginator.num_pages,
+                'current_page': context['page_obj'].number,
+                'has_next': context['page_obj'].has_next(),
+                'has_previous': context['page_obj'].has_previous(),
+                'results': SymptomSerializer(context['symptoms'], many=True).data,  # 當頁資料
+            }
 
-            return JsonResponse(SymptomSerializer(context['symptoms'], many=True).data)
+            return JsonResponse(
+                data,
+                safe=False,
+                json_dumps_params={'ensure_ascii': False},
+                content_type='application/json; charset=utf-8',
+            )
         else:
-
             return super().render_to_response(context, **response_kwargs)
