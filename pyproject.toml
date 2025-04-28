@@ -15,6 +15,7 @@ selenium = "^4.31.0"
 fake-useragent = "^2.2.0"
 openai = "^1.76.0"
 langchain-openai = "^0.3.14"
+django-rest-framework = "^0.1.0"
 
 
 [build-system]
