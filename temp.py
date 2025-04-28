@@ -1,6 +1,5 @@
 import json
 from symptoms.models import Symptom
-from django.utils import timezone
 from datetime import datetime
 
 

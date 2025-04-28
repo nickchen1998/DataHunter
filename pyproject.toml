@@ -11,6 +11,8 @@ django = "^5.2"
 psycopg2-binary = "^2.9.10"
 python-dotenv = "^1.1.0"
 pgvector = "^0.4.1"
+selenium = "^4.31.0"
+fake-useragent = "^2.2.0"
 
 
 [build-system]
