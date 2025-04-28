@@ -10,6 +10,29 @@ body {
     height: 100vh;
 }
 
+.layout-container {
+    display: flex;            /* 用 flexbox 排版 */
+    align-items: flex-start;  /* 預防內容拉高 sidebar */
+}
+
+/* 固定 sidebar */
+.sidebar {
+    width: 250px;              /* 固定 sidebar 寬度，可以依自己需求調整 */
+    flex-shrink: 0;            /* 不允許 sidebar 被擠壓縮小 */
+    background-color: #f8f9fa; /* 側欄背景色，可自行調整 */
+    height: 100vh;             /* 側欄高度撐滿整個螢幕 */
+    padding: 20px;             /* 內距 */
+    box-sizing: border-box;    /* 讓 padding 不會撐爆寬度 */
+    overflow-y: auto;          /* 側邊如果太長，自己出現捲軸 */
+}
+
+/* 主內容 */
+.main-content {
+    flex: 1;                   /* 主內容自動撐滿剩餘空間 */
+    padding: 20px;             /* 內距 */
+    overflow-x: auto;          /* 防止內容太寬時破版 */
+}
+
 .sidebar {
     width: 240px;
     background-color: #2e3b4e;
@@ -91,7 +114,7 @@ body {
 }
 
 .data-table {
-    height: 500px;
+    height: 100%;
     overflow-y: scroll;
     border: 1px solid #ddd;
     border-radius: 8px;
@@ -128,4 +151,11 @@ body {
     color: #888;
     font-size: 12px;
     margin-top: 8px;
+}
+
+.data-table-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: 100%;
 }

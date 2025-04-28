@@ -8,6 +8,7 @@
 </head>
 <body>
 
+{#<div class="layout-container">#}
 <!-- 左側側欄 -->
 <div class="sidebar">
     <div class="section logo">
@@ -44,20 +45,58 @@
         <button class="btn">搜尋</button>
     </div>
 
-    <!-- 資料呈現區塊 -->
-    <div class="data-table">
-        {% block data-table %}{% endblock %}
+
+    <div class="data-table-container">
+
+        <!-- 資料呈現區塊 -->
+        <div class="data-table">
+            {% block data-table %}{% endblock %}
+        </div>
+
+        <!-- API 範例區塊 -->
+{#        <div class="data-table">#}
+{#            <div class="doc-card">#}
+{#                <div>Request Example</div>#}
+{#            </div>#}
+{#            <div class="doc-card">#}
+{#                <div>Response Example</div>#}
+{#            </div>#}
+{#        </div>#}
+
     </div>
 
-    <!-- API 範例區塊 -->
-    <div class="data-table">
-        <div class="doc-card">
-            <div>Request Example</div>
-        </div>
-        <div class="doc-card">
-            <div>Response Example</div>
-        </div>
-    </div>
 </div>
+{#</div>#}
+
 </body>
 </html>
+
+<!-- 展開/收合的小腳本 -->
+<script>
+    function toggleText(id, field, button) {
+        const preview = document.getElementById(field + '-preview-' + id);
+        const full = document.getElementById(field + '-full-' + id);
+
+        if (preview.style.display === 'none') {
+            preview.style.display = 'inline';
+            full.style.display = 'none';
+            button.innerText = '展開';
+        } else {
+            preview.style.display = 'none';
+            full.style.display = 'inline';
+            button.innerText = '收合';
+        }
+    }
+
+    // 綁定所有的 toggle 按鈕
+    document.addEventListener('DOMContentLoaded', function () {
+        const buttons = document.querySelectorAll('.toggle-button');
+        buttons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                const id = this.getAttribute('data-id');
+                const field = this.getAttribute('data-field');
+                toggleText(id, field, this);
+            });
+        });
+    });
+</script>

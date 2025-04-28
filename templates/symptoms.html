@@ -6,17 +6,47 @@
 {% endblock %}
 
 {% block source-name %}
-<h2>衛生福利部 - 台灣 e 院</h2>
+    <h2>衛生福利部 - 台灣 e 院</h2>
 {% endblock %}
 
 {% block data-table %}
-    <div class="doc-card">
-        <div><strong>_id：</strong>ObjectId("123abc456def")</div>
-        <div><strong>subject_id：</strong>182526</div>
-        <div><strong>symptom：</strong>咳嗽</div>
-        <div><strong>gender：</strong>女</div>
-        <div><strong>question：</strong>最近咳得很厲害，晚上咳到睡不著。</div>
-        <div><strong>answer：</strong>建議多喝溫開水，可搭配化痰藥物。</div>
-        <div class="doc-meta">2024-06-01 10:24</div>
-    </div>
+    {% for data in object_list %}
+        <div class="doc-card">
+            <div><strong>id：</strong>{{ data.id }}</div>
+            <div><strong>gender：</strong>{{ data.gender }}</div>
+            <div><strong>subject_id：</strong>{{ data.subject_id }}</div>
+            <div><strong>symptom：</strong>{{ data.symptom }}</div>
+
+            <!-- 處理 question -->
+            <div>
+                <strong>question：</strong>
+                {% if data.question|length > 100 %}
+                    <span id="question-preview-{{ data.id }}">{{ data.question|slice:":50" }}...</span>
+                    <span id="question-full-{{ data.id }}" style="display: none;">{{ data.question }}</span>
+                    <button data-id="{{ data.id }}" data-field="question" class="toggle-button">展開</button>
+                {% else %}
+                    {{ data.question }}
+                {% endif %}
+            </div>
+
+            <div><strong>question_time：</strong>{{ data.question_time }}</div>
+
+            <!-- 處理 answer -->
+            <div>
+                <strong>answer：</strong>
+                {% if data.answer|length > 100 %}
+                    <span id="answer-preview-{{ data.id }}">{{ data.answer|slice:":50" }}...</span>
+                    <span id="answer-full-{{ data.id }}" style="display: none;">{{ data.answer }}</span>
+                    <button data-id="{{ data.id }}" data-field="answer" class="toggle-button">展開</button>
+                {% else %}
+                    {{ data.answer }}
+                {% endif %}
+            </div>
+
+            <div><strong>answer_time：</strong>{{ data.answer_time }}</div>
+            <div><strong>created_at：</strong>{{ data.created_at }}</div>
+        </div>
+    {% endfor %}
+
+
 {% endblock %}
