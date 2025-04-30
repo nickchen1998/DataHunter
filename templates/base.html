@@ -4,72 +4,58 @@
 <head>
     <meta charset="UTF-8"/>
     <title>資料獵人 - DataHunter</title>
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/daisyui@latest"></script>
 </head>
-<body>
+<body class="min-h-screen bg-gray-100">
 
-{#<div class="layout-container">#}
-<!-- 左側側欄 -->
-<div class="sidebar">
-    <div class="section logo">
-        <h2>📑 資料獵人 - DataHunter</h2>
-    </div>
+<div class="flex">
+    <!-- 左側側欄 -->
+    <aside class="w-64 bg-white shadow-md p-6">
+        <h2 class="text-xl font-bold mb-6">📑 資料獵人 - DataHunter</h2>
 
-    <div class="section">
-        <label for="source-select">資料來源</label>
-        <select id="source-select" class="dropdown">
-            <option>健保資料</option>
-            <option>疾病通報</option>
-            <option>開放API</option>
-        </select>
-    </div>
+        <div class="mb-4">
+            <label for="source-select" class="block font-semibold mb-1">資料來源</label>
+            <select id="source-select" class="select select-bordered w-full">
+                <option>健保資料</option>
+                <option>疾病通報</option>
+                <option>開放API</option>
+            </select>
+        </div>
 
-    <div class="section description">
-        <p><strong>說明：</strong></p>
-        {% block source-description %}{% endblock %}
-    </div>
-    <div class="section description">
-        <p><strong>注意事項：</strong></p>
-        <p>本網站資料來源皆為使用爬蟲爬取之網路公開資料，請勿使用於商業用途，本網站僅用於教學、練習使用。</p>
-    </div>
-</div>
+        <div class="mb-4">
+            <p class="font-semibold">說明：</p>
+            {% block source-description %}{% endblock %}
+        </div>
 
+        <div>
+            <p class="font-semibold">注意事項：</p>
+            <p class="text-sm text-gray-600 mt-1">
+                本網站資料來源皆為使用爬蟲爬取之網路公開資料，請勿使用於商業用途，本網站僅用於教學、練習使用。
+            </p>
+        </div>
+    </aside>
 
-<!-- 主內容區 -->
-<div class="main-content">
-    <div class="header">
-        {% block source-name %}{% endblock %}
-        <label>
-            <input type="text" placeholder="過濾器" style="flex: 2;"/>
-        </label>
-        <button class="btn">搜尋</button>
-    </div>
+    <!-- 主內容區 -->
+    <main class="flex-1 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <div class="text-2xl font-bold">{% block source-name %}{% endblock %}</div>
 
+            <div class="flex space-x-2">
+                <label>
+                    <input type="text" placeholder="過濾器" class="input input-bordered w-64"/>
+                </label>
+                <button class="btn btn-primary">搜尋</button>
+            </div>
+        </div>
 
-    <div class="data-table-container">
-
-        <!-- 資料呈現區塊 -->
-        <div class="data-table">
+        <!-- 資料表格與內容區 -->
+        <div class="bg-white rounded-lg shadow p-4">
             {% block data-table %}{% endblock %}
         </div>
 
-        <!-- API 範例區塊 -->
-{#        <div class="data-table">#}
-{#            <div class="doc-card">#}
-{#                <div>Request Example</div>#}
-{#            </div>#}
-{#            <div class="doc-card">#}
-{#                <div>Response Example</div>#}
-{#            </div>#}
-{#        </div>#}
-
-    </div>
-
+    </main>
 </div>
-{#</div>#}
-
-</body>
-</html>
 
 <!-- 展開/收合的小腳本 -->
 <script>
@@ -88,7 +74,6 @@
         }
     }
 
-    // 綁定所有的 toggle 按鈕
     document.addEventListener('DOMContentLoaded', function () {
         const buttons = document.querySelectorAll('.toggle-button');
         buttons.forEach(function (button) {
@@ -100,3 +85,5 @@
         });
     });
 </script>
+</body>
+</html>

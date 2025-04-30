@@ -10,43 +10,45 @@
 {% endblock %}
 
 {% block data-table %}
-    {% for data in object_list %}
-        <div class="doc-card">
-            <div><strong>id：</strong>{{ data.id }}</div>
-            <div><strong>gender：</strong>{{ data.gender }}</div>
-            <div><strong>subject_id：</strong>{{ data.subject_id }}</div>
-            <div><strong>symptom：</strong>{{ data.symptom }}</div>
+    <div class="grid grid-cols-1 gap-4">
+        {% for data in object_list %}
+            <div class="card shadow-md bg-white p-4 border border-gray-200">
+                <div class="grid grid-cols-2 gap-2 text-sm text-gray-800">
+                    <div><span class="font-semibold">ID：</span>{{ data.id }}</div>
+                    <div><span class="font-semibold">Gender：</span>{{ data.gender }}</div>
+                    <div><span class="font-semibold">Subject ID：</span>{{ data.subject_id }}</div>
+                    <div><span class="font-semibold">Symptom：</span>{{ data.symptom }}</div>
 
-            <!-- 處理 question -->
-            <div>
-                <strong>question：</strong>
-                {% if data.question|length > 100 %}
-                    <span id="question-preview-{{ data.id }}">{{ data.question|slice:":50" }}...</span>
-                    <span id="question-full-{{ data.id }}" style="display: none;">{{ data.question }}</span>
-                    <button data-id="{{ data.id }}" data-field="question" class="toggle-button">展開</button>
-                {% else %}
-                    {{ data.question }}
-                {% endif %}
+                    <!-- question 欄 -->
+                    <div class="col-span-2">
+                        <span class="font-semibold">Question：</span>
+                        {% if data.question|length > 20 %}
+                            <span id="question-preview-{{ data.id }}">{{ data.question|slice:":20" }}...</span>
+                            <span id="question-full-{{ data.id }}" class="hidden">{{ data.question }}</span>
+                            <button data-id="{{ data.id }}" data-field="question" class="btn btn-xs btn-outline btn-info ml-2 toggle-button">展開</button>
+                        {% else %}
+                            {{ data.question }}
+                        {% endif %}
+                    </div>
+
+                    <div><span class="font-semibold">Question Time：</span>{{ data.question_time }}</div>
+
+                    <!-- answer 欄 -->
+                    <div class="col-span-2">
+                        <span class="font-semibold">Answer：</span>
+                        {% if data.answer|length > 20 %}
+                            <span id="answer-preview-{{ data.id }}">{{ data.answer|slice:":20" }}...</span>
+                            <span id="answer-full-{{ data.id }}" class="hidden">{{ data.answer }}</span>
+                            <button data-id="{{ data.id }}" data-field="answer" class="btn btn-xs btn-outline btn-info ml-2 toggle-button">展開</button>
+                        {% else %}
+                            {{ data.answer }}
+                        {% endif %}
+                    </div>
+
+                    <div><span class="font-semibold">Answer Time：</span>{{ data.answer_time }}</div>
+                    <div><span class="font-semibold">Created At：</span>{{ data.created_at }}</div>
+                </div>
             </div>
-
-            <div><strong>question_time：</strong>{{ data.question_time }}</div>
-
-            <!-- 處理 answer -->
-            <div>
-                <strong>answer：</strong>
-                {% if data.answer|length > 100 %}
-                    <span id="answer-preview-{{ data.id }}">{{ data.answer|slice:":50" }}...</span>
-                    <span id="answer-full-{{ data.id }}" style="display: none;">{{ data.answer }}</span>
-                    <button data-id="{{ data.id }}" data-field="answer" class="toggle-button">展開</button>
-                {% else %}
-                    {{ data.answer }}
-                {% endif %}
-            </div>
-
-            <div><strong>answer_time：</strong>{{ data.answer_time }}</div>
-            <div><strong>created_at：</strong>{{ data.created_at }}</div>
-        </div>
-    {% endfor %}
-
-
+        {% endfor %}
+    </div>
 {% endblock %}
