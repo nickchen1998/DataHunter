@@ -12,7 +12,7 @@ services:
     container_name: postgres
     environment:
       POSTGRES_USER: root
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-Ac0933521}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: DataHunter
     ports:
       - "5432:5432"

@@ -79,7 +79,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': "DataHunter",
         'USER': "root",
-        'PASSWORD': os.getenv("POSTGRES_PASSWORD", "12345678"),
+        'PASSWORD': os.getenv("POSTGRES_PASSWORD"),
         'HOST': os.getenv("POSTGRES_HOST", "localhost"),
         'PORT': "5432",  # 通常是 5432
     }
