@@ -10,6 +10,7 @@ from selenium.webdriver.chrome.options import Options
 from fake_useragent import UserAgent
 from symptoms.models import Symptom
 from langchain_openai import OpenAIEmbeddings
+from DataHunter.celery import app
 
 
 def get_paragraph(browser: Chrome, symptom: str, department: str):
@@ -44,6 +45,7 @@ def get_paragraph(browser: Chrome, symptom: str, department: str):
             continue
 
 
+@app.task()
 def period_send_symptom_crawler_task():
     dataset_path = pathlib.Path(__file__).parent / "datasets.json"
     with open(dataset_path, "r", encoding="utf-8") as f:
@@ -54,6 +56,7 @@ def period_send_symptom_crawler_task():
             )
 
 
+@app.task()
 def symptom_crawler_task(department: str, start_url: str):
     options = Options()
     options.add_argument("--headless")

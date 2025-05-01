@@ -46,13 +46,17 @@ pip install -r requirements.txt
 於專案根目錄下建立 `.env` 檔案，內容範例如下或是可參考：
 
 ```dotenv
-POSTGRES_PASSWORD="資料庫密碼" # 預設為 12345678
-POSTGRES_USER="資料庫使用者" # 預設為 root
-POSTGRES_DB="資料庫名稱" # 預設為 DataHunter
-POSTGRES_HOST="資料庫主機" # 預設為 localhost
-POSTGRES_PORT="資料庫埠號" # 預設為 5432
-
 OPENAI_API_KEY="你的 OpenAI API 金鑰"
+```
+
+下面為本專案所有帶有預設值的的環境變數：
+
+```dotenv
+POSTGRES_PASSWORD="資料庫密碼" # 預設為 12345678
+POSTGRES_HOST="資料庫主機" # 預設為 localhost
+POSTGRES_VOLUME="資料庫資料夾" # 預設為 postgres_data
+
+REDIS_HOST="Redis 主機" # 預設為 localhost
 ```
 
 ### 3️⃣ 執行應用程式
@@ -63,17 +67,10 @@ python manage.py runserver
 
 ---
 
-## 💿 Postgres Database 啟動方式 (Based on Docker)
+## 💿 Database 啟動方式 (Based on Docker)
 
 ```bash
-docker run --name postgres-vector \
-  -e POSTGRES_USER=root \
-  -e POSTGRES_PASSWORD=Ac0933521 \
-  -e POSTGRES_DB=DataHunter \
-  -p 5432:5432 \
-  -d \
-  -v ./Datas/PostgresVector:/var/lib/postgresql/data \
-  ankane/pgvector
+docker-compose up -d
 ```
 
 ---
