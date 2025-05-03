@@ -1,27 +1,9 @@
 version: "3.8"
 
 services:
-  redis:
-    image: redis
-    container_name: redis
-    ports:
-      - "6379:6379"
-
-  postgres:
-    image: ankane/pgvector
-    container_name: postgres
-    environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: DataHunter
-    ports:
-      - "5432:5432"
-    volumes:
-      - ${POSTGRES_VOLUME:-./Datas/PostgresVector}:/var/lib/postgresql/data
-
   chrome:
-    image: selenium/node-chrome:latest
-    container_name: chrome
+    image: selenium/node-safari:latest
+    container_name: safari
     platform: linux/amd64
     shm_size: "2gb"
     depends_on:
