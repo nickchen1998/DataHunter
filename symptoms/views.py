@@ -3,13 +3,30 @@ from symptoms.models import Symptom
 from django.http import JsonResponse
 from symptoms.serializers import SymptomSerializer
 
+from langchain_openai import OpenAIEmbeddings
+from pgvector.django import CosineDistance
 
-# Create your views here.
+
 class SymptomListView(ListView):
     template_name = 'symptoms.html'
     context_object_name = 'symptoms'
     queryset = Symptom.objects.order_by("-question_time").all()
     paginate_by = 10
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if question := self.request.GET.get('question'):
+            question_embeddings = OpenAIEmbeddings(
+                model="text-embedding-3-small").embed_query(question)
+
+            queryset = queryset.annotate(
+                distance=CosineDistance(
+                    "question_embeddings",
+                    question_embeddings
+                )
+            ).order_by("distance")
+
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

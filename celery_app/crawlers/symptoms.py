@@ -8,9 +8,10 @@ from selenium.webdriver import Chrome
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from fake_useragent import UserAgent
+from DataHunter.celery import app
+
 from symptoms.models import Symptom
 from langchain_openai import OpenAIEmbeddings
-from DataHunter.celery import app
 
 
 def get_paragraph(browser: Chrome, symptom: str, department: str):
@@ -90,6 +91,7 @@ def symptom_crawler_task(department: str, start_url: str):
             if Symptom.objects.filter(subject_id=data["subject_id"]).exists():
                 continue
 
+            clean_question = data["question"].replace(" ", "").replace("\n", "")
             Symptom.objects.create(
                 subject_id=data["subject_id"],
                 department=data["department"],
@@ -101,7 +103,7 @@ def symptom_crawler_task(department: str, start_url: str):
                 answer_time=data["answer_time"],
                 question_embeddings=OpenAIEmbeddings(
                     model="text-embedding-3-small",
-                ).embed_query(data["question"].replace(" ", "").replace("\n", "")),
+                ).embed_query(clean_question),
             )
 
     browser.quit()
