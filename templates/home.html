@@ -11,13 +11,14 @@
 
 <div class="flex">
     <!-- 左側側欄 -->
-    <aside class="w-64 bg-white shadow-md p-6">
+    <aside class="w-64 min-h-screen bg-white shadow-md p-6">
         <h2 class="text-xl font-bold mb-6">📑 資料獵人 - DataHunter</h2>
 
         <div class="mb-4">
             <label for="source-select" class="block font-semibold mb-1">資料來源</label>
             <select id="source-select" class="select select-bordered w-full">
-                <option>衛福部 - 台灣 e 院</option>
+                <option disabled selected>請選擇資料來源</option>
+                <option value="/symptoms/list">衛福部 - 台灣 e 院</option>
             </select>
         </div>
 
@@ -81,6 +82,12 @@
                 toggleText(id, field, this);
             });
         });
+    });
+
+    document.getElementById('source-select').addEventListener('change', function () {
+        if (this.value) {
+            window.location.href = this.value;
+        }
     });
 </script>
 </body>
