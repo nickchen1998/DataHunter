@@ -2,28 +2,37 @@ from django.views.generic import ListView
 from symptoms.models import Symptom
 from django.http import JsonResponse
 from symptoms.serializers import SymptomSerializer
-
-from langchain_openai import OpenAIEmbeddings
-from pgvector.django import CosineDistance
+from utils.search_utils import hybrid_search_with_rerank
 
 
 class SymptomListView(ListView):
     template_name = 'symptoms.html'
     context_object_name = 'symptoms'
-    queryset = Symptom.objects.order_by("-question_time").all()
+    queryset = Symptom.objects.all()
     paginate_by = 10
 
     def get_queryset(self):
         queryset = super().get_queryset()
 
-        if department := self.request.GET.get('department'):
+        department = self.request.GET.get('department')
+        gender = self.request.GET.get('gender')
+        original_question = self.request.GET.get('question')
+
+        if department:
             queryset = queryset.filter(department__icontains=department)
 
-        if gender := self.request.GET.get('gender'):
+        if gender:
             queryset = queryset.filter(gender=gender)
 
-        if question := self.request.GET.get('question'):
-            queryset = queryset.filter(question__icontains=question)
+        if original_question:
+            queryset = hybrid_search_with_rerank(
+                queryset=queryset,
+                vector_field_name="question_embeddings",
+                text_field_name="question",
+                original_question=original_question,
+            )
+        else:
+            queryset = queryset.order_by("-question_time")
 
         return queryset
 
