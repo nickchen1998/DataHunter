@@ -1,27 +1,65 @@
 {% extends 'home.html' %}
 
 {% block source-description %}
-    <p>當前資料源的來源網站為 “衛生福利部 - 台灣 e 院”。</p>
-    <p>資料來源網址：<a href="https://sp1.hso.mohw.gov.tw/doctor/" target="_blank">衛生福利部 - 台灣 e 院</a></p>
+    <p>說明：</p>
+    <p>本資料源為 "衛生福利部 - 台灣 e 院" 站台上之資料，詳細醫療建議仍請諮詢專業醫師。</p>
+    <p> </p>
+    <p>資料來源網址：</p>
+    <p><a href="https://sp1.hso.mohw.gov.tw/doctor/" target="_blank">衛生福利部 - 台灣 e 院</a>
 {% endblock %}
 
 {% block source-name %}
     <h2>衛生福利部 - 台灣 e 院</h2>
 {% endblock %}
 
+{% block filter_section %}
+    <form method="get" action="{% url 'symptom_list' %}" class="bg-gray-50 p-4 rounded-lg shadow-inner mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+                <label for="department-select" class="block font-semibold mb-1">科別：</label>
+                <select id="department-select" name="department" class="select select-bordered w-full">
+                    <option value="">所有科別</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept }}" {% if dept == department %}selected{% endif %}>{{ dept }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="gender-select" class="block font-semibold mb-1">性別：</label>
+                <select id="gender-select" name="gender" class="select select-bordered w-full">
+                    <option value="">所有性別</option>
+                    {% for g in genders %}
+                        <option value="{{ g }}" {% if g == gender %}selected{% endif %}>{{ g }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="lg:col-span-1">
+                <label for="question-input" class="block font-semibold mb-1">問題：</label>
+                <input id="question-input" type="text" name="question" value="{{ question }}" placeholder="問題關鍵字"
+                       class="input input-bordered w-full"/>
+            </div>
+        </div>
+        <div class="mt-4 text-right">
+            <a href="{% url 'symptom_list' %}" class="btn btn-ghost">清除</a>
+            <button type="submit" class="btn btn-primary">搜尋</button>
+        </div>
+    </form>
+{% endblock %}
+
 {% block data-table %}
-    <div class="data-table max-h-[80vh] overflow-y-auto pr-2 space-y-4">
+    <div class="data-table max-h-[75vh] overflow-y-auto pr-2 space-y-4">
         {% if object_list %}
             {% for data in object_list %}
                 <div class="card shadow-md bg-white p-4 border border-gray-200">
-                    <div class="grid grid-cols-2 gap-2 text-sm text-gray-800">
+                    <div class="space-y-2 text-sm text-gray-800">
                         <div><span class="font-semibold">ID：</span>{{ data.id }}</div>
                         <div><span class="font-semibold">Gender：</span>{{ data.gender }}</div>
                         <div><span class="font-semibold">Subject ID：</span>{{ data.subject_id }}</div>
+                        <div><span class="font-semibold">Department：</span>{{ data.department }}</div>
                         <div><span class="font-semibold">Symptom：</span>{{ data.symptom }}</div>
 
                         <!-- question 欄 -->
-                        <div class="col-span-2">
+                        <div>
                             <span class="font-semibold">Question：</span>
                             {% if data.question|length > 20 %}
                                 <span id="question-preview-{{ data.id }}">{{ data.question|slice:":20" }}...</span>
@@ -37,7 +75,7 @@
                         <div><span class="font-semibold">Question Time：</span>{{ data.question_time }}</div>
 
                         <!-- answer 欄 -->
-                        <div class="col-span-2">
+                        <div>
                             <span class="font-semibold">Answer：</span>
                             {% if data.answer|length > 20 %}
                                 <span id="answer-preview-{{ data.id }}">{{ data.answer|slice:":20" }}...</span>
@@ -57,14 +95,15 @@
             {% endfor %}
         {% else %}
             <div class="card shadow-md bg-white p-4 border border-gray-200">
-                <div class="grid grid-cols-2 gap-2 text-sm text-gray-800">
+                <div class="space-y-2 text-sm text-gray-800">
                     <div><span class="font-semibold">ID：</span>1</div>
                     <div><span class="font-semibold">Gender：</span>女性</div>
                     <div><span class="font-semibold">Subject ID：</span>123</div>
+                    <div><span class="font-semibold">Department：</span>測試</div>
                     <div><span class="font-semibold">Symptom：</span>測試</div>
-                    <div class="col-span-2"><span class="font-semibold">Question：</span>測試</div>
+                    <div><span class="font-semibold">Question：</span>測試</div>
                     <div><span class="font-semibold">Question Time：</span>測試</div>
-                    <div class="col-span-2"><span class="font-semibold">Answer：</span>測試</div>
+                    <div><span class="font-semibold">Answer：</span>測試</div>
                     <div><span class="font-semibold">Answer Time：</span>測試</div>
                     <div><span class="font-semibold">Created At：</span>測試</div>
                 </div>

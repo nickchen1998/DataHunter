@@ -15,21 +15,30 @@ class SymptomListView(ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        if question := self.request.GET.get('question'):
-            question_embeddings = OpenAIEmbeddings(
-                model="text-embedding-3-small").embed_query(question)
 
-            queryset = queryset.annotate(
-                distance=CosineDistance(
-                    "question_embeddings",
-                    question_embeddings
-                )
-            ).order_by("distance")
+        if department := self.request.GET.get('department'):
+            queryset = queryset.filter(department__icontains=department)
+
+        if gender := self.request.GET.get('gender'):
+            queryset = queryset.filter(gender=gender)
+
+        if question := self.request.GET.get('question'):
+            queryset = queryset.filter(question__icontains=question)
 
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['request_path'] = self.request.path
+        context['department'] = self.request.GET.get('department', '')
+        context['gender'] = self.request.GET.get('gender', '')
+        context['question'] = self.request.GET.get('question', '')
+
+        # Add distinct departments for the dropdown filter
+        context['departments'] = Symptom.objects.values_list('department', flat=True).distinct().order_by('department')
+
+        # Add distinct genders for the dropdown filter
+        context['genders'] = Symptom.objects.values_list('gender', flat=True).distinct().order_by('gender')
 
         return context
 

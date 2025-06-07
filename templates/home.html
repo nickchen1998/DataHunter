@@ -12,18 +12,19 @@
 <div class="flex">
     <!-- 左側側欄 -->
     <aside class="w-64 min-h-screen bg-white shadow-md p-6">
-        <h2 class="text-xl font-bold mb-6">📑 資料獵人 - DataHunter</h2>
+        <a href="{% url 'home' %}">
+            <h2 class="text-xl font-bold mb-6">📑 資料獵人 - DataHunter</h2>
+        </a>
 
         <div class="mb-4">
-            <label for="source-select" class="block font-semibold mb-1">資料來源</label>
+            <label for="source-select" class="block font-semibold mb-1">資料來源：</label>
             <select id="source-select" class="select select-bordered w-full">
-                <option disabled selected>請選擇資料來源</option>
-                <option value="/symptoms/list">衛福部 - 台灣 e 院</option>
+                <option disabled {% if request_path == '/' %}selected{% endif %}>請選擇資料來源</option>
+                <option value="/symptoms/list/" {% if request_path == '/symptoms/list/' %}selected{% endif %}>衛福部 - 台灣 e 院</option>
             </select>
         </div>
 
         <div class="mb-4">
-            <p class="font-semibold">說明：</p>
             {% block source-description %}{% endblock %}
         </div>
 
@@ -39,14 +40,16 @@
     <main class="flex-1 p-6">
         <div class="flex items-center justify-between mb-4">
             <div class="text-2xl font-bold">{% block source-name %}{% endblock %}</div>
-
-            <div class="flex space-x-2">
-                <label>
-                    <input type="text" placeholder="過濾器" class="input input-bordered w-64"/>
-                </label>
-                <button class="btn btn-primary">搜尋</button>
-            </div>
         </div>
+
+        {% block filter_section %}
+        <div class="flex space-x-2 mb-4">
+            <label>
+                <input type="text" placeholder="過濾器" class="input input-bordered w-64"/>
+            </label>
+            <button class="btn btn-primary">搜尋</button>
+        </div>
+        {% endblock %}
 
         <!-- 資料表格與內容區 -->
         <div class="bg-white rounded-lg shadow p-4">
