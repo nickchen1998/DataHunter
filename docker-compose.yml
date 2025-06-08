@@ -2,8 +2,8 @@ version: "3.8"
 
 services:
   chrome:
-    image: selenium/node-safari:latest
-    container_name: safari
+    image: selenium/node-chrome:latest
+    container_name: chrome-node
     platform: linux/amd64
     shm_size: "2gb"
     depends_on:
@@ -24,3 +24,15 @@ services:
       - "4442:4442"
       - "4443:4443"
       - "4444:4444"
+
+  db:
+    image: ankane/pgvector:latest
+    container_name: db
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ${POSTGRES_VOLUME:-./postgres_data}:/var/lib/postgresql/data
