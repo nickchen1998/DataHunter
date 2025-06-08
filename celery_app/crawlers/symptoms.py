@@ -7,6 +7,7 @@ from datetime import datetime
 from selenium.webdriver import Chrome
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium import webdriver
 from fake_useragent import UserAgent
 from DataHunter.celery import app
 
@@ -48,7 +49,7 @@ def get_paragraph(browser: Chrome, symptom: str, department: str):
 
 @app.task()
 def period_send_symptom_crawler_task():
-    dataset_path = pathlib.Path(__file__).parent / "datasets.json"
+    dataset_path = pathlib.Path(__file__).parent / "symptoms.json"
     with open(dataset_path, "r", encoding="utf-8") as f:
         for dataset in json.load(f):
             symptom_crawler_task(
@@ -62,7 +63,10 @@ def symptom_crawler_task(department: str, start_url: str):
     options = Options()
     options.add_argument("--headless")
     options.add_argument(f'user-agent={UserAgent().random}')
-    browser = Chrome(options=options)
+    browser = webdriver.Remote(
+        command_executor='http://selenium-hub:4444/wd/hub',
+        options=options
+    )
     browser.maximize_window()
 
     browser.get(start_url)
