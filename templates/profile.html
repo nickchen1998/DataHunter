@@ -21,12 +21,8 @@
     </div>
 </nav>
 
-<div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-    <!-- 頁面標題 -->
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">個人資料</h1>
-        <p class="mt-2 text-gray-600">管理您的帳戶資訊和安全設定</p>
-    </div>
+<div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8 mt-8">
+
 
     <!-- 訊息提示 -->
     {% if messages %}
@@ -69,19 +65,32 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- 標籤導航 -->
+            <div class="mt-6 space-y-4">
+                <button class="btn btn-outline w-full justify-between border-2 tab tab-active" data-tab="profile">
+                    <span>👤 個人資料</span>
+                    <span></span>
+                </button>
+                <button class="btn btn-outline w-full justify-between border-2 tab" data-tab="apikey">
+                    <span>🔑 API Key管理</span>
+                    <span></span>
+                </button>
+            </div>
         </div>
 
         <!-- 右側：編輯表單 -->
         <div class="lg:col-span-2 space-y-8">
             <!-- 個人資料編輯 -->
-            <div class="card bg-base-100 shadow">
-                <div class="card-body">
-                    <h3 class="card-title">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                        </svg>
-                        個人資料
-                    </h3>
+            <div id="profile-content" class="tab-content">
+                <div class="card bg-base-100 shadow">
+                    <div class="card-body">
+                        <h3 class="card-title text-xl flex items-center">
+                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                            個人資料
+                        </h3>
                     <form method="post" class="space-y-6">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="update_profile">
@@ -142,95 +151,500 @@
                         
                         <div class="card-actions justify-end">
                             <button type="submit" class="btn btn-primary">
-                                儲存
+                                💾 儲存
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
 
-            <!-- 密碼修改 -->
-            <div class="card bg-base-100 shadow">
-                <div class="card-body">
-                    <h3 class="card-title">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                        </svg>
-                        修改密碼
-                    </h3>
-                    <form method="post" class="space-y-6">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="change_password">
-                        
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text font-medium">{{ password_form.old_password.label }}</span>
-                            </label>
-                            {{ password_form.old_password }}
-                            {% if password_form.old_password.errors %}
-                                <label class="label">
-                                    <span class="label-text-alt text-error">
-                                        {% for error in password_form.old_password.errors %}{{ error }}{% endfor %}
-                                    </span>
-                                </label>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- 密碼修改 -->
+                <div class="card bg-base-100 shadow mt-8">
+                    <div class="card-body">
+                        <h3 class="card-title text-xl flex items-center">
+                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                            修改密碼
+                        </h3>
+                        <form method="post" class="space-y-6">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="change_password">
+                            
                             <div class="form-control">
                                 <label class="label">
-                                    <span class="label-text font-medium">{{ password_form.new_password1.label }}</span>
+                                    <span class="label-text font-medium">{{ password_form.old_password.label }}</span>
                                 </label>
-                                {{ password_form.new_password1 }}
-                                {% if password_form.new_password1.errors %}
+                                {{ password_form.old_password }}
+                                {% if password_form.old_password.errors %}
                                     <label class="label">
                                         <span class="label-text-alt text-error">
-                                            {% for error in password_form.new_password1.errors %}{{ error }}{% endfor %}
+                                            {% for error in password_form.old_password.errors %}{{ error }}{% endfor %}
                                         </span>
                                     </label>
                                 {% endif %}
                             </div>
                             
-                            <div class="form-control">
-                                <label class="label">
-                                    <span class="label-text font-medium">{{ password_form.new_password2.label }}</span>
-                                </label>
-                                {{ password_form.new_password2 }}
-                                {% if password_form.new_password2.errors %}
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="form-control">
                                     <label class="label">
-                                        <span class="label-text-alt text-error">
-                                            {% for error in password_form.new_password2.errors %}{{ error }}{% endfor %}
-                                        </span>
+                                        <span class="label-text font-medium">{{ password_form.new_password1.label }}</span>
                                     </label>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        {% if password_form.non_field_errors %}
-                            <div class="alert alert-error">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <div>
-                                    {% for error in password_form.non_field_errors %}
-                                        <div>{{ error }}</div>
-                                    {% endfor %}
+                                    {{ password_form.new_password1 }}
+                                    {% if password_form.new_password1.errors %}
+                                        <label class="label">
+                                            <span class="label-text-alt text-error">
+                                                {% for error in password_form.new_password1.errors %}{{ error }}{% endfor %}
+                                            </span>
+                                        </label>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="form-control">
+                                    <label class="label">
+                                        <span class="label-text font-medium">{{ password_form.new_password2.label }}</span>
+                                    </label>
+                                    {{ password_form.new_password2 }}
+                                    {% if password_form.new_password2.errors %}
+                                        <label class="label">
+                                            <span class="label-text-alt text-error">
+                                                {% for error in password_form.new_password2.errors %}{{ error }}{% endfor %}
+                                            </span>
+                                        </label>
+                                    {% endif %}
                                 </div>
                             </div>
-                        {% endif %}
-                        
-                        <div class="card-actions justify-end">
-                            <button type="submit" class="btn btn-secondary">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            
+                            {% if password_form.non_field_errors %}
+                                <div class="alert alert-error">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <div>
+                                        {% for error in password_form.non_field_errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="card-actions justify-end">
+                                <button type="submit" class="btn btn-secondary">
+                                    💾 儲存
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- API Key管理 -->
+            <div id="apikey-content" class="tab-content hidden">
+                <div class="card bg-base-100 shadow">
+                    <div class="card-body">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="card-title">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
                                 </svg>
-                                修改密碼
+                                API Key管理
+                            </h3>
+                            <button type="button" class="btn btn-primary btn-sm" id="add-new-key">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                </svg>
+                                新增
                             </button>
                         </div>
-                    </form>
+                        
+                        <!-- API Key 清單 -->
+                        <div class="space-y-4" id="api-key-list">
+                            <!-- 範例 API Key -->
+                            <div class="card bg-gray-50 border api-key-item">
+                                <div class="card-body p-4">
+                                    <div class="flex justify-between items-start">
+                                        <div class="flex-1 space-y-2">
+                                            <div class="flex items-center space-x-2">
+                                                <span class="font-medium text-sm text-gray-600">Key名稱：</span>
+                                                <span class="font-semibold editable-field" data-field="name" data-value="生產環境API Key">生產環境API Key</span>
+                                                <button type="button" class="text-gray-400 hover:text-blue-600 ml-1" onclick="editField(this, 'name')" title="編輯名稱">
+                                                    ✏️
+                                                </button>
+                                            </div>
+                                            <div class="flex items-center space-x-2">
+                                                <span class="font-medium text-sm text-gray-600">Key內容：</span>
+                                                <code class="bg-gray-200 px-2 py-1 rounded text-sm font-mono">dhapi_1234567890abcdef...</code>
+                                                <button type="button" class="text-blue-600 hover:text-blue-800" onclick="copyApiKey('dhapi_1234567890abcdef...')" title="複製API Key">
+                                                    📋
+                                                </button>
+                                            </div>
+                                            <div class="space-y-1 text-sm text-gray-500">
+                                                <div><strong>申請時間：</strong>2024年6月1日</div>
+                                                <div class="flex items-center space-x-2">
+                                                    <span><strong>到期時間：</strong></span>
+                                                    <span class="editable-field" data-field="expire" data-value="2025年6月1日">2025年6月1日</span>
+                                                    <button type="button" class="text-gray-400 hover:text-blue-600 ml-1" onclick="editField(this, 'expire')" title="編輯到期時間">
+                                                        ✏️
+                                                    </button>
+                                                </div>
+                                                <div><strong>最近使用：</strong>2024年6月12日</div>
+                                            </div>
+                                        </div>
+                                        <div class="flex space-x-2 ml-4">
+                                            <button type="button" class="btn btn-ghost btn-xs text-red-600 hover:bg-red-50">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                </svg>
+                                                刪除
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 沒有 API Key 時的提示 (可以註釋掉上面的假資料，改用這個) -->
+                        <!-- 
+                        <div class="text-center py-12">
+                            <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                            </svg>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">尚未建立 API Key</h3>
+                            <p class="text-gray-500 mb-4">建立您的第一個 API Key 來開始使用我們的服務</p>
+                            <button type="button" class="btn btn-primary">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                </svg>
+                                建立第一個 API Key
+                            </button>
+                        </div>
+                        -->
+                        
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 標籤切換功能
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabs = document.querySelectorAll('.tab');
+        const contents = document.querySelectorAll('.tab-content');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // 移除所有 active 類別和樣式
+                tabs.forEach(t => {
+                    t.classList.remove('tab-active');
+                    t.classList.remove('btn-primary');
+                    t.classList.remove('border-primary');
+                    t.classList.add('btn-outline');
+                });
+                contents.forEach(c => c.classList.add('hidden'));
+                
+                // 添加 active 類別和樣式到當前標籤
+                this.classList.add('tab-active');
+                this.classList.remove('btn-outline');
+                this.classList.add('btn-primary');
+                this.classList.add('border-primary');
+                
+                // 顯示對應內容
+                const targetTab = this.getAttribute('data-tab');
+                const targetContent = document.getElementById(targetTab + '-content');
+                if (targetContent) {
+                    targetContent.classList.remove('hidden');
+                }
+            });
+        });
+        
+        // 初始化第一個標籤的樣式
+        const firstTab = document.querySelector('.tab.tab-active');
+        if (firstTab) {
+            firstTab.classList.remove('btn-outline');
+            firstTab.classList.add('btn-primary');
+            firstTab.classList.add('border-primary');
+        }
+        
+        // 新增API Key功能
+        const addButton = document.getElementById('add-new-key');
+        if (addButton) {
+            addButton.addEventListener('click', function() {
+                addNewApiKeyForm();
+            });
+        }
+    });
+    
+    // 複製API Key功能
+    function copyApiKey(apiKey) {
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(apiKey).then(function() {
+                showToast('✅ API Key 已複製到剪貼簿！', 'success');
+            }).catch(function(err) {
+                console.error('複製失敗: ', err);
+                fallbackCopyTextToClipboard(apiKey);
+            });
+        } else {
+            fallbackCopyTextToClipboard(apiKey);
+        }
+    }
+    
+    // 降級複製方案
+    function fallbackCopyTextToClipboard(text) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showToast('✅ API Key 已複製到剪貼簿！', 'success');
+            } else {
+                showToast('❌ 複製失敗，請手動選取複製', 'error');
+            }
+        } catch (err) {
+            console.error('降級複製方案失敗: ', err);
+            showToast('❌ 複製失敗，請手動選取複製', 'error');
+        }
+        
+        document.body.removeChild(textArea);
+    }
+    
+    // 顯示提示訊息
+    function showToast(message, type) {
+        const toast = document.createElement('div');
+        const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+        toast.className = `fixed top-4 right-4 ${bgColor} text-white px-4 py-2 rounded-lg shadow-lg z-50`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            if (document.body.contains(toast)) {
+                document.body.removeChild(toast);
+            }
+        }, 3000);
+    }
+    
+    // 新增API Key表單
+    function addNewApiKeyForm() {
+        const apiKeyList = document.getElementById('api-key-list');
+        const newKeyForm = document.createElement('div');
+        newKeyForm.className = 'card bg-blue-50 border-2 border-blue-200 api-key-form';
+        
+        newKeyForm.innerHTML = `
+            <div class="card-body p-4">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1 space-y-4">
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-medium">Key名稱</span>
+                            </label>
+                            <input type="text" class="input input-bordered" placeholder="請輸入API Key名稱" required>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-medium">到期時間</span>
+                            </label>
+                            <select class="select select-bordered">
+                                <option value="never">永不過期</option>
+                                <option value="3months">3個月</option>
+                                <option value="6months">6個月</option>
+                                <option value="1year">1年</option>
+                            </select>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="saveNewApiKey(this)">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                儲存
+                            </button>
+                            <button type="button" class="btn btn-ghost btn-sm" onclick="cancelNewApiKey(this)">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                取消
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // 插入到列表最前面
+        apiKeyList.insertBefore(newKeyForm, apiKeyList.firstChild);
+        
+        // 聚焦到名稱輸入框
+        const nameInput = newKeyForm.querySelector('input[type="text"]');
+        nameInput.focus();
+    }
+    
+    // 儲存新API Key
+    function saveNewApiKey(button) {
+        const form = button.closest('.api-key-form');
+        const nameInput = form.querySelector('input[type="text"]');
+        const expireSelect = form.querySelector('select');
+        
+        if (!nameInput.value.trim()) {
+            showToast('❌ 請輸入API Key名稱', 'error');
+            return;
+        }
+        
+        // 這裡將來會發送到後端
+        console.log('儲存API Key:', {
+            name: nameInput.value,
+            expire: expireSelect.value
+        });
+        
+        showToast('✅ API Key 創建成功！', 'success');
+        
+        // 移除表單
+        form.remove();
+    }
+    
+    // 取消新增API Key
+    function cancelNewApiKey(button) {
+        const form = button.closest('.api-key-form');
+        form.remove();
+    }
+    
+    // 編輯特定字段
+    function editField(button, fieldType) {
+        const editableField = button.previousElementSibling;
+        const currentValue = editableField.getAttribute('data-value');
+        const originalContent = editableField.innerHTML;
+        
+        if (fieldType === 'name') {
+            // 編輯名稱
+            editableField.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <input type="text" class="input input-bordered input-xs w-48" value="${currentValue}" id="edit-name-input">
+                    <button type="button" class="btn btn-primary btn-xs" onclick="saveField(this, 'name', '${originalContent}')">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </button>
+                    <button type="button" class="btn btn-ghost btn-xs" onclick="cancelField(this, '${originalContent}')">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            // 聚焦並選取輸入框
+            const input = document.getElementById('edit-name-input');
+            input.focus();
+            input.select();
+        } else if (fieldType === 'expire') {
+            // 編輯到期時間
+            let expireValue = 'never';
+            if (currentValue.includes('2024年11月')) expireValue = '6months';
+            else if (currentValue.includes('2025年6月')) expireValue = '1year';
+            else if (currentValue === '永不過期') expireValue = 'never';
+            
+            editableField.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <select class="select select-bordered select-xs w-32" id="edit-expire-select">
+                        <option value="never" ${expireValue === 'never' ? 'selected' : ''}>永不過期</option>
+                        <option value="3months" ${expireValue === '3months' ? 'selected' : ''}>3個月</option>
+                        <option value="6months" ${expireValue === '6months' ? 'selected' : ''}>6個月</option>
+                        <option value="1year" ${expireValue === '1year' ? 'selected' : ''}>1年</option>
+                    </select>
+                    <button type="button" class="btn btn-primary btn-xs" onclick="saveField(this, 'expire', '${originalContent}')">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </button>
+                    <button type="button" class="btn btn-ghost btn-xs" onclick="cancelField(this, '${originalContent}')">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            `;
+        }
+        
+        // 隱藏鉛筆按鈕
+        button.style.display = 'none';
+    }
+    
+    // 儲存字段編輯
+    function saveField(button, fieldType, originalContent) {
+        const editableField = button.closest('.editable-field');
+        const pencilButton = editableField.nextElementSibling;
+        
+        if (fieldType === 'name') {
+            const input = document.getElementById('edit-name-input');
+            if (!input.value.trim()) {
+                showToast('❌ 請輸入API Key名稱', 'error');
+                return;
+            }
+            
+            // 更新顯示和數據屬性
+            editableField.textContent = input.value;
+            editableField.setAttribute('data-value', input.value);
+            
+            console.log('更新API Key名稱:', input.value);
+            showToast('✅ 名稱更新成功！', 'success');
+            
+        } else if (fieldType === 'expire') {
+            const select = document.getElementById('edit-expire-select');
+            
+            // 轉換到期時間顯示
+            let expireText = '';
+            const today = new Date();
+            switch(select.value) {
+                case 'never':
+                    expireText = '永不過期';
+                    break;
+                case '3months':
+                    const date3m = new Date(today);
+                    date3m.setMonth(date3m.getMonth() + 3);
+                    expireText = date3m.getFullYear() + '年' + (date3m.getMonth() + 1) + '月' + date3m.getDate() + '日';
+                    break;
+                case '6months':
+                    const date6m = new Date(today);
+                    date6m.setMonth(date6m.getMonth() + 6);
+                    expireText = date6m.getFullYear() + '年' + (date6m.getMonth() + 1) + '月' + date6m.getDate() + '日';
+                    break;
+                case '1year':
+                    const date1y = new Date(today);
+                    date1y.setFullYear(date1y.getFullYear() + 1);
+                    expireText = date1y.getFullYear() + '年' + (date1y.getMonth() + 1) + '月' + date1y.getDate() + '日';
+                    break;
+            }
+            
+            // 更新顯示和數據屬性
+            editableField.textContent = expireText;
+            editableField.setAttribute('data-value', expireText);
+            
+            console.log('更新API Key到期時間:', expireText);
+            showToast('✅ 到期時間更新成功！', 'success');
+        }
+        
+        // 顯示鉛筆按鈕
+        pencilButton.style.display = 'inline-block';
+    }
+    
+    // 取消字段編輯
+    function cancelField(button, originalContent) {
+        const editableField = button.closest('.editable-field');
+        const pencilButton = editableField.nextElementSibling;
+        
+        // 恢復原始內容
+        editableField.innerHTML = originalContent;
+        
+        // 顯示鉛筆按鈕
+        pencilButton.style.display = 'inline-block';
+    }
+</script>
 {% endblock %} 
