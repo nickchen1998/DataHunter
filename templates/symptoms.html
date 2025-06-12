@@ -114,35 +114,54 @@
 
 {% block api-request %}
 import requests
+import json
 
-# API 基礎 URL
-base_url = "{{ request.scheme }}://{{ request.get_host }}{% url 'symptom_list' %}"
+# API 端點 URL
+api_url = "{{ request.scheme }}://{{ request.get_host }}{% url 'symptom_api_search' %}"
 
-# 查詢參數字典
-params = {
-    'format': 'json',        # 指定回應格式為 JSON
-    'department': '{{ department }}',  # 篩選特定科別，例如：家醫科、皮膚科
-    'gender': '{{ gender }}',          # 篩選性別，例如：男、女
-    'question': '{{ question }}'       # 搜尋問題關鍵字，支援語意搜尋
+# 請求參數字典
+data = {
+    'department': '{{ department }}',    # 篩選特定科別，例如：家醫科、皮膚科
+    'gender': '{{ gender }}',            # 篩選性別，例如：男、女
+    'question': '{{ question }}',        # 搜尋問題關鍵字，支援語意搜尋
+    'page': 1,                          # 頁碼，從 1 開始
+    'page_size': 10                     # 每頁資料筆數，最大 100 筆
 }
 
 # 移除空值參數
-params = {k: v for k, v in params.items() if v}
+data = {k: v for k, v in data.items() if v}
 
-# 發送 GET 請求
-response = requests.get(base_url, params=params)
+# 設定請求標頭
+headers = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+}
+
+# 發送 POST 請求
+response = requests.post(
+    api_url, 
+    data=json.dumps(data, ensure_ascii=False), 
+    headers=headers
+)
 
 # 檢查請求是否成功
 if response.status_code == 200:
-    data = response.json()
-    print(f"總共找到 {data['count']} 筆資料")
-    print(f"目前在第 {data['current_page']} 頁，共 {data['total_pages']} 頁")
+    result = response.json()
+    print(f"總共找到 {result['count']} 筆資料")
+    print(f"目前在第 {result['current_page']} 頁，共 {result['total_pages']} 頁")
     
     # 處理資料
-    for item in data['results']:
+    for item in result['results']:
         print(f"ID: {item['id']}, 科別: {item['department']}")
+        print(f"問題: {item['question'][:50]}...")
+        print("---")
+elif response.status_code == 400:
+    error_info = response.json()
+    print(f"參數錯誤: {error_info.get('error')}")
+    print(f"詳細資訊: {error_info.get('details')}")
 else:
     print(f"請求失敗，狀態碼: {response.status_code}")
+    print(f"錯誤訊息: {response.text}")
 {% endblock %}
 
 {% block api-response %}
