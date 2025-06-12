@@ -119,7 +119,7 @@ import json
 # API 端點 URL
 api_url = "{{ request.scheme }}://{{ request.get_host }}{% url 'symptom_api_search' %}"
 
-# 請求參數字典
+# 請求參數字典（包含分頁參數）
 data = {
     'department': '{{ department }}',    # 篩選特定科別，例如：家醫科、皮膚科
     'gender': '{{ gender }}',            # 篩選性別，例如：男、女
@@ -127,9 +127,6 @@ data = {
     'page': 1,                          # 頁碼，從 1 開始
     'page_size': 10                     # 每頁資料筆數，最大 100 筆
 }
-
-# 移除空值參數
-data = {k: v for k, v in data.items() if v}
 
 # 設定請求標頭
 headers = {
@@ -147,21 +144,8 @@ response = requests.post(
 # 檢查請求是否成功
 if response.status_code == 200:
     result = response.json()
-    print(f"總共找到 {result['count']} 筆資料")
-    print(f"目前在第 {result['current_page']} 頁，共 {result['total_pages']} 頁")
-    
-    # 處理資料
-    for item in result['results']:
-        print(f"ID: {item['id']}, 科別: {item['department']}")
-        print(f"問題: {item['question'][:50]}...")
-        print("---")
-elif response.status_code == 400:
-    error_info = response.json()
-    print(f"參數錯誤: {error_info.get('error')}")
-    print(f"詳細資訊: {error_info.get('details')}")
-else:
-    print(f"請求失敗，狀態碼: {response.status_code}")
-    print(f"錯誤訊息: {response.text}")
+    print(result)
+
 {% endblock %}
 
 {% block api-response %}

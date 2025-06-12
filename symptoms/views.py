@@ -3,32 +3,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from symptoms.models import Symptom
-from django.http import JsonResponse
 from symptoms.serializers import SymptomSerializer
-from utils.search_utils import hybrid_search_with_rerank
-from django.core.paginator import Paginator
-
-
-def build_symptom_queryset(department=None, gender=None, question=None):
-    queryset = Symptom.objects.all()
-    
-    if department:
-        queryset = queryset.filter(department__icontains=department)
-    
-    if gender:
-        queryset = queryset.filter(gender=gender)
-    
-    if question:
-        queryset = hybrid_search_with_rerank(
-            queryset=queryset,
-            vector_field_name="question_embeddings",
-            text_field_name="question",
-            original_question=question,
-        )
-    else:
-        queryset = queryset.order_by("-question_time")
-    
-    return queryset
+from symptoms.utils import build_symptom_queryset
+from DataHunter.paginator import BasePagination
 
 
 class SymptomListView(ListView):
@@ -54,29 +31,9 @@ class SymptomListView(ListView):
         context['genders'] = Symptom.objects.values_list('gender', flat=True).distinct().order_by('gender')
         return context
 
-    def render_to_response(self, context, **response_kwargs):
-        if (self.request.headers.get('Accept') == 'application/json' or
-                self.request.GET.get('format') == 'json'):
-            data = {
-                'count': context['page_obj'].paginator.count,
-                'total_pages': context['page_obj'].paginator.num_pages,
-                'current_page': context['page_obj'].number,
-                'has_next': context['page_obj'].has_next(),
-                'has_previous': context['page_obj'].has_previous(),
-                'results': SymptomSerializer(context['symptoms'], many=True).data,
-            }
-
-            return JsonResponse(
-                data,
-                safe=False,
-                json_dumps_params={'ensure_ascii': False},
-                content_type='application/json; charset=utf-8',
-            )
-        else:
-            return super().render_to_response(context, **response_kwargs)
-
 
 class SymptomSearchAPIView(APIView):
+    pagination_class = BasePagination
     
     def post(self, request):
         try:
@@ -89,21 +46,26 @@ class SymptomSearchAPIView(APIView):
             
             validated_data = serializer.validated_data
             
+            request._pagination_data = {
+                'page': validated_data.get('page', 1),
+                'page_size': validated_data.get('page_size', 10)
+            }
+            
             queryset = build_symptom_queryset(
                 department=validated_data.get('department'),
                 gender=validated_data.get('gender'),
                 question=validated_data.get('question')
             )
             
-            page = validated_data.get('page', 1)
-            page_size = validated_data.get('page_size', 10)
+            paginator = self.pagination_class()
+            page = paginator.paginate_queryset(queryset, request)
             
-            paginator = Paginator(queryset, page_size)
-            page_obj = paginator.get_page(page)
+            if page is not None:
+                serializer = SymptomSerializer(page, many=True)
+                return paginator.get_paginated_response(serializer.data)
             
-            response_data = serializer.create_response(queryset, page_obj)
-            
-            return Response(response_data, status=status.HTTP_200_OK)
+            serializer = SymptomSerializer(queryset, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
                 
         except Exception as e:
             return Response({

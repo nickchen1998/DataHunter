@@ -1,10 +1,14 @@
-from rest_framework.serializers import ModelSerializer, CharField, IntegerField
+from rest_framework.serializers import CharField
 from rest_framework import serializers
 from symptoms.models import Symptom
-import json
+from DataHunter.serializers import BaseSerializer
 
 
-class SymptomSerializer(ModelSerializer):
+class SymptomSerializer(BaseSerializer):
+    """
+    症狀資料的 Serializer，繼承 BaseSerializer 獲得分頁和 JSON 解析功能
+    """
+    # 搜尋參數
     department = CharField(
         required=False, 
         allow_blank=True, 
@@ -25,65 +29,17 @@ class SymptomSerializer(ModelSerializer):
         help_text="搜尋問題關鍵字，支援語意搜尋",
         write_only=True
     )
-    page = IntegerField(
-        required=False, 
-        min_value=1, 
-        default=1,
-        help_text="頁碼，從 1 開始",
-        write_only=True
-    )
-    page_size = IntegerField(
-        required=False, 
-        min_value=1, 
-        max_value=100, 
-        default=10,
-        help_text="每頁資料筆數，最大 100 筆",
-        write_only=True
-    )
+    
+    # 定義搜尋欄位，用於 BaseSerializer 的 Content-Type 檢查
+    search_fields = ['department', 'gender', 'question']
 
     class Meta:
         model = Symptom
-        fields = "__all__"
-        extra_kwargs = {
-            "question_embeddings": {"write_only": True},
-        }
-
-    def __init__(self, *args, **kwargs):
-        self.request = kwargs.get('context', {}).get('request')
-        
-        if 'data' in kwargs:
-            data = kwargs['data']
-            if isinstance(data, (bytes, str)):
-                try:
-                    if isinstance(data, bytes):
-                        data = data.decode('utf-8')
-                    kwargs['data'] = json.loads(data)
-                except json.JSONDecodeError as e:
-                    kwargs['data'] = {}
-                    self._json_decode_error = f"JSON 格式錯誤：{str(e)}"
-                except UnicodeDecodeError as e:
-                    kwargs['data'] = {}
-                    self._json_decode_error = f"編碼錯誤：{str(e)}"
-        
-        super().__init__(*args, **kwargs)
-
-    def validate(self, attrs):
-        if hasattr(self, '_json_decode_error'):
-            raise serializers.ValidationError({
-                'json_format': self._json_decode_error
-            })
-        
-        if (self.request and 
-            any(key in attrs for key in ['department', 'gender', 'question', 'page', 'page_size'])):
-            
-            if self.request.content_type != 'application/json':
-                raise serializers.ValidationError({
-                    'request_format': f'API 請求必須使用 application/json 格式，收到的格式：{self.request.content_type or "None"}'
-                })
-        
-        return super().validate(attrs)
+        fields = ['id', 'subject_id', 'department', 'symptom', 'question', 'answer', 'gender', 'question_time', 'answer_time', 'created_at', 'page', 'page_size']
+        read_only_fields = ['id', 'subject_id', 'symptom', 'answer', 'question_time', 'answer_time', 'created_at']
 
     def validate_department(self, value):
+        """驗證部門是否存在"""
         if not value:
             return value
             
@@ -103,6 +59,7 @@ class SymptomSerializer(ModelSerializer):
         return value
 
     def validate_gender(self, value):
+        """驗證性別是否有效"""
         if not value:
             return value
             
@@ -118,13 +75,3 @@ class SymptomSerializer(ModelSerializer):
             )
         
         return value
-
-    def create_response(self, queryset, page_obj):
-        return {
-            'count': queryset.count(),
-            'total_pages': page_obj.paginator.num_pages,
-            'current_page': page_obj.number,
-            'has_next': page_obj.has_next(),
-            'has_previous': page_obj.has_previous(),
-            'results': SymptomSerializer(page_obj.object_list, many=True).data
-        }
