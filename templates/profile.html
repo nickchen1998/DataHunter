@@ -435,10 +435,12 @@
                 e.preventDefault();
                 
                 const submitBtn = document.getElementById('create-api-key-btn');
-                const spinner = submitBtn.querySelector('.loading');
+                const spinner = submitBtn.querySelector('.loading-spinner');
                 
                 // 顯示載入狀態
-                spinner.style.display = 'inline-block';
+                if (spinner) {
+                    spinner.style.display = 'inline-block';
+                }
                 submitBtn.disabled = true;
                 
                 const formData = new FormData(this);
@@ -470,7 +472,10 @@
                     console.error('建立 API Key 錯誤:', error);
                     showToast('建立 API Key 時發生錯誤', 'error');
                 } finally {
-                    spinner.style.display = 'none';
+                    const spinner = submitBtn.querySelector('.loading-spinner');
+                    if (spinner) {
+                        spinner.style.display = 'none';
+                    }
                     submitBtn.disabled = false;
                 }
             });
@@ -557,6 +562,10 @@
             if (data.success) {
                 updateApiKeyCount(data.total_keys, data.max_keys);
                 
+                // 重置所有顯示狀態
+                document.getElementById('no-api-keys').style.display = 'none';
+                document.getElementById('api-key-list').style.display = 'none';
+                
                 if (data.keys.length === 0) {
                     document.getElementById('no-api-keys').style.display = 'block';
                 } else {
@@ -573,6 +582,15 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                         </svg>
                         已達上限 (${data.max_keys}個啟用中)
+                    `;
+                } else {
+                    // 如果可以創建更多，重置按鈕狀態
+                    addButton.disabled = false;
+                    addButton.innerHTML = `
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        新增
                     `;
                 }
             } else {
@@ -620,11 +638,9 @@
                             </button>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <span class="font-medium text-sm text-gray-600">Key內容：</span>
+                            <span class="font-medium text-sm text-gray-600">Key識別碼：</span>
                             <code class="bg-gray-200 px-2 py-1 rounded text-sm font-mono">${key.prefix}...</code>
-                            <button type="button" class="copy-key-btn text-blue-600 hover:text-blue-800" data-key="${key.prefix}..." title="複製API Key">
-                                📋
-                            </button>
+                            <span class="text-xs text-gray-500">(僅供識別，完整Key請在創建時複製)</span>
                         </div>
                         <div class="space-y-1 text-sm text-gray-500">
                             <div><strong>申請時間：</strong>${key.created_at}</div>
@@ -661,11 +677,6 @@
             editField(this, key.prefix, 'expires_at');
         });
         
-        const copyKeyBtn = div.querySelector('.copy-key-btn');
-        copyKeyBtn.addEventListener('click', function() {
-            copyApiKey(this.dataset.key);
-        });
-        
         const deleteKeyBtn = div.querySelector('.delete-key-btn');
         deleteKeyBtn.addEventListener('click', function() {
             deleteApiKey(key.prefix);
@@ -678,12 +689,32 @@
     function showCreateApiKeyForm() {
         document.getElementById('create-api-key-form').style.display = 'block';
         document.querySelector('#new-api-key-form input[name="name"]').focus();
+        
+        // 確保建立按鈕狀態正確
+        const submitBtn = document.getElementById('create-api-key-btn');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `
+                <span class="loading loading-spinner loading-sm mr-2" style="display: none;"></span>
+                建立
+            `;
+        }
     }
     
     // 隱藏新增 API Key 表單
     function hideCreateApiKeyForm() {
         document.getElementById('create-api-key-form').style.display = 'none';
         document.getElementById('new-api-key-form').reset();
+        
+        // 重置建立按鈕的狀態
+        const submitBtn = document.getElementById('create-api-key-btn');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `
+                <span class="loading loading-spinner loading-sm mr-2" style="display: none;"></span>
+                建立
+            `;
+        }
     }
     
 

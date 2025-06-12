@@ -105,6 +105,7 @@ class UserAPIKeyListView(LoginRequiredMixin, View):
                 'is_active': key.is_active,  # 這是我們的 property，映射到 not revoked
                 'is_expired': key.is_expired,
                 'is_valid': key.is_valid,
+                # 注意：不再包含完整的 key 數據，只在創建時提供
             })
         
         return JsonResponse({
