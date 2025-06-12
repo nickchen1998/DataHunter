@@ -1,5 +1,6 @@
 from django.db import models
-from pgvector.django import VectorField
+from pgvector.django import VectorField, HnswIndex
+from django.contrib.postgres.indexes import GinIndex
 
 
 # Create your models here.
@@ -23,6 +24,22 @@ class Symptom(models.Model):
         dimensions=1536,
         help_text="基於 question 欄位並使用 OpenAI text-embedding-3-small 產生向量。"
     )
+
+    class Meta:
+        indexes = [
+            HnswIndex(
+                name="symptom_q_emb_hnsw_idx",
+                fields=["question_embeddings"],
+                m=16,
+                ef_construction=64,
+                opclasses=["vector_l2_ops"],
+            ),
+            GinIndex(
+                fields=['question'],
+                name='symptom_q_trgm_gin_idx',
+                opclasses=['gin_trgm_ops']
+            )
+        ]
 
     def __str__(self):
         return self.id

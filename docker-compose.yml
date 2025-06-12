@@ -25,14 +25,15 @@ services:
       - "4443:4443"
       - "4444:4444"
 
-  db:
+  postgres:
     image: ankane/pgvector:latest
-    container_name: db
+    container_name: poestgres
     environment:
-      - POSTGRES_DB=postgres
+      - POSTGRES_DB=DataHunter
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
     ports:
       - "5432:5432"
     volumes:
+      - ./db_init:/docker-entrypoint-initdb.d
       - ${POSTGRES_VOLUME:-./postgres_data}:/var/lib/postgresql/data

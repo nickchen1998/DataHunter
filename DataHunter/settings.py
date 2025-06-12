@@ -85,8 +85,8 @@ else:
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': "DataHunter",
-            'USER': "root",
-            'PASSWORD': os.getenv("POSTGRES_PASSWORD"),
+            'USER': os.getenv("POSTGRES_USER", "postgres"),
+            'PASSWORD': os.getenv("POSTGRES_PASSWORD", "postgres"),
             'HOST': os.getenv("POSTGRES_HOST", "localhost"),
             'PORT': "5432",
         }

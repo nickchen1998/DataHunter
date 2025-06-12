@@ -43,17 +43,28 @@
         </div>
 
         {% block filter_section %}
-        <div class="flex space-x-2 mb-4">
-            <label>
-                <input type="text" placeholder="過濾器" class="input input-bordered w-64"/>
-            </label>
-            <button class="btn btn-primary">搜尋</button>
-        </div>
+            {% if request_path != '/' %}
+                <div class="flex space-x-2 mb-4">
+                    <label>
+                        <input type="text" placeholder="過濾器" class="input input-bordered w-64"/>
+                    </label>
+                    <button class="btn btn-primary">搜尋</button>
+                </div>
+            {% endif %}
         {% endblock %}
 
         <!-- 資料表格與內容區 -->
         <div class="bg-white rounded-lg shadow p-4">
-            {% block data-table %}{% endblock %}
+            {% block data-table %}
+                {% if request_path == '/' %}
+                    <div class="text-center">
+                        <h2 class="text-2xl font-bold mb-4">歡迎來到資料獵人 - DataHunter</h2>
+                        <p class="text-gray-600">
+                            請從左側的下拉選單中選擇一個資料來源開始探索。
+                        </p>
+                    </div>
+                {% endif %}
+            {% endblock %}
         </div>
 
     </main>
