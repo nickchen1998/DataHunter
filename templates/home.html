@@ -7,11 +7,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/daisyui@latest"></script>
 </head>
-<body class="min-h-screen bg-gray-100">
+<body class="h-screen bg-gray-100 overflow-hidden">
 
-<div class="flex">
+<div class="flex h-full">
     <!-- 左側側欄 -->
-    <aside class="w-64 min-h-screen bg-white shadow-md p-6">
+    <aside class="w-64 h-full bg-white shadow-md p-6 overflow-y-auto">
         <a href="{% url 'home' %}">
             <h2 class="text-xl font-bold mb-6">📑 資料獵人 - DataHunter</h2>
         </a>
@@ -19,7 +19,7 @@
         <div class="mb-4">
             <label for="source-select" class="block font-semibold mb-1">資料來源：</label>
             <select id="source-select" class="select select-bordered w-full">
-                <option disabled {% if request_path == '/' %}selected{% endif %}>請選擇資料來源</option>
+                <option value="/" {% if request_path == '/' %}selected{% endif %}>-</option>
                 <option value="/symptoms/list/" {% if request_path == '/symptoms/list/' %}selected{% endif %}>衛福部 - 台灣 e 院</option>
             </select>
         </div>
@@ -37,34 +37,74 @@
     </aside>
 
     <!-- 主內容區 -->
-    <main class="flex-1 p-6">
-        <div class="flex items-center justify-between mb-4">
+    <main class="flex-1 p-6 h-full flex flex-col overflow-hidden">
+        <div class="flex items-center justify-between mb-4 flex-shrink-0">
             <div class="text-2xl font-bold">{% block source-name %}{% endblock %}</div>
         </div>
 
-        {% block filter_section %}
-            {% if request_path != '/' %}
-                <div class="flex space-x-2 mb-4">
-                    <label>
-                        <input type="text" placeholder="過濾器" class="input input-bordered w-64"/>
-                    </label>
-                    <button class="btn btn-primary">搜尋</button>
-                </div>
-            {% endif %}
-        {% endblock %}
-
-        <!-- 資料表格與內容區 -->
-        <div class="bg-white rounded-lg shadow p-4">
-            {% block data-table %}
-                {% if request_path == '/' %}
-                    <div class="text-center">
-                        <h2 class="text-2xl font-bold mb-4">歡迎來到資料獵人 - DataHunter</h2>
-                        <p class="text-gray-600">
-                            請從左側的下拉選單中選擇一個資料來源開始探索。
-                        </p>
+        <div class="flex-shrink-0">
+            {% block filter_section %}
+                {% if request_path != '/' %}
+                    <div class="flex space-x-2 mb-4">
+                        <label>
+                            <input type="text" placeholder="過濾器" class="input input-bordered w-64"/>
+                        </label>
+                        <button class="btn btn-primary">搜尋</button>
                     </div>
                 {% endif %}
             {% endblock %}
+        </div>
+
+        <!-- 資料表格與內容區 -->
+        <div class="flex space-x-6 flex-1 min-h-0">
+            <!-- 左半邊：資料表格 -->
+            <div class="{% if request_path == '/' %}w-full{% else %}w-1/2{% endif %} flex flex-col">
+                <div class="bg-white rounded-lg shadow p-4 flex-1 flex flex-col overflow-hidden">
+                    {% block data-table %}
+                        {% if request_path == '/' %}
+                            <div class="text-center flex-1 flex items-center justify-center">
+                                <div>
+                                    <h2 class="text-2xl font-bold mb-4">歡迎來到資料獵人 - DataHunter</h2>
+                                    <p class="text-gray-600">
+                                        請從左側的下拉選單中選擇一個資料來源開始探索。
+                                    </p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endblock %}
+                </div>
+            </div>
+
+            <!-- 右半邊：API 資訊 -->
+            {% if request_path != '/' %}
+                <div class="w-1/2 flex flex-col space-y-6">
+                    <!-- API 請求範例 -->
+                    <div class="bg-white rounded-lg shadow p-4 flex-1 flex flex-col overflow-hidden">
+                        <div class="flex justify-between items-center mb-2 flex-shrink-0">
+                            <h3 class="font-bold text-lg">API 請求範例</h3>
+                            <button onclick="copyToClipboard('api-request-content')" class="btn btn-xs btn-outline btn-info" title="複製程式碼">
+                                📋 複製
+                            </button>
+                        </div>
+                        <div class="bg-gray-800 text-white p-4 rounded-md font-mono text-sm flex-1 overflow-auto">
+                            <pre><code id="api-request-content">{% block api-request %}{% endblock %}</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- API 回應格式 -->
+                    <div class="bg-white rounded-lg shadow p-4 flex-1 flex flex-col overflow-hidden">
+                        <div class="flex justify-between items-center mb-2 flex-shrink-0">
+                            <h3 class="font-bold text-lg">API 回應格式</h3>
+                            <button onclick="copyToClipboard('api-response-content')" class="btn btn-xs btn-outline btn-success" title="複製 JSON">
+                                📋 複製
+                            </button>
+                        </div>
+                        <div class="bg-gray-800 text-white p-4 rounded-md font-mono text-sm flex-1 overflow-auto">
+                            <pre><code id="api-response-content">{% block api-response %}{% endblock %}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
         </div>
 
     </main>
@@ -85,6 +125,77 @@
             full.style.display = 'inline';
             button.innerText = '收合';
         }
+    }
+
+    function copyToClipboard(elementId) {
+        const element = document.getElementById(elementId);
+        const text = element.textContent || element.innerText;
+        
+        // 使用現代的 Clipboard API
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(function() {
+                showCopySuccess();
+            }).catch(function(err) {
+                console.error('複製失敗: ', err);
+                fallbackCopyTextToClipboard(text);
+            });
+        } else {
+            // 降級方案
+            fallbackCopyTextToClipboard(text);
+        }
+    }
+
+    function fallbackCopyTextToClipboard(text) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.top = "0";
+        textArea.style.left = "0";
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showCopySuccess();
+            } else {
+                showCopyError();
+            }
+        } catch (err) {
+            console.error('降級複製方案失敗: ', err);
+            showCopyError();
+        }
+
+        document.body.removeChild(textArea);
+    }
+
+    function showCopySuccess() {
+        // 創建臨時提示訊息
+        const toast = document.createElement('div');
+        toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+        toast.textContent = '✅ 已複製到剪貼簿！';
+        document.body.appendChild(toast);
+
+        // 3秒後移除提示
+        setTimeout(() => {
+            document.body.removeChild(toast);
+        }, 3000);
+    }
+
+    function showCopyError() {
+        // 創建錯誤提示訊息
+        const toast = document.createElement('div');
+        toast.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+        toast.textContent = '❌ 複製失敗，請手動選取複製';
+        document.body.appendChild(toast);
+
+        // 3秒後移除提示
+        setTimeout(() => {
+            document.body.removeChild(toast);
+        }, 3000);
     }
 
     document.addEventListener('DOMContentLoaded', function () {

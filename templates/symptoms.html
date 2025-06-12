@@ -111,3 +111,72 @@
         {% endif %}
     </div>
 {% endblock %}
+
+{% block api-request %}
+import requests
+
+# API 基礎 URL
+base_url = "{{ request.scheme }}://{{ request.get_host }}{% url 'symptom_list' %}"
+
+# 查詢參數字典
+params = {
+    'format': 'json',        # 指定回應格式為 JSON
+    'department': '{{ department }}',  # 篩選特定科別，例如：家醫科、皮膚科
+    'gender': '{{ gender }}',          # 篩選性別，例如：男、女
+    'question': '{{ question }}'       # 搜尋問題關鍵字，支援語意搜尋
+}
+
+# 移除空值參數
+params = {k: v for k, v in params.items() if v}
+
+# 發送 GET 請求
+response = requests.get(base_url, params=params)
+
+# 檢查請求是否成功
+if response.status_code == 200:
+    data = response.json()
+    print(f"總共找到 {data['count']} 筆資料")
+    print(f"目前在第 {data['current_page']} 頁，共 {data['total_pages']} 頁")
+    
+    # 處理資料
+    for item in data['results']:
+        print(f"ID: {item['id']}, 科別: {item['department']}")
+else:
+    print(f"請求失敗，狀態碼: {response.status_code}")
+{% endblock %}
+
+{% block api-response %}
+{
+    "count": 12345,
+    "total_pages": 1235,
+    "current_page": 1,
+    "has_next": true,
+    "has_previous": false,
+    "results": [
+        {
+            "id": 1,
+            "subject_id": 123,
+            "department": "家醫科",
+            "symptom": "發燒",
+            "question": "醫生您好，我最近一直有發燒的狀況...",
+            "answer": "您好，建議您多喝水、多休息，若症狀持續，請盡速就醫。",
+            "gender": "男",
+            "question_time": "2024-01-01T12:00:00Z",
+            "answer_time": "2024-01-01T13:00:00Z",
+            "created_at": "2024-05-21T08:00:00.000000Z"
+        },
+        {
+            "id": 2,
+            "subject_id": 456,
+            "department": "皮膚科",
+            "symptom": "皮疹",
+            "question": "醫生您好，我身上出現不明紅疹...",
+            "answer": "您好，可能是過敏反應，建議您...",
+            "gender": "女",
+            "question_time": "2024-01-02T14:00:00Z",
+            "answer_time": "2024-01-02T15:00:00Z",
+            "created_at": "2024-05-21T09:00:00.000000Z"
+        }
+    ]
+}
+{% endblock %}
