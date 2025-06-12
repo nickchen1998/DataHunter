@@ -11,10 +11,11 @@
 
 <div class="flex h-full">
     <!-- 左側側欄 -->
-    <aside class="w-64 h-full bg-white shadow-md p-6 overflow-y-auto">
-        <a href="{% url 'home' %}">
-            <h2 class="text-xl font-bold mb-6">📑 資料獵人 - DataHunter</h2>
-        </a>
+    <aside class="w-64 h-full bg-white shadow-md p-6 overflow-y-auto flex flex-col">
+        <div class="flex-1">
+            <a href="{% url 'home' %}">
+                <h2 class="text-xl font-bold mb-6">📑 資料獵人 - DataHunter</h2>
+            </a>
 
         <div class="mb-4">
             <label for="source-select" class="block font-semibold mb-1">資料來源：</label>
@@ -33,6 +34,28 @@
             <p class="text-sm text-gray-600 mt-1">
                 本網站資料來源皆為使用爬蟲爬取之網路公開資料，請勿使用於商業用途，本網站僅用於教學、練習使用。
             </p>
+        </div>
+        </div>
+
+        <!-- 用戶操作區域 -->
+        <div class="border-t pt-4 mt-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                        {{ user.username|first|upper }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900 truncate">{{ user.username }}</p>
+                        <p class="text-xs text-gray-500 truncate">已登入</p>
+                    </div>
+                </div>
+                <a href="{% url 'logout' %}" class="btn btn-ghost btn-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                    登出
+                </a>
+            </div>
         </div>
     </aside>
 

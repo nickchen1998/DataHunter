@@ -1,18 +1,24 @@
 from django.views.generic import ListView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+
 from symptoms.models import Symptom
 from symptoms.serializers import SymptomSerializer
 from symptoms.utils import build_symptom_queryset
 from DataHunter.paginator import BasePagination
 
 
-class SymptomListView(ListView):
+@method_decorator(never_cache, name='dispatch')
+class SymptomListView(LoginRequiredMixin, ListView):
     template_name = 'symptoms.html'
     context_object_name = 'symptoms'
     queryset = Symptom.objects.all()
     paginate_by = 10
+    login_url = '/login/'  # 未登入時重定向的 URL
 
     def get_queryset(self):
         department = self.request.GET.get('department')
