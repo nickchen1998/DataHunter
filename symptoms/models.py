@@ -1,6 +1,5 @@
 from django.db import models
 from pgvector.django import VectorField, HnswIndex
-from django.contrib.postgres.indexes import GinIndex
 
 
 # Create your models here.
@@ -11,7 +10,7 @@ class Symptom(models.Model):
     department = models.CharField(max_length=255)
 
     symptom = models.CharField(max_length=255)
-    question = models.TextField()
+    question = models.TextField(db_index=True)
     answer = models.TextField()
 
     gender = models.CharField(max_length=10)
@@ -33,11 +32,6 @@ class Symptom(models.Model):
                 m=16,
                 ef_construction=64,
                 opclasses=["vector_l2_ops"],
-            ),
-            GinIndex(
-                fields=['question'],
-                name='symptom_q_trgm_gin_idx',
-                opclasses=['gin_trgm_ops']
             )
         ]
 

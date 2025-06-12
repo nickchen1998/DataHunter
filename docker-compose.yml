@@ -31,9 +31,27 @@ services:
     environment:
       - POSTGRES_DB=DataHunter
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:- postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
     ports:
       - "5432:5432"
     volumes:
-      - ./db_init:/docker-entrypoint-initdb.d
-      - ${POSTGRES_VOLUME:- ./postgres_data}:/var/lib/postgresql/data
+      - ${POSTGRES_VOLUME:-./postgres_data}:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d DataHunter"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgres-init:
+    image: ankane/pgvector:latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - PGPASSWORD=${POSTGRES_PASSWORD:-postgres}
+    command: |
+      bash -c "
+        psql -h postgres -U postgres -d DataHunter -c 'CREATE EXTENSION IF NOT EXISTS vector;';
+        echo 'Vector extension enabled successfully';
+      "
+    restart: "no"
