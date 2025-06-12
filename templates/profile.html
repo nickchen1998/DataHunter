@@ -1,267 +1,236 @@
-<!DOCTYPE html>
-<html lang="zh-TW" data-theme="light">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>個人資料 - DataHunter</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/daisyui@latest"></script>
-</head>
-<body class="min-h-screen bg-gray-50">
-    <!-- 導航欄 -->
-    <nav class="bg-white shadow-sm border-b">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <a href="{% url 'home' %}" class="flex items-center space-x-2 text-gray-900 hover:text-blue-600 transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                        </svg>
-                        <span class="font-medium">返回主頁</span>
-                    </a>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <span class="text-sm text-gray-500">{{ user.username }}</span>
-                    <a href="{% url 'logout' %}" class="btn btn-ghost btn-sm text-red-600">登出</a>
-                </div>
-            </div>
-        </div>
-    </nav>
+{% extends "base.html" %}
 
-    <div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <!-- 頁面標題 -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">個人資料</h1>
-            <p class="mt-2 text-gray-600">管理您的帳戶資訊和安全設定</p>
-        </div>
-
-        <!-- 訊息提示 -->
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-error{% else %}alert-info{% endif %} mb-6">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                        {% if message.tags == 'success' %}
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        {% elif message.tags == 'error' %}
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        {% else %}
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        {% endif %}
+{% block content %}
+<!-- 導航欄 -->
+<nav class="bg-white shadow-sm border-b">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center">
+                <a href="{% url 'home' %}" class="flex items-center space-x-2 text-gray-900 hover:text-blue-600 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                     </svg>
-                    <span>{{ message }}</span>
-                </div>
-            {% endfor %}
-        {% endif %}
+                    <span class="font-medium">返回主頁</span>
+                </a>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="text-sm text-gray-500">{{ user.username }}</span>
+                <a href="{% url 'logout' %}" class="btn btn-ghost btn-sm text-red-600">登出</a>
+            </div>
+        </div>
+    </div>
+</nav>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- 左側：個人資料摘要 -->
-            <div class="lg:col-span-1">
-                <div class="card bg-base-100 shadow">
-                    <div class="card-body text-center">
-                        <div class="w-20 h-20 bg-gray-500 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
-                            {{ user.username|first|upper }}
-                        </div>
-                        <h2 class="card-title justify-center">
-                            {% if user.first_name and user.last_name %}
-                                {{ user.first_name }} {{ user.last_name }}
-                            {% else %}
-                                {{ user.username }}
-                            {% endif %}
-                        </h2>
-                        <p class="text-gray-500">{{ user.email }}</p>
-                        <div class="divider"></div>
-                        <div class="text-sm text-gray-600 space-y-1">
-                            <p><span class="font-medium">帳戶創建：</span>{{ user.date_joined|date:"Y年m月d日" }}</p>
-                            <p><span class="font-medium">最後登入：</span>{{ user.last_login|date:"Y年m月d日 H:i" }}</p>
-                        </div>
+<div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <!-- 頁面標題 -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">個人資料</h1>
+        <p class="mt-2 text-gray-600">管理您的帳戶資訊和安全設定</p>
+    </div>
+
+    <!-- 訊息提示 -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-error{% else %}alert-info{% endif %} mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                    {% if message.tags == 'success' %}
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    {% elif message.tags == 'error' %}
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    {% else %}
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    {% endif %}
+                </svg>
+                <span>{{ message }}</span>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- 左側：個人資料摘要 -->
+        <div class="lg:col-span-1">
+            <div class="card bg-base-100 shadow">
+                <div class="card-body text-center">
+                    <div class="w-20 h-20 bg-gray-500 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
+                        {{ user.username|first|upper }}
+                    </div>
+                    <h2 class="card-title justify-center">
+                        {% if user.first_name and user.last_name %}
+                            {{ user.first_name }} {{ user.last_name }}
+                        {% else %}
+                            {{ user.username }}
+                        {% endif %}
+                    </h2>
+                    <p class="text-gray-500">{{ user.email }}</p>
+                    <div class="divider"></div>
+                    <div class="text-sm text-gray-600 space-y-1">
+                        <p><span class="font-medium">帳戶創建：</span>{{ user.date_joined|date:"Y年m月d日" }}</p>
+                        <p><span class="font-medium">最後登入：</span>{{ user.last_login|date:"Y年m月d日 H:i" }}</p>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- 右側：編輯表單 -->
-            <div class="lg:col-span-2 space-y-8">
-                <!-- 個人資料編輯 -->
-                <div class="card bg-base-100 shadow">
-                    <div class="card-body">
-                        <h3 class="card-title">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                            </svg>
-                            個人資料
-                        </h3>
-                        <form method="post" class="space-y-6">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="update_profile">
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="form-control">
-                                    <label class="label">
-                                        <span class="label-text font-medium">{{ profile_form.username.label }}</span>
-                                    </label>
-                                    {{ profile_form.username }}
-                                    {% if profile_form.username.errors %}
-                                        <label class="label">
-                                            <span class="label-text-alt text-error">
-                                                {% for error in profile_form.username.errors %}{{ error }}{% endfor %}
-                                            </span>
-                                        </label>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="form-control">
-                                    <label class="label">
-                                        <span class="label-text font-medium">Email</span>
-                                        <span class="label-text-alt text-gray-500">不可修改</span>
-                                    </label>
-                                    <input type="email" value="{{ user.email }}" class="input input-bordered w-full bg-gray-50" readonly>
-                                </div>
-                            </div>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="form-control">
-                                    <label class="label">
-                                        <span class="label-text font-medium">{{ profile_form.first_name.label }}</span>
-                                    </label>
-                                    {{ profile_form.first_name }}
-                                    {% if profile_form.first_name.errors %}
-                                        <label class="label">
-                                            <span class="label-text-alt text-error">
-                                                {% for error in profile_form.first_name.errors %}{{ error }}{% endfor %}
-                                            </span>
-                                        </label>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="form-control">
-                                    <label class="label">
-                                        <span class="label-text font-medium">{{ profile_form.last_name.label }}</span>
-                                    </label>
-                                    {{ profile_form.last_name }}
-                                    {% if profile_form.last_name.errors %}
-                                        <label class="label">
-                                            <span class="label-text-alt text-error">
-                                                {% for error in profile_form.last_name.errors %}{{ error }}{% endfor %}
-                                            </span>
-                                        </label>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            
-                            <div class="card-actions justify-end">
-                                <button type="submit" class="btn btn-primary">
-                                    儲存
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- 密碼修改 -->
-                <div class="card bg-base-100 shadow">
-                    <div class="card-body">
-                        <h3 class="card-title">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                            </svg>
-                            修改密碼
-                        </h3>
-                        <form method="post" class="space-y-6">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="change_password">
-                            
+        <!-- 右側：編輯表單 -->
+        <div class="lg:col-span-2 space-y-8">
+            <!-- 個人資料編輯 -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <h3 class="card-title">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                        個人資料
+                    </h3>
+                    <form method="post" class="space-y-6">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_profile">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="form-control">
                                 <label class="label">
-                                    <span class="label-text font-medium">{{ password_form.old_password.label }}</span>
+                                    <span class="label-text font-medium">{{ profile_form.username.label }}</span>
                                 </label>
-                                {{ password_form.old_password }}
-                                {% if password_form.old_password.errors %}
+                                {{ profile_form.username }}
+                                {% if profile_form.username.errors %}
                                     <label class="label">
                                         <span class="label-text-alt text-error">
-                                            {% for error in password_form.old_password.errors %}{{ error }}{% endfor %}
+                                            {% for error in profile_form.username.errors %}{{ error }}{% endfor %}
                                         </span>
                                     </label>
                                 {% endif %}
                             </div>
                             
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="form-control">
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text font-medium">Email</span>
+                                    <span class="label-text-alt text-gray-500">不可修改</span>
+                                </label>
+                                <input type="email" value="{{ user.email }}" class="input input-bordered w-full bg-gray-50" readonly>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text font-medium">{{ profile_form.first_name.label }}</span>
+                                </label>
+                                {{ profile_form.first_name }}
+                                {% if profile_form.first_name.errors %}
                                     <label class="label">
-                                        <span class="label-text font-medium">{{ password_form.new_password1.label }}</span>
+                                        <span class="label-text-alt text-error">
+                                            {% for error in profile_form.first_name.errors %}{{ error }}{% endfor %}
+                                        </span>
                                     </label>
-                                    {{ password_form.new_password1 }}
-                                    {% if password_form.new_password1.errors %}
-                                        <label class="label">
-                                            <span class="label-text-alt text-error">
-                                                {% for error in password_form.new_password1.errors %}{{ error }}{% endfor %}
-                                            </span>
-                                        </label>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="form-control">
-                                    <label class="label">
-                                        <span class="label-text font-medium">{{ password_form.new_password2.label }}</span>
-                                    </label>
-                                    {{ password_form.new_password2 }}
-                                    {% if password_form.new_password2.errors %}
-                                        <label class="label">
-                                            <span class="label-text-alt text-error">
-                                                {% for error in password_form.new_password2.errors %}{{ error }}{% endfor %}
-                                            </span>
-                                        </label>
-                                    {% endif %}
-                                </div>
+                                {% endif %}
                             </div>
                             
-                            {% if password_form.non_field_errors %}
-                                <div class="alert alert-error">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <div>
-                                        {% for error in password_form.non_field_errors %}
-                                            <div>{{ error }}</div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text font-medium">{{ profile_form.last_name.label }}</span>
+                                </label>
+                                {{ profile_form.last_name }}
+                                {% if profile_form.last_name.errors %}
+                                    <label class="label">
+                                        <span class="label-text-alt text-error">
+                                            {% for error in profile_form.last_name.errors %}{{ error }}{% endfor %}
+                                        </span>
+                                    </label>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="card-actions justify-end">
+                            <button type="submit" class="btn btn-primary">
+                                儲存
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 密碼修改 -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <h3 class="card-title">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                        修改密碼
+                    </h3>
+                    <form method="post" class="space-y-6">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="change_password">
+                        
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-medium">{{ password_form.old_password.label }}</span>
+                            </label>
+                            {{ password_form.old_password }}
+                            {% if password_form.old_password.errors %}
+                                <label class="label">
+                                    <span class="label-text-alt text-error">
+                                        {% for error in password_form.old_password.errors %}{{ error }}{% endfor %}
+                                    </span>
+                                </label>
                             {% endif %}
-                            
-                            <div class="card-actions justify-end">
-                                <button type="submit" class="btn btn-secondary">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                                    </svg>
-                                    修改密碼
-                                </button>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text font-medium">{{ password_form.new_password1.label }}</span>
+                                </label>
+                                {{ password_form.new_password1 }}
+                                {% if password_form.new_password1.errors %}
+                                    <label class="label">
+                                        <span class="label-text-alt text-error">
+                                            {% for error in password_form.new_password1.errors %}{{ error }}{% endfor %}
+                                        </span>
+                                    </label>
+                                {% endif %}
                             </div>
-                        </form>
-                    </div>
+                            
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text font-medium">{{ password_form.new_password2.label }}</span>
+                                </label>
+                                {{ password_form.new_password2 }}
+                                {% if password_form.new_password2.errors %}
+                                    <label class="label">
+                                        <span class="label-text-alt text-error">
+                                            {% for error in password_form.new_password2.errors %}{{ error }}{% endfor %}
+                                        </span>
+                                    </label>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if password_form.non_field_errors %}
+                            <div class="alert alert-error">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <div>
+                                    {% for error in password_form.non_field_errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="card-actions justify-end">
+                            <button type="submit" class="btn btn-secondary">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                                修改密碼
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
-
-    <script>
-        // 表單提交時顯示載入狀態
-        document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                const submitBtn = this.querySelector('button[type="submit"]');
-                if (submitBtn) {
-                    submitBtn.classList.add('loading');
-                    submitBtn.disabled = true;
-                }
-            });
-        });
-
-        // 自動隱藏成功訊息
-        setTimeout(() => {
-            const successAlerts = document.querySelectorAll('.alert-success');
-            successAlerts.forEach(alert => {
-                alert.style.transition = 'opacity 0.5s';
-                alert.style.opacity = '0';
-                setTimeout(() => alert.remove(), 500);
-            });
-        }, 3000);
-    </script>
-</body>
-</html> 
+</div>
+{% endblock %} 

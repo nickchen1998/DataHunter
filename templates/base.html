@@ -1,0 +1,58 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-TW" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>資料獵人 - DataHunter</title>
+    
+    <!-- Tailwind CSS & DaisyUI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/daisyui@latest"></script>
+    
+    <!-- 額外的 CSS -->
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="{% block body_class %}min-h-screen bg-gray-50{% endblock %}">
+    
+    <!-- 主要內容區域 -->
+    {% block content %}{% endblock %}
+    
+    <!-- 基礎 JavaScript -->
+    <script>
+        // 通用的表單提交載入狀態
+        function setupFormLoadingStates() {
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.classList.add('loading');
+                        submitBtn.disabled = true;
+                    }
+                });
+            });
+        }
+
+        // 通用的提示訊息自動隱藏
+        function setupAutoHideAlerts() {
+            setTimeout(() => {
+                const successAlerts = document.querySelectorAll('.alert-success');
+                successAlerts.forEach(alert => {
+                    alert.style.transition = 'opacity 0.5s';
+                    alert.style.opacity = '0';
+                    setTimeout(() => alert.remove(), 500);
+                });
+            }, 3000);
+        }
+
+        // 頁面載入完成後執行通用初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            setupFormLoadingStates();
+            setupAutoHideAlerts();
+        });
+    </script>
+    
+    <!-- 頁面特定的 JavaScript -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 

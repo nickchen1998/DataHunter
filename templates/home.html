@@ -1,13 +1,8 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-    <meta charset="UTF-8"/>
-    <title>資料獵人 - DataHunter</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/daisyui@latest"></script>
-</head>
-<body class="h-screen bg-gray-100 overflow-hidden">
+{% extends "base.html" %}
+
+{% block body_class %}h-screen bg-gray-100 overflow-hidden{% endblock %}
+
+{% block content %}
 
 <div class="flex h-full">
     <!-- 左側側欄 -->
@@ -132,8 +127,9 @@
 
     </main>
 </div>
+{% endblock %}
 
-<!-- 展開/收合的小腳本 -->
+{% block extra_js %}
 <script>
     function toggleText(id, field, button) {
         const preview = document.getElementById(field + '-preview-' + id);
@@ -232,11 +228,11 @@
         });
     });
 
+    // 下拉選單導航功能
     document.getElementById('source-select').addEventListener('change', function () {
         if (this.value) {
             window.location.href = this.value;
         }
     });
 </script>
-</body>
-</html>
+{% endblock %}
