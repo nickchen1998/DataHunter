@@ -22,24 +22,11 @@ class UserAPIKey(AbstractAPIKey):
         verbose_name='Key 名稱'
     )
     
-    expires_at = models.DateTimeField(
-        null=True, 
-        blank=True, 
-        help_text="API Key 的到期時間，留空表示永不到期",
-        verbose_name='到期時間'
-    )
-    
     last_used_at = models.DateTimeField(
         null=True, 
         blank=True, 
         help_text="最後一次使用此 API Key 的時間",
         verbose_name='最後使用時間'
-    )
-    
-    is_active = models.BooleanField(
-        default=True,
-        help_text="此 API Key 是否啟用",
-        verbose_name='是否啟用'
     )
     
     created_at = models.DateTimeField(
@@ -63,14 +50,19 @@ class UserAPIKey(AbstractAPIKey):
     @property
     def is_expired(self):
         """檢查 API Key 是否已過期"""
-        if not self.expires_at:
+        if not self.expiry_date:
             return False
-        return timezone.now() > self.expires_at
+        return timezone.now() > self.expiry_date
 
     @property
     def is_valid(self):
-        """檢查 API Key 是否有效（未過期且啟用）"""
-        return self.is_active and not self.is_expired
+        """檢查 API Key 是否有效（未過期且未撤銷）"""
+        return not self.revoked and not self.is_expired
+    
+    @property
+    def is_active(self):
+        """為了向後兼容，映射到 revoked 的反向"""
+        return not self.revoked
 
     def update_last_used(self):
         """更新最後使用時間"""
@@ -82,7 +74,7 @@ class UserAPIKey(AbstractAPIKey):
         """取得使用者所有有效的 API Keys"""
         return cls.objects.filter(
             user=user,
-            is_active=True
+            revoked=False
         ).exclude(
-            expires_at__lt=timezone.now()
+            expiry_date__lt=timezone.now()
         )

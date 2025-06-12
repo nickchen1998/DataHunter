@@ -10,15 +10,15 @@ class UserAPIKeyAdmin(admin.ModelAdmin):
         'name', 
         'user', 
         'formatted_key', 
-        'is_active', 
+        'revoked_status', 
         'expires_status',
         'last_used_at', 
         'created_at'
     ]
     list_filter = [
-        'is_active', 
+        'revoked', 
         'created_at', 
-        'expires_at',
+        'expiry_date',
         'user'
     ]
     search_fields = [
@@ -36,10 +36,10 @@ class UserAPIKeyAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('基本資訊', {
-            'fields': ('user', 'name', 'is_active')
+            'fields': ('user', 'name', 'revoked')
         }),
         ('時間設定', {
-            'fields': ('expires_at',)
+            'fields': ('expiry_date',)
         }),
         ('使用記錄', {
             'fields': ('last_used_at', 'created_at', 'updated_at'),
@@ -58,14 +58,22 @@ class UserAPIKeyAdmin(admin.ModelAdmin):
         return "未產生"
     formatted_key.short_description = "API Key"
 
+    def revoked_status(self, obj):
+        """顯示撤銷狀態"""
+        if obj.revoked:
+            return format_html('<span style="color: red;">已撤銷</span>')
+        else:
+            return format_html('<span style="color: green;">啟用中</span>')
+    revoked_status.short_description = "狀態"
+
     def expires_status(self, obj):
         """顯示過期狀態"""
-        if not obj.expires_at:
+        if not obj.expiry_date:
             return format_html('<span style="color: green;">永不過期</span>')
         elif obj.is_expired:
             return format_html('<span style="color: red;">已過期</span>')
         else:
-            days_left = (obj.expires_at - timezone.now()).days
+            days_left = (obj.expiry_date - timezone.now()).days
             if days_left <= 7:
                 return format_html(
                     '<span style="color: orange;">還有 {} 天過期</span>', 

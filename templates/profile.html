@@ -229,7 +229,7 @@
                             {% endif %}
                             
                             <div class="card-actions justify-end">
-                                <button type="submit" class="btn btn-secondary">
+                                <button type="submit" class="btn btn-primary">
                                     💾 儲存
                                 </button>
                             </div>
@@ -239,15 +239,18 @@
             </div>
             
             <!-- API Key管理 -->
-            <div id="apikey-content" class="tab-content hidden">
+            <div id="apikey-content" class="tab-content">
                 <div class="card bg-base-100 shadow">
                     <div class="card-body">
                         <div class="flex justify-between items-center mb-6">
                             <h3 class="card-title">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                                 </svg>
                                 API Key管理
+                                <span id="api-key-count" class="text-sm font-normal text-gray-500 ml-2">
+                                    載入中...
+                                </span>
                             </h3>
                             <button type="button" class="btn btn-primary btn-sm" id="add-new-key">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -257,49 +260,76 @@
                             </button>
                         </div>
                         
+                        <!-- 載入中狀態 -->
+                        <div id="api-key-loading" class="text-center py-12">
+                            <div class="loading loading-spinner loading-lg text-primary"></div>
+                            <p class="mt-4 text-gray-500">載入 API Keys...</p>
+                        </div>
+                        
                         <!-- API Key 清單 -->
-                        <div class="space-y-4" id="api-key-list">
-                            <!-- 範例 API Key -->
-                            <div class="card bg-gray-50 border api-key-item">
-                                <div class="card-body p-4">
-                                    <div class="flex justify-between items-start">
-                                        <div class="flex-1 space-y-2">
-                                            <div class="flex items-center space-x-2">
-                                                <span class="font-medium text-sm text-gray-600">Key名稱：</span>
-                                                <span class="font-semibold editable-field" data-field="name" data-value="生產環境API Key">生產環境API Key</span>
-                                                <button type="button" class="text-gray-400 hover:text-blue-600 ml-1" onclick="editField(this, 'name')" title="編輯名稱">
-                                                    ✏️
-                                                </button>
-                                            </div>
-                                            <div class="flex items-center space-x-2">
-                                                <span class="font-medium text-sm text-gray-600">Key內容：</span>
-                                                <code class="bg-gray-200 px-2 py-1 rounded text-sm font-mono">dhapi_1234567890abcdef...</code>
-                                                <button type="button" class="text-blue-600 hover:text-blue-800" onclick="copyApiKey('dhapi_1234567890abcdef...')" title="複製API Key">
-                                                    📋
-                                                </button>
-                                            </div>
-                                            <div class="space-y-1 text-sm text-gray-500">
-                                                <div><strong>申請時間：</strong>2024年6月1日</div>
-                                                <div class="flex items-center space-x-2">
-                                                    <span><strong>到期時間：</strong></span>
-                                                    <span class="editable-field" data-field="expire" data-value="2025年6月1日">2025年6月1日</span>
-                                                    <button type="button" class="text-gray-400 hover:text-blue-600 ml-1" onclick="editField(this, 'expire')" title="編輯到期時間">
-                                                        ✏️
-                                                    </button>
-                                                </div>
-                                                <div><strong>最近使用：</strong>2024年6月12日</div>
-                                            </div>
+                        <div class="space-y-4" id="api-key-list" style="display: none;">
+                            <!-- 動態載入的內容 -->
+                        </div>
+                        
+                        <!-- 沒有 API Key 時的提示 -->
+                        <div id="no-api-keys" class="text-center py-12" style="display: none;">
+                            <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">尚未建立 API Key</h3>
+                            <p class="text-gray-500 mb-4">建立您的第一個 API Key 來開始使用我們的服務</p>
+                            <button type="button" class="btn btn-primary show-create-form-btn">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                </svg>
+                                建立第一個 API Key
+                            </button>
+                        </div>
+                        
+                        <!-- 新增 API Key 表單 -->
+                        <div id="create-api-key-form" class="card bg-blue-50 border-2 border-blue-200 mt-6" style="display: none;">
+                            <div class="card-body p-4">
+                                <h4 class="font-bold text-lg mb-4">新增 API Key</h4>
+                                <form id="new-api-key-form">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div class="form-control">
+                                            <label class="label">
+                                                <span class="label-text font-medium">Key 名稱 *</span>
+                                            </label>
+                                            <input type="text" name="name" class="input input-bordered w-full" 
+                                                   placeholder="例：生產環境API Key" maxlength="100" required>
                                         </div>
-                                        <div class="flex space-x-2 ml-4">
-                                            <button type="button" class="btn btn-ghost btn-xs text-red-600 hover:bg-red-50">
-                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                                </svg>
-                                                刪除
-                                            </button>
+                                        <div class="form-control">
+                                            <label class="label">
+                                                <span class="label-text font-medium">到期時間</span>
+                                            </label>
+                                            <select name="expires_period" class="select select-bordered w-full">
+                                                <option value="never">永不過期</option>
+                                                <option value="1month">1 個月</option>
+                                                <option value="3months" selected>3 個月</option>
+                                                <option value="6months">6 個月</option>
+                                                <option value="1year">1 年</option>
+                                            </select>
                                         </div>
                                     </div>
-                                </div>
+                                    
+                                    <div class="alert alert-info mt-4">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <div>
+                                            <p class="text-sm">API Key 建立後將只顯示一次，請妥善保存。每個使用者最多可建立 5 個 API Keys。</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card-actions justify-end mt-4">
+                                        <button type="button" class="btn btn-ghost hide-create-form-btn">取消</button>
+                                        <button type="submit" class="btn btn-primary" id="create-api-key-btn">
+                                            <span class="loading loading-spinner loading-sm mr-2" style="display: none;"></span>
+                                            建立
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                         
@@ -346,7 +376,11 @@
                     t.classList.remove('border-primary');
                     t.classList.add('btn-outline');
                 });
-                contents.forEach(c => c.classList.add('hidden'));
+                
+                // 隱藏所有內容
+                contents.forEach(c => {
+                    c.style.display = 'none';
+                });
                 
                 // 添加 active 類別和樣式到當前標籤
                 this.classList.add('tab-active');
@@ -357,8 +391,9 @@
                 // 顯示對應內容
                 const targetTab = this.getAttribute('data-tab');
                 const targetContent = document.getElementById(targetTab + '-content');
+                
                 if (targetContent) {
-                    targetContent.classList.remove('hidden');
+                    targetContent.style.display = 'block';
                 }
             });
         });
@@ -371,11 +406,88 @@
             firstTab.classList.add('border-primary');
         }
         
+        // 初始化內容顯示狀態
+        contents.forEach(c => {
+            c.style.display = 'none';
+        });
+        
+        // 顯示第一個內容（個人資料）
+        const profileContent = document.getElementById('profile-content');
+        if (profileContent) {
+            profileContent.style.display = 'block';
+        }
+        
         // 新增API Key功能
         const addButton = document.getElementById('add-new-key');
         if (addButton) {
             addButton.addEventListener('click', function() {
-                addNewApiKeyForm();
+                showCreateApiKeyForm();
+            });
+        }
+        
+        // 載入 API Keys
+        loadApiKeys();
+        
+        // 處理新增 API Key 表單提交
+        const newApiKeyForm = document.getElementById('new-api-key-form');
+        if (newApiKeyForm) {
+            newApiKeyForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const submitBtn = document.getElementById('create-api-key-btn');
+                const spinner = submitBtn.querySelector('.loading');
+                
+                // 顯示載入狀態
+                spinner.style.display = 'inline-block';
+                submitBtn.disabled = true;
+                
+                const formData = new FormData(this);
+                
+                try {
+                    const response = await fetch('/profile/api-keys/', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showToast(data.message, 'success');
+                        hideCreateApiKeyForm();
+                        
+                        // 顯示完整的 API Key（只在建立時顯示）
+                        showApiKeyModal(data.key_data);
+                        
+                        // 重新載入列表
+                        loadApiKeys();
+                    } else {
+                        showToast(data.error, 'error');
+                    }
+                } catch (error) {
+                    console.error('建立 API Key 錯誤:', error);
+                    showToast('建立 API Key 時發生錯誤', 'error');
+                } finally {
+                    spinner.style.display = 'none';
+                    submitBtn.disabled = false;
+                }
+            });
+        }
+        
+        // 處理顯示建立表單按鈕（空狀態時的按鈕）
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.show-create-form-btn')) {
+                showCreateApiKeyForm();
+            }
+        });
+        
+        // 處理隱藏建立表單按鈕
+        const hideFormBtn = document.querySelector('.hide-create-form-btn');
+        if (hideFormBtn) {
+            hideFormBtn.addEventListener('click', function() {
+                hideCreateApiKeyForm();
             });
         }
     });
@@ -434,217 +546,451 @@
         }, 3000);
     }
     
-    // 新增API Key表單
-    function addNewApiKeyForm() {
-        const apiKeyList = document.getElementById('api-key-list');
-        const newKeyForm = document.createElement('div');
-        newKeyForm.className = 'card bg-blue-50 border-2 border-blue-200 api-key-form';
+    // 載入 API Keys
+    async function loadApiKeys() {
+        try {
+            const response = await fetch('/profile/api-keys/');
+            const data = await response.json();
+            
+            document.getElementById('api-key-loading').style.display = 'none';
+            
+            if (data.success) {
+                updateApiKeyCount(data.total_keys, data.max_keys);
+                
+                if (data.keys.length === 0) {
+                    document.getElementById('no-api-keys').style.display = 'block';
+                } else {
+                    document.getElementById('api-key-list').style.display = 'block';
+                    renderApiKeys(data.keys);
+                }
+                
+                // 更新新增按鈕狀態
+                const addButton = document.getElementById('add-new-key');
+                if (!data.can_create_more) {
+                    addButton.disabled = true;
+                    addButton.innerHTML = `
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        已達上限 (${data.max_keys}個啟用中)
+                    `;
+                }
+            } else {
+                showToast('載入 API Keys 失敗：' + data.error, 'error');
+            }
+        } catch (error) {
+            console.error('載入 API Keys 錯誤:', error);
+            document.getElementById('api-key-loading').style.display = 'none';
+            showToast('載入 API Keys 時發生錯誤', 'error');
+        }
+    }
+    
+    // 更新 API Key 計數顯示
+    function updateApiKeyCount(current, max) {
+        const countElement = document.getElementById('api-key-count');
+        countElement.textContent = `(${current}/${max})`;
+    }
+    
+    // 渲染 API Keys 列表
+    function renderApiKeys(keys) {
+        const listElement = document.getElementById('api-key-list');
+        listElement.innerHTML = '';
         
-        newKeyForm.innerHTML = `
+        keys.forEach(key => {
+            const keyElement = createApiKeyElement(key);
+            listElement.appendChild(keyElement);
+        });
+    }
+    
+    // 建立單個 API Key 元素
+    function createApiKeyElement(key) {
+        const div = document.createElement('div');
+        div.className = 'card bg-gray-50 border api-key-item';
+        div.setAttribute('data-key-prefix', key.prefix);
+        
+        div.innerHTML = `
             <div class="card-body p-4">
                 <div class="flex justify-between items-start">
-                    <div class="flex-1 space-y-4">
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text font-medium">Key名稱</span>
-                            </label>
-                            <input type="text" class="input input-bordered" placeholder="請輸入API Key名稱" required>
-                        </div>
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text font-medium">到期時間</span>
-                            </label>
-                            <select class="select select-bordered">
-                                <option value="never">永不過期</option>
-                                <option value="3months">3個月</option>
-                                <option value="6months">6個月</option>
-                                <option value="1year">1年</option>
-                            </select>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button type="button" class="btn btn-primary btn-sm" onclick="saveNewApiKey(this)">
-                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                </svg>
-                                儲存
-                            </button>
-                            <button type="button" class="btn btn-ghost btn-sm" onclick="cancelNewApiKey(this)">
-                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
-                                取消
+                    <div class="flex-1 space-y-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-medium text-sm text-gray-600">Key名稱：</span>
+                            <span class="font-semibold editable-field" data-field="name">${key.name}</span>
+                            <button type="button" class="edit-name-btn text-gray-400 hover:text-blue-600 ml-1" title="編輯名稱">
+                                ✏️
                             </button>
                         </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="font-medium text-sm text-gray-600">Key內容：</span>
+                            <code class="bg-gray-200 px-2 py-1 rounded text-sm font-mono">${key.prefix}...</code>
+                            <button type="button" class="copy-key-btn text-blue-600 hover:text-blue-800" data-key="${key.prefix}..." title="複製API Key">
+                                📋
+                            </button>
+                        </div>
+                        <div class="space-y-1 text-sm text-gray-500">
+                            <div><strong>申請時間：</strong>${key.created_at}</div>
+                            <div class="flex items-center space-x-2">
+                                <span><strong>到期時間：</strong></span>
+                                <span class="editable-field" data-field="expires_at">${key.expires_at || '永不過期'}</span>
+                                <button type="button" class="edit-expire-btn text-gray-400 hover:text-blue-600 ml-1" title="編輯到期時間">
+                                    ✏️
+                                </button>
+                            </div>
+                            <div><strong>最近使用：</strong>${key.last_used_at}</div>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 ml-4">
+                        <button type="button" class="delete-key-btn btn btn-error btn-sm" data-key-name="${key.name}">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                            刪除
+                        </button>
                     </div>
                 </div>
             </div>
         `;
         
-        // 插入到列表最前面
-        apiKeyList.insertBefore(newKeyForm, apiKeyList.firstChild);
-        
-        // 聚焦到名稱輸入框
-        const nameInput = newKeyForm.querySelector('input[type="text"]');
-        nameInput.focus();
-    }
-    
-    // 儲存新API Key
-    function saveNewApiKey(button) {
-        const form = button.closest('.api-key-form');
-        const nameInput = form.querySelector('input[type="text"]');
-        const expireSelect = form.querySelector('select');
-        
-        if (!nameInput.value.trim()) {
-            showToast('❌ 請輸入API Key名稱', 'error');
-            return;
-        }
-        
-        // 這裡將來會發送到後端
-        console.log('儲存API Key:', {
-            name: nameInput.value,
-            expire: expireSelect.value
+        // 添加事件監聽器
+        const editNameBtn = div.querySelector('.edit-name-btn');
+        editNameBtn.addEventListener('click', function() {
+            editField(this, key.prefix, 'name');
         });
         
-        showToast('✅ API Key 創建成功！', 'success');
+        const editExpireBtn = div.querySelector('.edit-expire-btn');
+        editExpireBtn.addEventListener('click', function() {
+            editField(this, key.prefix, 'expires_at');
+        });
         
-        // 移除表單
-        form.remove();
+        const copyKeyBtn = div.querySelector('.copy-key-btn');
+        copyKeyBtn.addEventListener('click', function() {
+            copyApiKey(this.dataset.key);
+        });
+        
+        const deleteKeyBtn = div.querySelector('.delete-key-btn');
+        deleteKeyBtn.addEventListener('click', function() {
+            deleteApiKey(key.prefix);
+        });
+        
+        return div;
     }
     
-    // 取消新增API Key
-    function cancelNewApiKey(button) {
-        const form = button.closest('.api-key-form');
-        form.remove();
+    // 顯示新增 API Key 表單
+    function showCreateApiKeyForm() {
+        document.getElementById('create-api-key-form').style.display = 'block';
+        document.querySelector('#new-api-key-form input[name="name"]').focus();
     }
     
-    // 編輯特定字段
-    function editField(button, fieldType) {
+    // 隱藏新增 API Key 表單
+    function hideCreateApiKeyForm() {
+        document.getElementById('create-api-key-form').style.display = 'none';
+        document.getElementById('new-api-key-form').reset();
+    }
+    
+
+    
+    // 顯示 API Key 詳細信息的彈出框
+    function showApiKeyModal(keyData) {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        modal.innerHTML = `
+            <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                <h3 class="text-lg font-bold mb-4">✅ API Key 建立成功！</h3>
+                <div class="alert alert-warning mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                    <div>
+                        <p class="text-sm">請立即複製並保存您的 API Key，它將不會再次顯示。</p>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Key 名稱：</label>
+                        <p class="text-gray-900">${keyData.name}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">API Key：</label>
+                        <div class="flex items-center space-x-2 bg-gray-100 p-2 rounded">
+                            <code class="flex-1 text-sm font-mono break-all">${keyData.key}</code>
+                            <button type="button" class="btn btn-sm btn-primary copy-new-key-btn" data-key="${keyData.key}">
+                                📋 複製
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">到期時間：</label>
+                        <p class="text-gray-900">${keyData.expires_at || '永不過期'}</p>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end">
+                    <button type="button" class="btn btn-primary close-modal-btn">
+                        我已保存
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        window.currentModal = modal;
+        
+        // 添加事件監聽器
+        const copyBtn = modal.querySelector('.copy-new-key-btn');
+        copyBtn.addEventListener('click', function() {
+            copyApiKey(this.dataset.key);
+        });
+        
+        const closeBtn = modal.querySelector('.close-modal-btn');
+        closeBtn.addEventListener('click', function() {
+            closeApiKeyModal();
+        });
+    }
+    
+    // 關閉 API Key 彈出框
+    function closeApiKeyModal() {
+        if (window.currentModal) {
+            document.body.removeChild(window.currentModal);
+            window.currentModal = null;
+        }
+    }
+    
+    // 編輯欄位
+    async function editField(button, prefix, fieldName) {
         const editableField = button.previousElementSibling;
-        const currentValue = editableField.getAttribute('data-value');
-        const originalContent = editableField.innerHTML;
+        const currentValue = editableField.textContent;
         
-        if (fieldType === 'name') {
-            // 編輯名稱
-            editableField.innerHTML = `
-                <div class="flex items-center space-x-2">
-                    <input type="text" class="input input-bordered input-xs w-48" value="${currentValue}" id="edit-name-input">
-                    <button type="button" class="btn btn-primary btn-xs" onclick="saveField(this, 'name', '${originalContent}')">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                        </svg>
-                    </button>
-                    <button type="button" class="btn btn-ghost btn-xs" onclick="cancelField(this, '${originalContent}')">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
-            `;
-            // 聚焦並選取輸入框
-            const input = document.getElementById('edit-name-input');
-            input.focus();
-            input.select();
-        } else if (fieldType === 'expire') {
-            // 編輯到期時間
-            let expireValue = 'never';
-            if (currentValue.includes('2024年11月')) expireValue = '6months';
-            else if (currentValue.includes('2025年6月')) expireValue = '1year';
-            else if (currentValue === '永不過期') expireValue = 'never';
-            
-            editableField.innerHTML = `
-                <div class="flex items-center space-x-2">
-                    <select class="select select-bordered select-xs w-32" id="edit-expire-select">
-                        <option value="never" ${expireValue === 'never' ? 'selected' : ''}>永不過期</option>
-                        <option value="3months" ${expireValue === '3months' ? 'selected' : ''}>3個月</option>
-                        <option value="6months" ${expireValue === '6months' ? 'selected' : ''}>6個月</option>
-                        <option value="1year" ${expireValue === '1year' ? 'selected' : ''}>1年</option>
+        if (fieldName === 'name') {
+            const newValue = prompt('請輸入新的 API Key 名稱：', currentValue);
+            if (newValue && newValue.trim() !== currentValue) {
+                await updateApiKeyField(prefix, 'name', newValue.trim(), editableField);
+            }
+        } else if (fieldName === 'expires_at') {
+            showExpiryEditModal(prefix, currentValue, editableField);
+        }
+    }
+    
+    // 顯示到期時間編輯選擇器
+    function showExpiryEditModal(prefix, currentValue, element) {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        modal.innerHTML = `
+            <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                <h3 class="text-lg font-bold mb-4">修改到期時間</h3>
+                <div class="mb-4">
+                    <p class="text-gray-700 mb-3">當前設定：<span class="font-semibold">${currentValue}</span></p>
+                    <label class="label">
+                        <span class="label-text font-medium">選擇新的到期時間：</span>
+                    </label>
+                    <select id="expiry-period-select" class="select select-bordered w-full">
+                        <option value="never">永不過期</option>
+                        <option value="1month">1 個月後過期</option>
+                        <option value="3months">3 個月後過期</option>
+                        <option value="6months">6 個月後過期</option>
+                        <option value="1year">1 年後過期</option>
                     </select>
-                    <button type="button" class="btn btn-primary btn-xs" onclick="saveField(this, 'expire', '${originalContent}')">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                        </svg>
+                    <div class="text-sm text-gray-500 mt-2">
+                        新的到期時間將從現在開始計算
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" class="cancel-expiry-edit-btn btn btn-ghost">
+                        取消
                     </button>
-                    <button type="button" class="btn btn-ghost btn-xs" onclick="cancelField(this, '${originalContent}')">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
+                    <button type="button" class="confirm-expiry-edit-btn btn btn-primary">
+                        確認修改
                     </button>
                 </div>
-            `;
-        }
+            </div>
+        `;
         
-        // 隱藏鉛筆按鈕
-        button.style.display = 'none';
+        document.body.appendChild(modal);
+        window.currentExpiryModal = modal;
+        
+        // 添加事件監聽器
+        const confirmBtn = modal.querySelector('.confirm-expiry-edit-btn');
+        confirmBtn.addEventListener('click', async function() {
+            const select = modal.querySelector('#expiry-period-select');
+            const selectedPeriod = select.value;
+            
+            try {
+                await updateApiKeyField(prefix, 'expires_at', selectedPeriod, element);
+                closeExpiryEditModal();
+            } catch (error) {
+                console.error('更新到期時間錯誤:', error);
+            }
+        });
+        
+        const cancelBtn = modal.querySelector('.cancel-expiry-edit-btn');
+        cancelBtn.addEventListener('click', function() {
+            closeExpiryEditModal();
+        });
     }
     
-    // 儲存字段編輯
-    function saveField(button, fieldType, originalContent) {
-        const editableField = button.closest('.editable-field');
-        const pencilButton = editableField.nextElementSibling;
-        
-        if (fieldType === 'name') {
-            const input = document.getElementById('edit-name-input');
-            if (!input.value.trim()) {
-                showToast('❌ 請輸入API Key名稱', 'error');
-                return;
-            }
-            
-            // 更新顯示和數據屬性
-            editableField.textContent = input.value;
-            editableField.setAttribute('data-value', input.value);
-            
-            console.log('更新API Key名稱:', input.value);
-            showToast('✅ 名稱更新成功！', 'success');
-            
-        } else if (fieldType === 'expire') {
-            const select = document.getElementById('edit-expire-select');
-            
-            // 轉換到期時間顯示
-            let expireText = '';
-            const today = new Date();
-            switch(select.value) {
-                case 'never':
-                    expireText = '永不過期';
-                    break;
-                case '3months':
-                    const date3m = new Date(today);
-                    date3m.setMonth(date3m.getMonth() + 3);
-                    expireText = date3m.getFullYear() + '年' + (date3m.getMonth() + 1) + '月' + date3m.getDate() + '日';
-                    break;
-                case '6months':
-                    const date6m = new Date(today);
-                    date6m.setMonth(date6m.getMonth() + 6);
-                    expireText = date6m.getFullYear() + '年' + (date6m.getMonth() + 1) + '月' + date6m.getDate() + '日';
-                    break;
-                case '1year':
-                    const date1y = new Date(today);
-                    date1y.setFullYear(date1y.getFullYear() + 1);
-                    expireText = date1y.getFullYear() + '年' + (date1y.getMonth() + 1) + '月' + date1y.getDate() + '日';
-                    break;
-            }
-            
-            // 更新顯示和數據屬性
-            editableField.textContent = expireText;
-            editableField.setAttribute('data-value', expireText);
-            
-            console.log('更新API Key到期時間:', expireText);
-            showToast('✅ 到期時間更新成功！', 'success');
+    // 關閉到期時間編輯彈窗
+    function closeExpiryEditModal() {
+        if (window.currentExpiryModal) {
+            document.body.removeChild(window.currentExpiryModal);
+            window.currentExpiryModal = null;
         }
-        
-        // 顯示鉛筆按鈕
-        pencilButton.style.display = 'inline-block';
     }
     
-    // 取消字段編輯
-    function cancelField(button, originalContent) {
-        const editableField = button.closest('.editable-field');
-        const pencilButton = editableField.nextElementSibling;
-        
-        // 恢復原始內容
-        editableField.innerHTML = originalContent;
-        
-        // 顯示鉛筆按鈕
-        pencilButton.style.display = 'inline-block';
+    // 更新 API Key 欄位
+    async function updateApiKeyField(prefix, field, value, element) {
+        try {
+            const response = await fetch(`/profile/api-keys/${prefix}/`, {
+                method: 'PATCH',
+                body: JSON.stringify({
+                    field: field,
+                    value: value
+                }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                element.textContent = data.updated_value || value;
+                showToast(data.message, 'success');
+            } else {
+                showToast(data.error, 'error');
+            }
+        } catch (error) {
+            console.error('更新欄位錯誤:', error);
+            showToast('更新時發生錯誤', 'error');
+        }
     }
+    
+    // 顯示刪除確認對話框
+    function showDeleteConfirm(prefix, keyName) {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        modal.innerHTML = `
+            <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-bold text-gray-900">確認刪除 API Key</h3>
+                        <p class="text-sm text-gray-500 font-medium">此操作無法復原</p>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <p class="text-gray-700 font-medium">您確定要刪除以下 API Key 嗎？</p>
+                    <div class="mt-3 p-3 bg-gray-50 rounded-lg">
+                        <p class="font-bold text-gray-900">${keyName}</p>
+                        <p class="text-sm text-gray-600 font-medium">刪除後此 API Key 將立即失效，所有使用此 Key 的應用程式將無法存取 API。</p>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button type="button" class="confirm-delete-btn btn btn-error font-bold">
+                        刪除
+                    </button>
+                    <button type="button" class="cancel-delete-btn btn btn-ghost font-bold">
+                        取消
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        window.currentDeleteModal = modal;
+        
+        // 添加事件監聽器
+        const confirmBtn = modal.querySelector('.confirm-delete-btn');
+        confirmBtn.addEventListener('click', function() {
+            confirmDeleteApiKey(prefix);
+        });
+        
+        const cancelBtn = modal.querySelector('.cancel-delete-btn');
+        cancelBtn.addEventListener('click', function() {
+            closeDeleteConfirm();
+        });
+        
+        // 點擊背景關閉
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeDeleteConfirm();
+            }
+        });
+    }
+    
+    // 關閉刪除確認對話框
+    function closeDeleteConfirm() {
+        if (window.currentDeleteModal) {
+            document.body.removeChild(window.currentDeleteModal);
+            window.currentDeleteModal = null;
+        }
+    }
+    
+    // 處理刪除按鈕點擊
+    function deleteApiKey(prefix) {
+        // 找到對應的 API Key 名稱
+        const keyElement = document.querySelector(`[data-key-prefix="${prefix}"]`);
+        const keyName = keyElement ? keyElement.querySelector('.delete-key-btn').dataset.keyName : 'Unknown';
+        
+        showDeleteConfirm(prefix, keyName);
+    }
+    
+    // 確認刪除 API Key
+    async function confirmDeleteApiKey(prefix) {
+        const deleteBtn = document.querySelector('.confirm-delete-btn');
+        if (deleteBtn) {
+            deleteBtn.disabled = true;
+            deleteBtn.innerHTML = '<span class="loading loading-spinner loading-sm mr-2"></span>刪除中...';
+        }
+        
+        try {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (!csrfToken) {
+                throw new Error('CSRF token not found');
+            }
+            
+            console.log('Deleting API Key with prefix:', prefix);
+            
+            const response = await fetch(`/profile/api-keys/${prefix}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': csrfToken.value,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                const responseText = await response.text();
+                console.error('Response text:', responseText);
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const responseText = await response.text();
+                console.error('Non-JSON response:', responseText);
+                throw new Error('Response is not JSON');
+            }
+            
+            const data = await response.json();
+            
+            closeDeleteConfirm();
+            
+            if (data.success) {
+                showToast(data.message, 'success');
+                loadApiKeys(); // 重新載入列表
+            } else {
+                showToast(data.error || '刪除失敗', 'error');
+            }
+        } catch (error) {
+            console.error('刪除 API Key 錯誤:', error);
+            closeDeleteConfirm();
+            showToast(`刪除時發生錯誤：${error.message}`, 'error');
+        }
+    }
+
 </script>
 {% endblock %} 
