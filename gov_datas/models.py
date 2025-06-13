@@ -8,7 +8,7 @@ class Dataset(models.Model):
     name = models.CharField(max_length=255, verbose_name="資料集名稱")
     category = models.CharField(max_length=100, verbose_name="服務分類")
     description = models.TextField(null=True, blank=True, verbose_name="資料集描述")
-    columns_description = models.JSONField(models.CharField(max_length=100), verbose_name="主要欄位說明")
+    columns_description = models.JSONField(models.CharField(max_length=100))
     department = models.CharField(max_length=100, verbose_name="提供機關")
     update_frequency = models.CharField(max_length=100, verbose_name="更新頻率")
     license = models.CharField(max_length=100, verbose_name="授權方式")
@@ -18,7 +18,7 @@ class Dataset(models.Model):
     upload_time = models.CharField(max_length=50, null=True, blank=True, verbose_name="上架日期")
     update_time = models.CharField(max_length=50, null=True, blank=True, verbose_name="詮釋資料更新時間")
     rag_description = models.TextField(null=True, blank=True, verbose_name="重構內容")
-    rag_description_embeddings = VectorField(
+    description_embeddings = VectorField(
         dimensions=1536,
         help_text="基於 rag_description 欄位並使用 OpenAI text-embedding-3-small 產生向量。"
     )
@@ -27,8 +27,8 @@ class Dataset(models.Model):
     class Meta:
         indexes = [
             HnswIndex(
-                name="dataset_rag_description_embeddings_hnsw_idx",
-                fields=["rag_description_embeddings"],
+                name="description_embeddings_hnsw_idx",
+                fields=["description_embeddings"],
                 m=16,
                 ef_construction=64,
                 opclasses=["vector_l2_ops"],

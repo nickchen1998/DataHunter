@@ -7,6 +7,7 @@ from utils.mongodb import get_mongo_database
 from gridfs import GridFS
 from gov_datas.models import Dataset, File
 from DataHunter.celery import app
+from langchain_openai import OpenAIEmbeddings
 
 
 @app.task()
@@ -34,6 +35,7 @@ def period_crawl_government_datasets(demo=False):
                     'name': row.資料集名稱,
                     'category': row.服務分類,
                     'description': row.資料集描述,
+                    'description_embeddings': OpenAIEmbeddings().embed_query(row.資料集描述),
                     'columns_description': row.主要欄位說明.split(';') if pd.notna(row.主要欄位說明) else [],
                     'department': row.提供機關,
                     'update_frequency': row.更新頻率,
