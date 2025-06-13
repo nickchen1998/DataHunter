@@ -9,7 +9,8 @@ app = Celery(
 )
 
 app.conf.imports = (
-    "celery_app.crawlers",
+    "celery_app.crawlers.symptoms",
+    "celery_app.crawlers.gov_datas",
 )
 
 
