@@ -42,8 +42,6 @@ class Dataset(models.Model):
 class File(models.Model):
     class FormatChoices(models.TextChoices):
         CSV = "csv"
-        JSON = "json"
-        XML = "xml"
 
     dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE, related_name="files", verbose_name="所屬資料集")
 
