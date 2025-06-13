@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 
 @contextlib.contextmanager
-def get_mongo_database() -> Generator[Database]:
+def get_mongo_database() -> Generator[Database, None, None]:
     load_dotenv("./.env")
     client = MongoClient(host=os.getenv("MONGODB_ATLAS_URI"))
     try:
