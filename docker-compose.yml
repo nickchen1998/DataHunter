@@ -69,6 +69,9 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+    profiles:
+      - celery
+      - production
 
   celery-beat:
     build: .
@@ -85,6 +88,9 @@ services:
       - POSTGRES_HOST=postgres
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
     restart: unless-stopped
+    profiles:
+      - celery
+      - production
 
   celery-static-worker:
     build: .
@@ -103,6 +109,9 @@ services:
     restart: unless-stopped
     deploy:
       replicas: 1
+    profiles:
+      - celery
+      - production
 
   celery-dynamic-worker:
     build: .
@@ -121,6 +130,9 @@ services:
     restart: unless-stopped
     deploy:
       replicas: 1
+    profiles:
+      - celery
+      - production
 
   celery-default-worker:
     build: .
@@ -139,3 +151,6 @@ services:
     restart: unless-stopped
     deploy:
       replicas: 1
+    profiles:
+      - celery
+      - production

@@ -62,11 +62,18 @@ OPENAI_API_KEY="你的 OpenAI API 金鑰"
 下面為本專案所有帶有預設值的的環境變數：
 
 ```dotenv
-POSTGRES_PASSWORD="資料庫密碼" # 預設為 12345678
+# 資料庫相關
+POSTGRES_PASSWORD="資料庫密碼" # 預設為 postgres
 POSTGRES_HOST="資料庫主機" # 預設為 localhost
-POSTGRES_VOLUME="資料庫資料夾" # 預設為 postgres_data
+POSTGRES_USER="資料庫使用者" # 預設為 postgres
+POSTGRES_VOLUME="資料庫資料夾" # 預設為 ./postgres_data
 
+# Redis 相關（Celery 使用）
 REDIS_HOST="Redis 主機" # 預設為 localhost
+REDIS_VOLUME="Redis 資料夾" # 預設為 ./redis_data
+
+# OpenAI API（爬蟲和 AI 功能使用）
+OPENAI_API_KEY="你的 OpenAI API 金鑰" # 必填
 ```
 
 ### 3️⃣ 建構 CSS 樣式
@@ -87,10 +94,93 @@ python manage.py runserver
 
 ---
 
-## 💿 Database 啟動方式 (Based on Docker)
+## 🐳 Docker 容器化部署
+
+### 本機開發環境（不含爬蟲服務）
+
+如果您只需要進行一般的 Web 開發，不需要運行爬蟲任務，可以只啟動基本服務：
 
 ```bash
+# 只啟動 PostgreSQL、Selenium Hub、Chrome 等基本服務
 docker-compose up -d
+```
+
+這將啟動以下服務：
+- `postgres` - PostgreSQL 資料庫
+- `postgres-init` - 資料庫初始化
+- `selenium-hub` - Selenium Grid Hub
+- `chrome` - Chrome 瀏覽器節點
+
+### 完整生產環境（包含爬蟲服務）
+
+如果需要運行完整的爬蟲系統，請使用以下命令：
+
+```bash
+# 啟動所有服務，包含 Celery 相關服務
+docker-compose --profile production up -d
+
+# 或者使用 celery profile
+docker-compose --profile celery up -d
+```
+
+這將額外啟動以下 Celery 相關服務：
+- `redis` - Redis 作為 Celery 的 broker 和 backend
+- `celery-beat` - Celery 排程服務
+- `celery-static-worker` - 處理靜態爬蟲任務（5 個 worker）
+- `celery-dynamic-worker` - 處理動態爬蟲任務（3 個 worker）
+- `celery-default-worker` - 處理預設佇列任務（2 個 worker）
+
+---
+
+## 🕷️ 爬蟲系統說明
+
+### 架構概述
+
+本專案使用 Celery 作為分散式任務佇列，實現自動化的資料爬取系統：
+
+- **Celery Beat**：負責排程管理，每天凌晨 1:00 自動觸發爬蟲任務
+- **多佇列設計**：不同類型的爬蟲分配到專用佇列，避免資源競爭
+- **Redis**：作為訊息代理和結果後端
+
+### 爬蟲任務
+
+1. **衛生福利部-台灣 e 院爬蟲** (`symptoms`)
+   - 任務：`period_send_symptom_crawler_task`
+   - 佇列：`static_crawler_queue`
+   - 排程：每天凌晨 1:00
+
+2. **政府開放資料爬蟲** (`gov_datas`)
+   - 任務：`period_crawl_government_datasets`
+   - 佇列：`dynamic_crawler_queue`
+   - 排程：每天凌晨 1:00
+
+### 手動執行爬蟲
+
+如果需要手動觸發爬蟲任務，可以使用以下命令：
+
+```bash
+# 進入容器
+docker exec -it celery-beat bash
+
+# 手動執行症狀爬蟲
+celery -A DataHunter call celery_app.crawlers.symptoms.period_send_symptom_crawler_task
+
+# 手動執行政府資料爬蟲
+celery -A DataHunter call celery_app.crawlers.gov_datas.period_crawl_government_datasets
+```
+
+### 監控 Celery 狀態
+
+```bash
+# 查看 Celery Beat 日誌
+docker-compose logs -f celery-beat
+
+# 查看 Worker 日誌
+docker-compose logs -f celery-static-worker
+docker-compose logs -f celery-dynamic-worker
+
+# 查看所有 Celery 服務狀態
+docker-compose ps | grep celery
 ```
 
 ---
