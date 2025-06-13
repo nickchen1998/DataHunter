@@ -93,7 +93,7 @@ def symptom_crawler_task(department: str, start_url: str):
 
             page += 1
             tmp_url = url + f"&PageNo={page}"
-            
+
             time.sleep(random.randint(4, 8))
             browser.get(tmp_url)
 
