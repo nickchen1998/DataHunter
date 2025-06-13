@@ -51,7 +51,7 @@ class File(models.Model):
     filename = models.CharField(max_length=255, verbose_name="檔案名稱")
     encoding = models.CharField(max_length=50, verbose_name="編碼格式")
     format = models.CharField(choices=FormatChoices.choices, max_length=20, verbose_name="檔案格式")
-    content_md5 = models.CharField(max_length=64, verbose_name="檔案內容 MD5")
+    content_md5 = models.CharField(max_length=64, verbose_name="檔案內容 MD5", unique=True)
     gridfs_id = models.CharField(max_length=100, verbose_name="GridFS ID")  # 雖然是字串，但保留 GridFS ID 作為外部參照
 
     def __str__(self):
