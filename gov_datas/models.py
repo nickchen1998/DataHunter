@@ -42,13 +42,19 @@ class Dataset(models.Model):
 class File(models.Model):
     class FormatChoices(models.TextChoices):
         CSV = "csv"
+        JSON = "json"
+        XML = "xml"
 
     dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE, related_name="files", verbose_name="所屬資料集")
 
     original_download_url = models.URLField(verbose_name="資料下載網址")
     filename = models.CharField(max_length=255, verbose_name="檔案名稱")
     encoding = models.CharField(max_length=50, verbose_name="編碼格式")
-    format = models.CharField(choices=FormatChoices.choices, max_length=20, verbose_name="檔案格式")
+    format = models.CharField( max_length=20, verbose_name="檔案格式", default='csv')
+    original_formats = models.CharField(
+        choices=FormatChoices.choices,max_length=20, null=True, blank=True, verbose_name="原始檔案格式", 
+        help_text="記錄合併前的原始格式，如：csv,json,xml"
+    )
     content_md5 = models.CharField(max_length=64, verbose_name="檔案內容 MD5", unique=True)
     gridfs_id = models.CharField(max_length=100, verbose_name="GridFS ID")  # 雖然是字串，但保留 GridFS ID 作為外部參照
 
