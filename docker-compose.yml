@@ -55,3 +55,87 @@ services:
         echo 'Vector extension enabled successfully';
       "
     restart: "no"
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - ${REDIS_VOLUME:-./redis_data}:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  celery-beat:
+    build: .
+    container_name: celery-beat
+    command: celery -A DataHunter beat -l info
+    volumes:
+      - .:/app
+    working_dir: /app
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      - REDIS_HOST=redis
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+    restart: unless-stopped
+
+  celery-static-worker:
+    build: .
+    container_name: celery-static-worker
+    command: celery -A DataHunter worker -Q static_crawler_queue -l info -c 5
+    volumes:
+      - .:/app
+    working_dir: /app
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      - REDIS_HOST=redis
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+    restart: unless-stopped
+    deploy:
+      replicas: 1
+
+  celery-dynamic-worker:
+    build: .
+    container_name: celery-dynamic-worker
+    command: celery -A DataHunter worker -Q dynamic_crawler_queue -l info -c 3
+    volumes:
+      - .:/app
+    working_dir: /app
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      - REDIS_HOST=redis
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+    restart: unless-stopped
+    deploy:
+      replicas: 1
+
+  celery-default-worker:
+    build: .
+    container_name: celery-default-worker
+    command: celery -A DataHunter worker -Q default -l info -c 2
+    volumes:
+      - .:/app
+    working_dir: /app
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      - REDIS_HOST=redis
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+    restart: unless-stopped
+    deploy:
+      replicas: 1
