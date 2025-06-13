@@ -39,7 +39,8 @@ def period_crawl_government_datasets(demo=False):
                     'name': row.資料集名稱,
                     'category': row.服務分類,
                     'description': row.資料集描述,
-                    'description_embeddings': OpenAIEmbeddings().embed_query(row.資料集描述),
+                    'description_embeddings': OpenAIEmbeddings(
+                        model="text-embedding-3-small").embed_query(row.資料集描述),
                     'columns_description': row.主要欄位說明.split(';') if pd.notna(row.主要欄位說明) else [],
                     'department': row.提供機關,
                     'update_frequency': row.更新頻率,
@@ -53,7 +54,7 @@ def period_crawl_government_datasets(demo=False):
             )
 
             print(f"{'創建' if created else '更新'} 資料集: {dataset.name}")
-            process_dataset_files.delay(row.to_dict(), dataset.id)
+            # process_dataset_files.delay(row.to_dict(), dataset.id)
             processed_datasets += 1
 
     print(f"共處理 {processed_datasets} 筆資料。")

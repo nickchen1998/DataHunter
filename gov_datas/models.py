@@ -17,7 +17,6 @@ class Dataset(models.Model):
     contact_phone = models.CharField(max_length=50, null=True, blank=True, verbose_name="聯絡人電話")
     upload_time = models.CharField(max_length=50, null=True, blank=True, verbose_name="上架日期")
     update_time = models.CharField(max_length=50, null=True, blank=True, verbose_name="詮釋資料更新時間")
-    rag_description = models.TextField(null=True, blank=True, verbose_name="重構內容")
     description_embeddings = VectorField(
         dimensions=1536,
         help_text="基於 rag_description 欄位並使用 OpenAI text-embedding-3-small 產生向量。"
