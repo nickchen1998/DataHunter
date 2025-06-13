@@ -14,6 +14,8 @@
 - [OpenAI](https://openai.com/) - AI Model
 - [LangChain](https://www.langchain.com/) - LLM Framework
 - [Celery](https://docs.celeryproject.org/en/stable/) - Asynchronous Task Queue
+- [Tailwind CSS](https://tailwindcss.com/) - CSS Framework
+- [daisyUI](https://daisyui.com/) - Tailwind CSS Components
 
 ---
 
@@ -29,6 +31,8 @@
 
 ### 1️⃣ 安裝依賴套件
 
+#### Python 依賴
+
 建議使用虛擬環境，並安裝以下依賴：
 
 ```bash
@@ -39,6 +43,12 @@ or
 
 ```bash
 pip install -r requirements.txt
+```
+
+#### Node.js 依賴（用於 CSS 建構）
+
+```bash
+npm install
 ```
 
 ### 2️⃣ 建立 `.env`
@@ -59,7 +69,17 @@ POSTGRES_VOLUME="資料庫資料夾" # 預設為 postgres_data
 REDIS_HOST="Redis 主機" # 預設為 localhost
 ```
 
-### 3️⃣ 執行應用程式
+### 3️⃣ 建構 CSS 樣式
+
+```bash
+# 建構 Tailwind CSS
+./build_css.sh
+
+# 或開發模式（監控檔案變更）
+./build_css.sh --watch
+```
+
+### 4️⃣ 執行應用程式
 
 ```bash
 python manage.py runserver
@@ -72,5 +92,21 @@ python manage.py runserver
 ```bash
 docker-compose up -d
 ```
+
+---
+
+## 🎨 前端開發說明
+
+本專案使用 Tailwind CSS + daisyUI 進行樣式開發：
+
+- **CSS 源文件**：`static/css/input.css`
+- **生成文件**：`static/css/output.css`（自動生成，不需手動編輯）
+
+### 樣式修改流程
+
+1. 修改 HTML 模板中的 Tailwind 類或 daisyUI 組件
+2. 如需自定義樣式，編輯 `static/css/input.css`
+3. 執行 `./build_css.sh` 重新建構 CSS
+4. 重新載入頁面查看效果
 
 ---
