@@ -55,6 +55,7 @@
                         <div><span class="font-semibold">ID：</span>{{ data.id }}</div>
                         <div><span class="font-semibold">Gender：</span>{{ data.gender }}</div>
                         <div><span class="font-semibold">Subject ID：</span>{{ data.subject_id }}</div>
+                        <div><span class="font-semibold">Subject：</span>{{ data.subject }}</div>
                         <div><span class="font-semibold">Department：</span>{{ data.department }}</div>
                         <div><span class="font-semibold">Symptom：</span>{{ data.symptom }}</div>
 
@@ -99,6 +100,7 @@
                     <div><span class="font-semibold">ID：</span>1</div>
                     <div><span class="font-semibold">Gender：</span>女性</div>
                     <div><span class="font-semibold">Subject ID：</span>123</div>
+                    <div><span class="font-semibold">Subject：</span>測試</div>
                     <div><span class="font-semibold">Department：</span>測試</div>
                     <div><span class="font-semibold">Symptom：</span>測試</div>
                     <div><span class="font-semibold">Question：</span>測試</div>
@@ -128,10 +130,11 @@ data = {
     'page_size': 10                     # 每頁資料筆數，最大 100 筆
 }
 
-# 設定請求標頭
+# 設定請求標頭（包含 API Key 認證）
 headers = {
     'Content-Type': 'application/json',
-    'Accept': 'application/json'
+    'Accept': 'application/json',
+    'Authorization': 'Api-Key YOUR_API_KEY_HERE'  # 請替換為您的實際 API Key
 }
 
 # 發送 POST 請求
@@ -159,6 +162,7 @@ if response.status_code == 200:
         {
             "id": 1,
             "subject_id": 123,
+            "subject": "發燒相關問題",
             "department": "家醫科",
             "symptom": "發燒",
             "question": "醫生您好，我最近一直有發燒的狀況...",
@@ -171,6 +175,7 @@ if response.status_code == 200:
         {
             "id": 2,
             "subject_id": 456,
+            "subject": "皮膚過敏諮詢",
             "department": "皮膚科",
             "symptom": "皮疹",
             "question": "醫生您好，我身上出現不明紅疹...",

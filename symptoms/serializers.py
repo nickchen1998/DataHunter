@@ -35,8 +35,8 @@ class SymptomSerializer(BaseSerializer):
 
     class Meta:
         model = Symptom
-        fields = ['id', 'subject_id', 'department', 'symptom', 'question', 'answer', 'gender', 'question_time', 'answer_time', 'created_at', 'page', 'page_size']
-        read_only_fields = ['id', 'subject_id', 'symptom', 'answer', 'question_time', 'answer_time', 'created_at']
+        fields = ['id', 'subject_id', 'subject', 'department', 'symptom', 'question', 'answer', 'gender', 'question_time', 'answer_time', 'created_at', 'page', 'page_size']
+        read_only_fields = ['id', 'subject_id', 'subject', 'symptom', 'answer', 'question_time', 'answer_time', 'created_at']
 
     def validate_department(self, value):
         """驗證部門是否存在"""
