@@ -6,7 +6,7 @@ import pandas as pd
 from utils.mongodb import get_mongo_database
 from pymongo.collection import Collection
 from gridfs import GridFS
-from models import Dataset
+from gov_datas.models import Dataset
 
 # 下載資料並讀取為 DataFrame
 url = "https://data.gov.tw/api/front/dataset/export?format=csv"
