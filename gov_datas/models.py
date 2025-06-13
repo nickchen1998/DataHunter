@@ -1,3 +1,36 @@
 from django.db import models
 
-# Create your models here.
+
+class Dataset(models.Model):
+    dataset_id = models.IntegerField(unique=True, verbose_name="資料集識別碼")
+    url = models.URLField(verbose_name="資料集網址")
+    name = models.CharField(max_length=255, verbose_name="資料集名稱")
+    category = models.CharField(max_length=100, verbose_name="服務分類")
+    description = models.TextField(null=True, blank=True, verbose_name="資料集描述")
+    columns = models.JSONField(models.CharField(max_length=100), verbose_name="主要欄位說明")
+    department = models.CharField(max_length=100, verbose_name="提供機關")
+    update_frequency = models.CharField(max_length=100, verbose_name="更新頻率")
+    license = models.CharField(max_length=100, verbose_name="授權方式")
+    price = models.CharField(max_length=100, verbose_name="計費方式")
+    contact_person = models.CharField(max_length=100, null=True, blank=True, verbose_name="聯絡人姓名")
+    contact_phone = models.CharField(max_length=50, null=True, blank=True, verbose_name="聯絡人電話")
+    upload_date = models.CharField(max_length=50, null=True, blank=True, verbose_name="上架日期")
+    update_date = models.CharField(max_length=50, null=True, blank=True, verbose_name="詮釋資料更新時間")
+    refactor_content = models.TextField(null=True, blank=True, verbose_name="重構內容")
+
+    def __str__(self):
+        return self.name
+
+
+class File(models.Model):
+    download_url = models.URLField(verbose_name="資料下載網址")
+    filename = models.CharField(max_length=255, verbose_name="檔案名稱")
+    encoding = models.CharField(max_length=50, verbose_name="編碼格式")
+    format = models.CharField(max_length=20, verbose_name="檔案格式")
+    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE, related_name="files", verbose_name="所屬資料集")
+    category = models.CharField(max_length=100, verbose_name="服務分類")
+    content_md5 = models.CharField(max_length=64, verbose_name="檔案內容 MD5")
+    gridfs_id = models.CharField(max_length=100, verbose_name="GridFS ID")  # 雖然是字串，但保留 GridFS ID 作為外部參照
+
+    def __str__(self):
+        return self.filename
