@@ -1,0 +1,13 @@
+{
+  "name": "datahunter",
+  "version": "1.0.0",
+  "description": "DataHunter - 資料獵人",
+  "scripts": {
+    "build-css": "tailwindcss -i ./static/css/input.css -o ./static/css/output.css --watch",
+    "build-css-prod": "tailwindcss -i ./static/css/input.css -o ./static/css/output.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0",
+    "daisyui": "^4.12.10"
+  }
+} 
