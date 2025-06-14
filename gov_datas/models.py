@@ -1,6 +1,28 @@
 from django.db import models
 from pgvector.django import VectorField, HnswIndex
-    
+
+
+ASSOCIATED_CATEGORIES_DATABASE_NAME = {
+    "生育保健": "MaternalAndChildHealthGovData",
+    "出生及收養": "BirthAndAdoptionGovData",
+    "求學及進修": "EducationAndFurtherStudiesGovData",
+    "服兵役": "MilitaryServiceGovData",
+    "求職及就業": "JobSeekingAndEmploymentGovData",
+    "開創事業": "StartingABusinessGovData",
+    "婚姻": "MarriageGovData",
+    "投資理財": "InvestmentAndFinancialManagementGovData",
+    "休閒旅遊": "LeisureAndTravelGovData",
+    "交通及通訊": "TransportationAndCommunicationGovData",
+    "就醫": "MedicalServicesGovData",
+    "購屋及遷徙": "HousingAndRelocationGovData",
+    "選舉及投票": "ElectionsAndVotingGovData",
+    "生活安全及品質": "SafetyAndQualityOfLifeGovData",
+    "退休": "RetirementGovData",
+    "老年安養": "ElderlyCareGovData",
+    "生命禮儀": "FuneralAndMemorialServicesGovData",
+    "公共資訊": "PublicInformationGovData"
+}
+
 
 class Dataset(models.Model):
     dataset_id = models.IntegerField(unique=True, verbose_name="資料集識別碼")
