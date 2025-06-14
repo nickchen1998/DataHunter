@@ -5,11 +5,40 @@ import requests
 import pandas as pd
 import json
 import xml.etree.ElementTree as ET
+from datetime import datetime
 from utils.mongodb import get_mongo_database
 from gridfs import GridFS
 from gov_datas.models import Dataset, File
 from DataHunter.celery import app
 from langchain_openai import OpenAIEmbeddings
+
+
+def _parse_datetime_string(date_string):
+    """
+    解析時間字串並轉換為 datetime 物件
+    支援格式：'YYYY-MM-DD HH:MM:SS' 或 'YYYY-MM-DD'
+    """
+    if not date_string or pd.isna(date_string):
+        return None
+    
+    try:
+        date_string = str(date_string).strip()
+        
+        # 嘗試解析完整的日期時間格式
+        if len(date_string) > 10:  # 包含時間部分
+            return datetime.strptime(date_string, '%Y-%m-%d %H:%M:%S')
+        else:  # 只有日期部分
+            return datetime.strptime(date_string, '%Y-%m-%d')
+    except ValueError:
+        try:
+            # 嘗試其他可能的格式
+            return datetime.strptime(date_string, '%Y/%m/%d %H:%M:%S')
+        except ValueError:
+            try:
+                return datetime.strptime(date_string, '%Y/%m/%d')
+            except ValueError:
+                print(f"無法解析時間格式: {date_string}")
+                return None
 
 
 @app.task()
@@ -32,6 +61,10 @@ def period_crawl_government_datasets(demo=False):
     for category in categories:
         sub_df = filtered_df[filtered_df['服務分類'] == category]
         for _, row in sub_df.iterrows():
+            # 解析時間欄位
+            upload_time = _parse_datetime_string(row.上架日期)
+            update_time = _parse_datetime_string(row.詮釋資料更新時間)
+            
             dataset, created = Dataset.objects.update_or_create(
                 dataset_id=row.資料集識別碼,
                 defaults={
@@ -48,8 +81,8 @@ def period_crawl_government_datasets(demo=False):
                     'price': row.計費方式,
                     'contact_person': row.提供機關聯絡人姓名 if pd.notna(row.提供機關聯絡人姓名) else None,
                     'contact_phone': row.提供機關聯絡人電話 if pd.notna(row.提供機關聯絡人電話) else None,
-                    'upload_time': row.上架日期 if pd.notna(row.上架日期) else None,
-                    'update_time': row.詮釋資料更新時間 if pd.notna(row.詮釋資料更新時間) else None,
+                    'upload_time': upload_time,
+                    'update_time': update_time,
                 }
             )
 

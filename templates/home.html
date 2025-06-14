@@ -17,6 +17,7 @@
             <select id="source-select" class="select select-bordered w-full">
                 <option value="/" {% if request_path == '/' %}selected{% endif %}>-</option>
                 <option value="/symptoms/list/" {% if request_path == '/symptoms/list/' %}selected{% endif %}>衛福部 - 台灣 e 院</option>
+                <option value="/gov-data/list/" {% if request_path == '/gov-data/list/' %}selected{% endif %}>政府資料開放平臺</option>
             </select>
         </div>
 

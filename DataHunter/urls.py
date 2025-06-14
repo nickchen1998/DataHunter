@@ -23,4 +23,5 @@ urlpatterns = [
     path('profile/', include('profiles.urls')),
     path('admin/', admin.site.urls),
     path('symptoms/', include('symptoms.urls')),
+    path('gov-data/', include('gov_datas.urls')),
 ]
