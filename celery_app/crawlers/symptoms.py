@@ -56,13 +56,14 @@ def get_paragraph(browser: Chrome, symptom: str, department: str):
 
 @app.task()
 def period_send_symptom_crawler_task(demo=False):
-    dataset_path = pathlib.Path(__file__).parent / "symptoms.json"
+    dataset_path = pathlib.Path(__file__).parent.parent / "datasets" / "symptoms.json"
     with open(dataset_path, "r", encoding="utf-8") as f:
         for dataset in json.load(f):
             if demo:
                 symptom_crawler_task(
                     department=dataset["department"],
                     start_url=dataset["start_url"],
+                    demo=demo,
                 )
                 break
             else:
@@ -73,12 +74,16 @@ def period_send_symptom_crawler_task(demo=False):
 
 
 @app.task()
-def symptom_crawler_task(department: str, start_url: str):
+def symptom_crawler_task(department: str, start_url: str, demo=False):
+    command_executor = 'http://selenium-hub:4444/wd/hub'
+    if demo:
+        command_executor = 'http://localhost:4444/wd/hub'
+
     options = Options()
     options.add_argument("--headless")
     options.add_argument(f'user-agent={UserAgent().random}')
     browser = webdriver.Remote(
-        command_executor='http://selenium-hub:4444/wd/hub',
+        command_executor=command_executor,
         options=options
     )
     browser.maximize_window()
