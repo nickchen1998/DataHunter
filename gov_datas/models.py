@@ -81,6 +81,12 @@ class File(models.Model):
     content_md5 = models.CharField(max_length=64, verbose_name="檔案內容 MD5", unique=True)
     table_name = models.CharField(max_length=255, verbose_name="對應資料表名稱", unique=True,
                                   help_text="在 GovData 資料庫中的資料表名稱")
+    database_name = models.CharField(
+        max_length=255, 
+        verbose_name="對應資料庫名稱", 
+        default="InvestmentAndFinancialManagementGovData",
+        help_text="在 GovData 資料庫中的資料庫名稱"
+    )
     
     # 時間戳記
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")

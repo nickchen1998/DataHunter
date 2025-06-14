@@ -30,7 +30,8 @@ def period_crawl_government_datasets(demo=False):
 
     processed_datasets = 0
 
-    for category in categories:
+    for category in [tmp for tmp in categories if tmp in ASSOCIATED_CATEGORIES_DATABASE_NAME]:
+        _check_database_exists(category)
         sub_df = filtered_df[filtered_df['服務分類'] == category]
         for _, row in sub_df.iterrows():
             dataset, created = Dataset.objects.update_or_create(
@@ -209,6 +210,7 @@ def _save_dataframe_to_table(dataset, df, table_name, download_url, file_format,
             encoding=encoding,
             content_md5=content_md5,
             table_name=table_name,
+            database_name=ASSOCIATED_CATEGORIES_DATABASE_NAME[dataset.category],
         )
         
         return True
@@ -367,7 +369,7 @@ def _insert_dataframe_to_table(cursor, df: pd.DataFrame, table_name: str):
             print(f"成功插入 {success_count}/{len(values)} 行資料")
 
 
-def _check_database_exists(categories: list[str]):
+def _check_database_exists(category: str):
 
     try:
         # 連到預設 postgres 資料庫
@@ -381,28 +383,25 @@ def _check_database_exists(categories: list[str]):
         )
         conn.autocommit = True
         cursor = conn.cursor()
-        for category in categories:
-            if category not in ASSOCIATED_CATEGORIES_DATABASE_NAME:
-                continue
-            
-            db_name = ASSOCIATED_CATEGORIES_DATABASE_NAME[category]
-            cursor.execute(
-                psycopg2.sql.SQL("SELECT 1 FROM pg_database WHERE datname = %s"),
-                [db_name]
-            )
-            exists = cursor.fetchone() is not None
+        
+        db_name = ASSOCIATED_CATEGORIES_DATABASE_NAME[category]
+        cursor.execute(
+            psycopg2.sql.SQL("SELECT 1 FROM pg_database WHERE datname = %s"),
+            [db_name]
+        )
+        exists = cursor.fetchone() is not None
 
-            if not exists:
-                print(f"Database '{db_name}' does not exist. Creating...")
-                cursor.execute(psycopg2.sql.SQL("CREATE DATABASE {}").format(
-                    psycopg2.sql.Identifier(db_name)
-                ))
-                print(f"Database '{db_name}' created successfully.")
-            else:
-                print(f"Database '{db_name}' already exists.")
+        if not exists:
+            print(f"Database '{db_name}' does not exist. Creating...")
+            cursor.execute(psycopg2.sql.SQL("CREATE DATABASE {}").format(
+                psycopg2.sql.Identifier(db_name)
+            ))
+            print(f"Database '{db_name}' created successfully.")
+        else:
+            print(f"Database '{db_name}' already exists.")
 
-            cursor.close()
-            conn.close()
+        cursor.close()
+        conn.close()
 
     except Exception as e:
         print(f"Error checking or creating database '{db_name}': {e}")
