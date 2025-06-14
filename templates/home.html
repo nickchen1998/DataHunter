@@ -12,32 +12,50 @@
                 <h2 class="text-xl font-bold mb-6">📑 資料獵人 - DataHunter</h2>
             </a>
 
-        <div class="mb-4">
-            <label for="source-select" class="block font-semibold mb-1">資料來源：</label>
-            <select id="source-select" class="select select-bordered w-full">
-                <option value="/" {% if request_path == '/' %}selected{% endif %}>-</option>
-                <option value="/symptoms/list/" {% if request_path == '/symptoms/list/' %}selected{% endif %}>衛福部 - 台灣 e 院</option>
-                <option value="/gov-data/list/" {% if request_path == '/gov-data/list/' %}selected{% endif %}>政府資料開放平臺</option>
-            </select>
-        </div>
+            <div class="mb-4">
+                <label for="source-select" class="block font-semibold mb-1">資料來源：</label>
+                <select id="source-select" class="select select-bordered w-full">
+                    <option value="/" {% if request_path == '/' %}selected{% endif %}>-</option>
+                    <option value="/symptoms/list/" {% if request_path == '/symptoms/list/' %}selected{% endif %}>衛福部 - 台灣 e 院</option>
+                    <option value="/gov-data/list/" {% if request_path == '/gov-data/list/' %}selected{% endif %}>政府資料開放平臺</option>
+                </select>
+            </div>
 
-        <div class="mb-4">
-            {% block source-description %}{% endblock %}
-        </div>
+            <div class="mb-4">
+                {% block source-description %}{% endblock %}
+            </div>
 
-        <div>
-            <p class="font-semibold">注意事項：</p>
-            <p class="text-sm text-gray-600 mt-1">
-                本網站資料來源皆為使用爬蟲爬取之網路公開資料，請勿使用於商業用途，本網站僅用於教學、練習使用。
-            </p>
-        </div>
+            <!-- 資料使用政策 -->
+            {% if request_path != '/' %}
+                <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+                    <p class="text-sm font-semibold text-blue-800 mb-2">📋 資料使用政策</p>
+                    {% if request_path == '/symptoms/list/' %}
+                        <a href="https://sp1.hso.mohw.gov.tw/doctor/" target="_blank" 
+                           class="text-xs text-blue-600 hover:text-blue-800 hover:underline">
+                            台灣 e 院使用條款 ↗
+                        </a>
+                    {% elif request_path == '/gov-data/list/' %}
+                        <a href="https://data.gov.tw/privacy" target="_blank" 
+                           class="text-xs text-blue-600 hover:text-blue-800 hover:underline">
+                            政府資料開放平臺隱私權政策 ↗
+                        </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <div>
+                <p class="font-semibold">注意事項：</p>
+                <p class="text-sm text-gray-600 mt-1">
+                    本網站資料來源皆為使用爬蟲爬取之網路公開資料，請勿使用於商業用途，本網站僅用於教學、練習使用。
+                </p>
+            </div>
         </div>
 
         <!-- 用戶操作區域 -->
         <div class="border-t pt-4 mt-4">
             <div class="flex items-center justify-between">
-                <a href="{% url 'profile' %}" class="flex items-center space-x-2 hover:bg-gray-50 rounded-lg p-2 transition-colors flex-1 min-w-0 mr-2">
-                    <div class="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                <a href="{% url 'profile' %}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 transition-colors flex-1 mr-2">
+                    <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium mr-4" style="min-width: 32px; min-height: 32px; background-color: #3b82f6; border-radius: 50%;">
                         {{ user.username|first|upper }}
                     </div>
                     <div class="flex-1 min-w-0">
@@ -74,57 +92,58 @@
             {% endblock %}
         </div>
 
-        <!-- 資料表格與內容區 -->
-        <div class="flex space-x-6 flex-1 min-h-0">
-            <!-- 左半邊：資料表格 -->
-            <div class="{% if request_path == '/' %}w-full{% else %}w-1/2{% endif %} flex flex-col">
-                <div class="bg-white rounded-lg shadow p-4 flex-1 flex flex-col overflow-hidden">
-                    {% block data-table %}
-                        {% if request_path == '/' %}
-                            <div class="text-center flex-1 flex items-center justify-center">
-                                <div>
-                                    <h2 class="text-2xl font-bold mb-4">歡迎來到資料獵人 - DataHunter</h2>
-                                    <p class="text-gray-600">
-                                        請從左側的下拉選單中選擇一個資料來源開始探索。
-                                    </p>
-                                </div>
+        <!-- 資料表格區域 -->
+        <div class="flex-1 min-h-0">
+            <div class="bg-white rounded-lg shadow p-4 h-full flex flex-col overflow-hidden">
+                {% block data-table %}
+                    {% if request_path == '/' %}
+                        <div class="text-center flex-1 flex items-center justify-center">
+                            <div>
+                                <h2 class="text-2xl font-bold mb-4">歡迎來到資料獵人 - DataHunter</h2>
+                                <p class="text-gray-600">
+                                    請從左側的下拉選單中選擇一個資料來源開始探索。
+                                </p>
                             </div>
-                        {% endif %}
-                    {% endblock %}
+                        </div>
+                    {% endif %}
+                {% endblock %}
+            </div>
+        </div>
+
+        <!-- 共用分頁區域 -->
+        {% if is_paginated %}
+            <div class="flex justify-center mt-6">
+                <div class="join">
+                    {% if page_obj.has_previous %}
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1" 
+                           class="join-item btn" title="第一頁">&lt;&lt;</a>
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" 
+                           class="join-item btn" title="上一頁">&lt;</a>
+                    {% else %}
+                        <span class="join-item btn btn-disabled">&lt;&lt;</span>
+                        <span class="join-item btn btn-disabled">&lt;</span>
+                    {% endif %}
+                    
+                    <span class="join-item btn btn-active">{{ page_obj.number }}</span>
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" 
+                           class="join-item btn" title="下一頁">&gt;</a>
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}" 
+                           class="join-item btn" title="最後一頁">&gt;&gt;</a>
+                    {% else %}
+                        <span class="join-item btn btn-disabled">&gt;</span>
+                        <span class="join-item btn btn-disabled">&gt;&gt;</span>
+                    {% endif %}
+                </div>
+                
+                <!-- 分頁資訊 -->
+                <div class="ml-4 flex items-center text-sm text-gray-600">
+                    第 {{ page_obj.number }} 頁，共 {{ page_obj.paginator.num_pages }} 頁
+                    (總計 {{ page_obj.paginator.count }} 筆資料)
                 </div>
             </div>
-
-            <!-- 右半邊：API 資訊 -->
-            {% if request_path != '/' %}
-                <div class="w-1/2 flex flex-col space-y-6">
-                    <!-- API 請求範例 -->
-                    <div class="bg-white rounded-lg shadow p-4 flex-1 flex flex-col overflow-hidden">
-                        <div class="flex justify-between items-center mb-2 flex-shrink-0">
-                            <h3 class="font-bold text-lg">API 請求範例</h3>
-                            <button onclick="copyToClipboard('api-request-content')" class="btn btn-xs btn-outline btn-info" title="複製程式碼">
-                                📋 複製
-                            </button>
-                        </div>
-                        <div class="bg-gray-800 text-white p-4 rounded-md font-mono text-sm flex-1 overflow-auto">
-                            <pre><code id="api-request-content">{% block api-request %}{% endblock %}</code></pre>
-                        </div>
-                    </div>
-
-                    <!-- API 回應格式 -->
-                    <div class="bg-white rounded-lg shadow p-4 flex-1 flex flex-col overflow-hidden">
-                        <div class="flex justify-between items-center mb-2 flex-shrink-0">
-                            <h3 class="font-bold text-lg">API 回應格式</h3>
-                            <button onclick="copyToClipboard('api-response-content')" class="btn btn-xs btn-outline btn-success" title="複製 JSON">
-                                📋 複製
-                            </button>
-                        </div>
-                        <div class="bg-gray-800 text-white p-4 rounded-md font-mono text-sm flex-1 overflow-auto">
-                            <pre><code id="api-response-content">{% block api-response %}{% endblock %}</code></pre>
-                        </div>
-                    </div>
-                </div>
-            {% endif %}
-        </div>
+        {% endif %}
 
     </main>
 </div>

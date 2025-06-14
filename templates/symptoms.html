@@ -1,15 +1,10 @@
 {% extends 'home.html' %}
 
+{% block source-name %}衛生福利部 - 台灣 e 院{% endblock %}
+
 {% block source-description %}
     <p>說明：</p>
     <p>本資料源為 "衛生福利部 - 台灣 e 院" 站台上之資料，詳細醫療建議仍請諮詢專業醫師。</p>
-    <p> </p>
-    <p>資料來源網址：</p>
-    <p><a href="https://sp1.hso.mohw.gov.tw/doctor/" target="_blank">衛生福利部 - 台灣 e 院</a>
-{% endblock %}
-
-{% block source-name %}
-    <h2>衛生福利部 - 台灣 e 院</h2>
 {% endblock %}
 
 {% block filter_section %}
@@ -33,13 +28,13 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="lg:col-span-1">
-                <label for="question-input" class="block font-semibold mb-1">問題：</label>
-                <input id="question-input" type="text" name="question" value="{{ question }}" placeholder="問題關鍵字"
+            <div>
+                <label for="question-input" class="block font-semibold mb-1">症狀描述：</label>
+                <input id="question-input" type="text" name="question" value="{{ question }}" placeholder="症狀描述或症狀關鍵字"
                        class="input input-bordered w-full"/>
             </div>
         </div>
-        <div class="mt-4 text-right">
+        <div class="flex justify-end mt-4 space-x-2">
             <a href="{% url 'symptom_list' %}" class="btn btn-ghost">清除</a>
             <button type="submit" class="btn btn-primary">搜尋</button>
         </div>
@@ -52,19 +47,14 @@
             {% for data in object_list %}
                 <div class="card shadow-md bg-white p-4 border border-gray-200">
                     <div class="space-y-2 text-sm text-gray-800">
-                        <div><span class="font-semibold">ID：</span>{{ data.id }}</div>
-                        <div><span class="font-semibold">Gender：</span>{{ data.gender }}</div>
-                        <div><span class="font-semibold">Subject ID：</span>{{ data.subject_id }}</div>
-                        <div><span class="font-semibold">Subject：</span>{{ data.subject }}</div>
-                        <div><span class="font-semibold">Department：</span>{{ data.department }}</div>
-                        <div><span class="font-semibold">Symptom：</span>{{ data.symptom }}</div>
-
-                        <!-- question 欄 -->
+                        <div><span class="font-semibold">科別：</span>{{ data.department }}</div>
+                        <div><span class="font-semibold">性別：</span>{{ data.gender }}</div>
+                        <div><span class="font-semibold">年齡：</span>{{ data.age }}</div>
                         <div>
-                            <span class="font-semibold">Question：</span>
-                            {% if data.question|length > 20 %}
-                                <span id="question-preview-{{ data.id }}">{{ data.question|slice:":20" }}...</span>
-                                <span id="question-full-{{ data.id }}" class="hidden">{{ data.question }}</span>
+                            <span class="font-semibold">症狀描述：</span>
+                            {% if data.question|length > 100 %}
+                                <span id="question-preview-{{ data.id }}">{{ data.question|slice:":100" }}...</span>
+                                <span id="question-full-{{ data.id }}" style="display: none;">{{ data.question }}</span>
                                 <button data-id="{{ data.id }}" data-field="question"
                                         class="btn btn-xs btn-outline btn-info ml-2 toggle-button">展開
                                 </button>
@@ -72,15 +62,11 @@
                                 {{ data.question }}
                             {% endif %}
                         </div>
-
-                        <div><span class="font-semibold">Question Time：</span>{{ data.question_time }}</div>
-
-                        <!-- answer 欄 -->
                         <div>
-                            <span class="font-semibold">Answer：</span>
-                            {% if data.answer|length > 20 %}
-                                <span id="answer-preview-{{ data.id }}">{{ data.answer|slice:":20" }}...</span>
-                                <span id="answer-full-{{ data.id }}" class="hidden">{{ data.answer }}</span>
+                            <span class="font-semibold">醫師回覆：</span>
+                            {% if data.answer|length > 100 %}
+                                <span id="answer-preview-{{ data.id }}">{{ data.answer|slice:":100" }}...</span>
+                                <span id="answer-full-{{ data.id }}" style="display: none;">{{ data.answer }}</span>
                                 <button data-id="{{ data.id }}" data-field="answer"
                                         class="btn btn-xs btn-outline btn-info ml-2 toggle-button">展開
                                 </button>
@@ -88,103 +74,20 @@
                                 {{ data.answer }}
                             {% endif %}
                         </div>
-
-                        <div><span class="font-semibold">Answer Time：</span>{{ data.answer_time }}</div>
-                        <div><span class="font-semibold">Created At：</span>{{ data.created_at }}</div>
                     </div>
                 </div>
             {% endfor %}
         {% else %}
             <div class="card shadow-md bg-white p-4 border border-gray-200">
                 <div class="space-y-2 text-sm text-gray-800">
-                    <div><span class="font-semibold">ID：</span>1</div>
-                    <div><span class="font-semibold">Gender：</span>女性</div>
-                    <div><span class="font-semibold">Subject ID：</span>123</div>
-                    <div><span class="font-semibold">Subject：</span>測試</div>
-                    <div><span class="font-semibold">Department：</span>測試</div>
-                    <div><span class="font-semibold">Symptom：</span>測試</div>
-                    <div><span class="font-semibold">Question：</span>測試</div>
-                    <div><span class="font-semibold">Question Time：</span>測試</div>
-                    <div><span class="font-semibold">Answer：</span>測試</div>
-                    <div><span class="font-semibold">Answer Time：</span>測試</div>
-                    <div><span class="font-semibold">Created At：</span>測試</div>
+                    <div><span class="font-semibold">科別：</span>測試科別</div>
+                    <div><span class="font-semibold">性別：</span>測試性別</div>
+                    <div><span class="font-semibold">年齡：</span>測試年齡</div>
+                    <div><span class="font-semibold">症狀描述：</span>測試症狀描述</div>
+                    <div><span class="font-semibold">醫師回覆：</span>測試醫師回覆</div>
                 </div>
             </div>
         {% endif %}
     </div>
 {% endblock %}
 
-{% block api-request %}
-import requests
-import json
-
-# API 端點 URL
-api_url = "{{ request.scheme }}://{{ request.get_host }}{% url 'symptom_api_search' %}"
-
-# 請求參數字典（包含分頁參數）
-data = {
-    'department': '{{ department }}',    # 篩選特定科別，例如：家醫科、皮膚科
-    'gender': '{{ gender }}',            # 篩選性別，例如：男、女
-    'question': '{{ question }}',        # 搜尋問題關鍵字，支援語意搜尋
-    'page': 1,                          # 頁碼，從 1 開始
-    'page_size': 10                     # 每頁資料筆數，最大 100 筆
-}
-
-# 設定請求標頭（包含 API Key 認證）
-headers = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-    'Authorization': 'Api-Key YOUR_API_KEY_HERE'  # 請替換為您的實際 API Key
-}
-
-# 發送 POST 請求
-response = requests.post(
-    api_url, 
-    data=json.dumps(data, ensure_ascii=False), 
-    headers=headers
-)
-
-# 檢查請求是否成功
-if response.status_code == 200:
-    result = response.json()
-    print(result)
-
-{% endblock %}
-
-{% block api-response %}
-{
-    "count": 12345,
-    "total_pages": 1235,
-    "current_page": 1,
-    "has_next": true,
-    "has_previous": false,
-    "results": [
-        {
-            "id": 1,
-            "subject_id": 123,
-            "subject": "發燒相關問題",
-            "department": "家醫科",
-            "symptom": "發燒",
-            "question": "醫生您好，我最近一直有發燒的狀況...",
-            "answer": "您好，建議您多喝水、多休息，若症狀持續，請盡速就醫。",
-            "gender": "男",
-            "question_time": "2024-01-01T12:00:00Z",
-            "answer_time": "2024-01-01T13:00:00Z",
-            "created_at": "2024-05-21T08:00:00.000000Z"
-        },
-        {
-            "id": 2,
-            "subject_id": 456,
-            "subject": "皮膚過敏諮詢",
-            "department": "皮膚科",
-            "symptom": "皮疹",
-            "question": "醫生您好，我身上出現不明紅疹...",
-            "answer": "您好，可能是過敏反應，建議您...",
-            "gender": "女",
-            "question_time": "2024-01-02T14:00:00Z",
-            "answer_time": "2024-01-02T15:00:00Z",
-            "created_at": "2024-05-21T09:00:00.000000Z"
-        }
-    ]
-}
-{% endblock %}

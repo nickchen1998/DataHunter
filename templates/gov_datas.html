@@ -1,15 +1,10 @@
 {% extends 'home.html' %}
 
+{% block source-name %}政府資料開放平臺{% endblock %}
+
 {% block source-description %}
     <p>說明：</p>
     <p>本資料源為 "政府資料開放平臺" 站台上之資料，提供各政府機關開放資料集資訊。</p>
-    <p> </p>
-    <p>資料來源網址：</p>
-    <p><a href="https://data.gov.tw/" target="_blank">政府資料開放平臺</a></p>
-{% endblock %}
-
-{% block source-name %}
-    <h2>政府資料開放平臺</h2>
 {% endblock %}
 
 {% block filter_section %}
@@ -106,15 +101,36 @@
                             {% endif %}
                         </div>
                         
-                        <div><span class="font-semibold">主要欄位說明：</span>
+                        <!-- 主要欄位說明 - 支援展開/收合 -->
+                        <div>
+                            <span class="font-semibold">主要欄位說明：</span>
                             {% if data.columns_description %}
-                                {% for column in data.columns_description %}
-                                    <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs mr-1 mb-1">{{ column }}</span>
-                                {% endfor %}
+                                <div id="columns-preview-{{ data.dataset_id }}" class="inline">
+                                    {% for column in data.columns_description|slice:":3" %}
+                                        <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs mr-1 mb-1">{{ column }}</span>
+                                    {% endfor %}
+                                    {% if data.columns_description|length > 3 %}
+                                        <button data-id="{{ data.dataset_id }}" data-field="columns"
+                                                class="btn btn-xs btn-outline btn-info ml-2 toggle-button">
+                                            展開 ({{ data.columns_description|length|add:"-3" }} 個更多)
+                                        </button>
+                                    {% endif %}
+                                </div>
+                                <div id="columns-full-{{ data.dataset_id }}" class="hidden">
+                                    {% for column in data.columns_description %}
+                                        <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs mr-1 mb-1">{{ column }}</span>
+                                    {% endfor %}
+                                    {% if data.columns_description|length > 3 %}
+                                        <button data-id="{{ data.dataset_id }}" data-field="columns"
+                                                class="btn btn-xs btn-outline btn-info ml-2 toggle-button">收合
+                                        </button>
+                                    {% endif %}
+                                </div>
                             {% else %}
                                 無
                             {% endif %}
                         </div>
+                        
                         <div><span class="font-semibold">更新頻率：</span>{{ data.update_frequency }}</div>
                         <div><span class="font-semibold">授權方式：</span>{{ data.license }}</div>
                         <div><span class="font-semibold">計費方式：</span>{{ data.price }}</div>
@@ -131,12 +147,34 @@
                         <div><span class="font-semibold">最後更新時間：</span>{{ data.update_time|date:"Y-m-d H:i:s" }}</div>
                         
                         <!-- 操作按鈕區域 -->
-                        <div class="pt-2 border-t border-gray-200">
+                        <div class="pt-2 border-t border-gray-200 flex gap-2">
                             <a href="{{ data.url }}" target="_blank" class="btn btn-xs btn-outline btn-primary">
                                 查看原始資料集
                             </a>
+                            <button onclick="showFileList('{{ data.dataset_id }}', '{{ data.name|escapejs }}')" 
+                                    class="btn btn-xs btn-outline btn-secondary">
+                                檔案列表 ({{ data.files.count }})
+                            </button>
                         </div>
                     </div>
+                    
+                    <!-- 隱藏的檔案資料，供 JavaScript 使用 -->
+                    <script type="application/json" id="files-data-{{ data.dataset_id }}">
+                        {
+                            "dataset_id": {{ data.dataset_id }},
+                            "dataset_name": "{{ data.name|escapejs }}",
+                            "files": [
+                                {% for file in data.files.all %}
+                                {
+                                    "filename": "{{ file.filename|escapejs }}",
+                                    "original_download_url": "{{ file.original_download_url|escapejs }}",
+                                    "encoding": "{{ file.encoding|escapejs }}",
+                                    "original_formats": "{{ file.original_formats|escapejs }}"
+                                }{% if not forloop.last %},{% endif %}
+                                {% endfor %}
+                            ]
+                        }
+                    </script>
                 </div>
             {% endfor %}
         {% else %}
@@ -157,29 +195,28 @@
             </div>
         {% endif %}
     </div>
-{% endblock %}
-
-{% block pagination %}
-    {% if is_paginated %}
-        <div class="flex justify-center mt-6">
-            <div class="join">
-                {% if page_obj.has_previous %}
-                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1" class="join-item btn">«</a>
-                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" class="join-item btn">‹</a>
-                {% endif %}
-                
-                <span class="join-item btn btn-active">第 {{ page_obj.number }} 頁，共 {{ page_obj.paginator.num_pages }} 頁</span>
-                
-                {% if page_obj.has_next %}
-                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" class="join-item btn">›</a>
-                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}" class="join-item btn">»</a>
-                {% endif %}
+    
+    <!-- 檔案列表彈出視窗 -->
+    <div id="file-list-modal" class="modal">
+        <div class="modal-box w-11/12 max-w-5xl">
+            <h3 class="font-bold text-lg mb-4">
+                <span id="modal-dataset-name">資料集檔案列表</span>
+            </h3>
+            
+            <div id="file-list-content" class="overflow-x-auto">
+                <!-- 檔案列表內容將由 JavaScript 動態載入 -->
+            </div>
+            
+            <div class="modal-action">
+                <button class="btn" onclick="closeFileListModal()">關閉</button>
             </div>
         </div>
-    {% endif %}
+        <div class="modal-backdrop" onclick="closeFileListModal()"></div>
+    </div>
 {% endblock %}
 
 {% block extra_js %}
+{{ block.super }}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // 進階篩選展開/收合功能
@@ -237,7 +274,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateStart.addEventListener('change', () => validateDateRange(updateStart, updateEnd, '更新時間'));
     updateEnd.addEventListener('change', () => validateDateRange(updateStart, updateEnd, '更新時間'));
     
-    // 展開/收合功能（資料內容）
+    // 展開/收合功能（資料內容和欄位說明）
     document.querySelectorAll('.toggle-button').forEach(button => {
         button.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
@@ -248,7 +285,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (preview.classList.contains('hidden')) {
                 preview.classList.remove('hidden');
                 full.classList.add('hidden');
-                this.textContent = '展開';
+                if (field === 'columns') {
+                    const remainingCount = this.getAttribute('data-remaining') || '更多';
+                    this.textContent = `展開 (${remainingCount})`;
+                } else {
+                    this.textContent = '展開';
+                }
             } else {
                 preview.classList.add('hidden');
                 full.classList.remove('hidden');
@@ -257,90 +299,100 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
-</script>
-{% endblock %}
 
-{% block api-request %}
-import requests
-import json
-
-# API 端點 URL
-api_url = "{{ request.scheme }}://{{ request.get_host }}{% url 'gov_data_list' %}"
-
-# 請求參數字典（包含分頁參數）
-data = {
-    'category': '{{ category }}',           # 篩選服務分類，例如：交通及通訊、公共資訊
-    'name': '{{ name }}',                   # 搜尋資料集名稱關鍵字
-    'description': '{{ description }}',     # 搜尋資料集描述關鍵字（支援向量語意搜尋）
-    'upload_start': '{{ upload_start }}',   # 上架時間開始日期 (ISO格式: YYYY-MM-DD)
-    'upload_end': '{{ upload_end }}',       # 上架時間結束日期 (ISO格式: YYYY-MM-DD)
-    'update_start': '{{ update_start }}',   # 更新時間開始日期 (ISO格式: YYYY-MM-DD)
-    'update_end': '{{ update_end }}',       # 更新時間結束日期 (ISO格式: YYYY-MM-DD)
-    'page': 1,                              # 頁碼，從 1 開始
-}
-
-# 發送 GET 請求（網頁版本使用 GET）
-response = requests.get(api_url, params=data)
-
-# 檢查請求是否成功
-if response.status_code == 200:
-    print("請求成功")
-    # 解析 HTML 回應或處理資料
-else:
-    print(f"請求失敗，狀態碼: {response.status_code}")
-
-# 注意：此為網頁版本的請求方式
-# 如需 JSON API，請聯繫開發團隊獲取 API 端點資訊
-{% endblock %}
-
-{% block api-response %}
-{
-    "說明": "政府資料開放平臺資料集搜尋",
-    "功能特色": [
-        "支援服務分類篩選",
-        "資料集名稱關鍵字搜尋",
-        "資料集描述語意搜尋（使用 AI 向量搜尋）",
-        "上架時間和更新時間範圍篩選",
-        "分頁瀏覽功能"
-    ],
-    "搜尋欄位說明": {
-        "category": "服務分類篩選，例如：公共資訊、交通及通訊",
-        "name": "資料集名稱關鍵字搜尋",
-        "description": "資料集描述語意搜尋，支援 AI 智能匹配",
-        "upload_start/upload_end": "上架時間範圍篩選",
-        "update_start/update_end": "更新時間範圍篩選"
-    },
-    "資料欄位": {
-        "dataset_id": "資料集識別碼",
-        "name": "資料集名稱",
-        "category": "服務分類",
-        "department": "資料提供機關",
-        "description": "資料集描述",
-        "columns_description": "主要欄位說明",
-        "update_frequency": "更新頻率",
-        "license": "授權方式",
-        "price": "計費方式",
-        "contact_person": "聯絡人",
-        "contact_phone": "聯絡電話",
-        "upload_time": "上架時間",
-        "update_time": "最後更新時間",
-        "url": "原始資料集網址"
-    },
-    "範例資料": {
-        "dataset_id": 123456,
-        "name": "台北市公車路線資料",
-        "category": "交通及通訊",
-        "department": "臺北市政府交通局",
-        "description": "提供台北市公車路線的詳細資訊，包含路線名稱、起迄站點、行經路段等。",
-        "columns_description": ["路線編號", "路線名稱", "起站", "迄站", "行經路段"],
-        "update_frequency": "每日",
-        "license": "政府資料開放授權條款",
-        "price": "免費",
-        "contact_person": "張小明",
-        "contact_phone": "02-12345678",
-        "upload_time": "2024-01-01T00:00:00Z",
-        "update_time": "2024-12-15T00:00:00Z",
-        "url": "https://data.gov.tw/dataset/123456"
+// 檔案列表相關函數
+function showFileList(datasetId, datasetName) {
+    const modal = document.getElementById('file-list-modal');
+    const modalTitle = document.getElementById('modal-dataset-name');
+    const fileListContent = document.getElementById('file-list-content');
+    
+    modalTitle.textContent = `${datasetName} - 檔案列表`;
+    
+    // 從頁面中的 JSON 資料獲取檔案列表
+    const filesDataElement = document.getElementById(`files-data-${datasetId}`);
+    
+    if (!filesDataElement) {
+        fileListContent.innerHTML = `
+            <div class="text-center py-8">
+                <div class="text-red-500">
+                    <p>無法載入檔案資料。</p>
+                </div>
+            </div>
+        `;
+        modal.classList.add('modal-open');
+        return;
     }
+    
+    try {
+        const data = JSON.parse(filesDataElement.textContent);
+        
+        if (data.files && data.files.length > 0) {
+            let tableHTML = `
+                <table class="table table-zebra w-full">
+                    <thead>
+                        <tr>
+                            <th>檔案名稱</th>
+                            <th>原始下載網址</th>
+                            <th>編碼格式</th>
+                            <th>原始格式</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            data.files.forEach(file => {
+                tableHTML += `
+                    <tr>
+                        <td class="font-medium">${file.filename}</td>
+                        <td>
+                            <a href="${file.original_download_url}" target="_blank" 
+                               class="link link-primary text-xs break-all">
+                                ${file.original_download_url}
+                            </a>
+                        </td>
+                        <td><span class="badge badge-outline">${file.encoding}</span></td>
+                        <td><span class="badge badge-secondary">${file.original_formats || 'N/A'}</span></td>
+                    </tr>
+                `;
+            });
+            
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+            
+            fileListContent.innerHTML = tableHTML;
+        } else {
+            fileListContent.innerHTML = `
+                <div class="text-center py-8">
+                    <div class="text-gray-500 mb-2">
+                        <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">尚無檔案</h3>
+                        <p class="text-gray-500">此資料集目前沒有相關檔案。</p>
+                    </div>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error parsing file data:', error);
+        fileListContent.innerHTML = `
+            <div class="text-center py-8">
+                <div class="text-red-500">
+                    <p>解析檔案資料時發生錯誤。</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    // 顯示彈出視窗
+    modal.classList.add('modal-open');
 }
+
+function closeFileListModal() {
+    const modal = document.getElementById('file-list-modal');
+    modal.classList.remove('modal-open');
+}
+</script>
 {% endblock %} 

@@ -22,7 +22,7 @@ class GovDataDatasetListView(ListView):
         update_start = self.request.GET.get('update_start')
         update_end = self.request.GET.get('update_end')
         
-        return build_dataset_queryset(
+        queryset = build_dataset_queryset(
             category=category,
             description=description,
             name=name,
@@ -31,6 +31,9 @@ class GovDataDatasetListView(ListView):
             update_start=update_start,
             update_end=update_end
         )
+        
+        # 預載入檔案關聯以提高效能
+        return queryset.prefetch_related('files')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -48,5 +51,8 @@ class GovDataDatasetListView(ListView):
         context['update_start'] = self.request.GET.get('update_start', '')
         context['update_end'] = self.request.GET.get('update_end', '')
         context['request_path'] = self.request.path
+        
+        # 添加總數統計
+        context['total_count'] = Dataset.objects.count()
         
         return context

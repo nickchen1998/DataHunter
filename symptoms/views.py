@@ -35,6 +35,10 @@ class SymptomListView(LoginRequiredMixin, ListView):
         context['question'] = self.request.GET.get('question', '')
         context['departments'] = Symptom.objects.values_list('department', flat=True).distinct().order_by('department')
         context['genders'] = Symptom.objects.values_list('gender', flat=True).distinct().order_by('gender')
+        
+        # 添加總數統計
+        context['total_count'] = Symptom.objects.count()
+        
         return context
 
 
