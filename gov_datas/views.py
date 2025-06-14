@@ -52,7 +52,4 @@ class GovDataDatasetListView(ListView):
         context['update_end'] = self.request.GET.get('update_end', '')
         context['request_path'] = self.request.path
         
-        # 添加總數統計
-        context['total_count'] = Dataset.objects.count()
-        
         return context
