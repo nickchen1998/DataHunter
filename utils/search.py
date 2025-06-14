@@ -12,6 +12,7 @@ def hybrid_search_with_rerank(
     vector_field_name: str,
     text_field_name: str,
     original_question: str,
+    min_score: float = 0.80
 ) -> QuerySet:
     # 1. Extract keywords with OpenAI
     prompt = ChatPromptTemplate.from_template(
@@ -30,7 +31,7 @@ def hybrid_search_with_rerank(
     if keywords:
         for keyword in keywords:
             keyword_query |= Q(**{f"{text_field_name}__icontains": keyword})
-        keyword_results = list(queryset.filter(keyword_query)[:20])
+        keyword_results = list(queryset.filter(keyword_query)[:100])
     else:
         keyword_results = []
 
@@ -39,7 +40,7 @@ def hybrid_search_with_rerank(
     question_embeddings = OpenAIEmbeddings(model="text-embedding-3-small").embed_query(original_question)
     vector_results = list(queryset.annotate(
         distance=CosineDistance(vector_field_name, question_embeddings)
-    ).order_by("distance")[:20])
+    ).order_by("distance")[:100])
 
     # 4. Combine and deduplicate results
     combined_results = []
@@ -51,7 +52,10 @@ def hybrid_search_with_rerank(
             seen_ids.add(result.id)
 
     # 5. Rerank using Cohere
-    reranker = CohereRerank(model="rerank-multilingual-v3.0")
+    reranker = CohereRerank(
+        model="rerank-multilingual-v3.0",
+        top_n=100
+    )
 
     docs_to_rerank = [
         Document(page_content=getattr(res, text_field_name), metadata={"id": res.id})
@@ -63,7 +67,14 @@ def hybrid_search_with_rerank(
         query=original_question
     )
 
-    sorted_ids = [doc.metadata["id"] for doc in reranked_docs]
+    # 6. Filter by minimum score and get sorted IDs
+    high_score_docs = [doc for doc in reranked_docs]
+    
+    if not high_score_docs:
+        # 如果沒有符合分數條件的結果，回傳空的 QuerySet
+        return queryset.model.objects.none()
+    
+    sorted_ids = [doc.metadata["id"] for doc in high_score_docs]
     preserved_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(sorted_ids)])
 
     final_queryset = queryset.model.objects.filter(pk__in=sorted_ids).order_by(preserved_order)
