@@ -33,7 +33,7 @@ class GovDataDatasetListView(ListView):
         )
         
         # 預載入檔案關聯以提高效能
-        return queryset.prefetch_related('files')
+        return queryset.prefetch_related('file_set')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

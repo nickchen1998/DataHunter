@@ -153,7 +153,7 @@
                             </a>
                             <button onclick="showFileList('{{ data.dataset_id }}', '{{ data.name|escapejs }}')" 
                                     class="btn btn-xs btn-outline btn-secondary">
-                                檔案列表 ({{ data.file_set.count }})
+                                檔案列表 ({{ data.files.count }})
                             </button>
                         </div>
                     </div>
@@ -164,12 +164,12 @@
                             "dataset_id": {{ data.dataset_id }},
                             "dataset_name": "{{ data.name|escapejs }}",
                             "files": [
-                                {% for file in data.file_set.all %}
+                                {% for file in data.files.all %}
                                 {
-                                    "table_name": "{{ file.table_name|escapejs }}",
+                                    "filename": "{{ file.filename|escapejs }}",
                                     "original_download_url": "{{ file.original_download_url|escapejs }}",
                                     "encoding": "{{ file.encoding|escapejs }}",
-                                    "original_format": "{{ file.original_format|escapejs }}"
+                                    "original_formats": "{{ file.original_formats|escapejs }}"
                                 }{% if not forloop.last %},{% endif %}
                                 {% endfor %}
                             ]
@@ -331,7 +331,7 @@ function showFileList(datasetId, datasetName) {
                 <table class="table table-zebra w-full">
                     <thead>
                         <tr>
-                            <th>資料表名稱</th>
+                            <th>檔案名稱</th>
                             <th>原始下載網址</th>
                             <th>編碼格式</th>
                             <th>原始格式</th>
@@ -343,7 +343,7 @@ function showFileList(datasetId, datasetName) {
             data.files.forEach(file => {
                 tableHTML += `
                     <tr>
-                        <td class="font-medium">${file.table_name}</td>
+                        <td class="font-medium">${file.filename}</td>
                         <td>
                             <a href="${file.original_download_url}" target="_blank" 
                                class="link link-primary text-xs break-all">
@@ -351,7 +351,7 @@ function showFileList(datasetId, datasetName) {
                             </a>
                         </td>
                         <td><span class="badge badge-outline">${file.encoding}</span></td>
-                        <td><span class="badge badge-secondary">${file.original_format}</span></td>
+                        <td><span class="badge badge-secondary">${file.original_formats || 'N/A'}</span></td>
                     </tr>
                 `;
             });

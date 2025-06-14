@@ -19,6 +19,7 @@ venv/
 __pycache__/
 Datas/
 postgres_data/
+mongo_data/
 redis_data/
 
 # macOS 系統文件

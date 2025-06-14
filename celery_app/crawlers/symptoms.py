@@ -55,14 +55,21 @@ def get_paragraph(browser: Chrome, symptom: str, department: str):
 
 
 @app.task()
-def period_send_symptom_crawler_task():
+def period_send_symptom_crawler_task(demo=False):
     dataset_path = pathlib.Path(__file__).parent / "symptoms.json"
     with open(dataset_path, "r", encoding="utf-8") as f:
         for dataset in json.load(f):
-            symptom_crawler_task(
-                department=dataset["department"],
-                start_url=dataset["start_url"],
-            )
+            if demo:
+                symptom_crawler_task(
+                    department=dataset["department"],
+                    start_url=dataset["start_url"],
+                )
+                break
+            else:
+                symptom_crawler_task.delay(
+                    department=dataset["department"],
+                    start_url=dataset["start_url"],
+                )
 
 
 @app.task()
