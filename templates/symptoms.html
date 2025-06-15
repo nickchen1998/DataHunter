@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block filter_section %}
-    <form method="get" action="{% url 'symptom_list' %}" class="bg-gray-50 p-4 rounded-lg shadow-inner mb-4">
+    <form id="filter-form" method="get" action="{% url 'symptom_list' %}" class="bg-gray-50 p-4 rounded-lg shadow-inner mb-4">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
                 <label for="department-select" class="block font-semibold mb-1">科別：</label>
@@ -35,7 +35,7 @@
             </div>
         </div>
         <div class="flex justify-end mt-4 space-x-2">
-            <a href="{% url 'symptom_list' %}" class="btn btn-ghost">清除</a>
+            <button type="button" id="clear-btn" class="btn btn-ghost">清除</button>
             <button type="submit" class="btn btn-primary">搜尋</button>
         </div>
     </form>

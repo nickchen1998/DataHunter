@@ -1,0 +1,266 @@
+<!-- 對話小工具 -->
+<div class="flex-1 flex flex-col bg-white rounded-lg shadow overflow-hidden">
+    <!-- 對話標題 -->
+    <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4">
+        <h3 class="text-lg font-semibold flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+            </svg>
+            智能助手 - DataHunter AI
+        </h3>
+        <p class="text-blue-100 text-sm mt-1">協助您查詢和分析資料</p>
+    </div>
+
+    <!-- 對話訊息區域 -->
+    <div id="chat-messages" class="flex-1 p-4 overflow-y-auto bg-gray-50">
+        <!-- 訊息將通過 JavaScript 動態添加 -->
+    </div>
+
+    <!-- 連線狀態指示器 -->
+    <div id="connection-status" class="px-4 py-3 bg-yellow-50 border-t border-yellow-200 text-yellow-800 text-sm hidden">
+        <div class="flex items-center">
+            <div class="w-2 h-2 bg-yellow-400 rounded-full mr-2 animate-pulse"></div>
+            正在連線...
+        </div>
+    </div>
+
+    <!-- 輸入區域 -->
+    <div class="p-4 border-t border-gray-200 bg-white">
+        <div class="flex space-x-3">
+            <input 
+                type="text" 
+                id="chat-input" 
+                placeholder="請輸入您的問題，例如：「幫我查詢台北市的人口統計資料」" 
+                class="flex-1 input input-bordered focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                maxlength="500"
+            />
+            <button 
+                id="send-button" 
+                class="btn btn-primary px-6"
+                disabled
+            >
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+                發送
+            </button>
+        </div>
+        <div class="mt-2 flex justify-between items-center text-sm text-gray-500">
+            <span>按 Enter 發送訊息 • 最多 500 字元</span>
+            <span class="text-xs">💡 提示：您可以詢問資料查詢、統計分析等問題</span>
+        </div>
+    </div>
+</div>
+
+<!-- 對話功能 JavaScript -->
+<script>
+class ChatManager {
+    constructor() {
+        this.socket = null;
+        this.chatMessages = document.getElementById('chat-messages');
+        this.chatInput = document.getElementById('chat-input');
+        this.sendButton = document.getElementById('send-button');
+        this.connectionStatus = document.getElementById('connection-status');
+        
+        this.init();
+    }
+
+    init() {
+        this.connectWebSocket();
+        this.setupEventListeners();
+    }
+
+    connectWebSocket() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws/chat/`;
+        
+        this.showConnectionStatus('正在連線...');
+        
+        this.socket = new WebSocket(wsUrl);
+        
+        this.socket.onopen = (event) => {
+            console.log('WebSocket 連線成功');
+            this.hideConnectionStatus();
+            this.sendButton.disabled = false;
+        };
+        
+        this.socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            this.handleMessage(data);
+        };
+        
+        this.socket.onclose = (event) => {
+            console.log('WebSocket 連線關閉');
+            this.showConnectionStatus('連線已斷開，正在重新連線...');
+            this.sendButton.disabled = true;
+            
+            setTimeout(() => {
+                this.connectWebSocket();
+            }, 3000);
+        };
+        
+        this.socket.onerror = (error) => {
+            console.error('WebSocket 錯誤:', error);
+            this.showConnectionStatus('連線錯誤');
+        };
+    }
+
+    setupEventListeners() {
+        this.sendButton.addEventListener('click', () => {
+            this.sendMessage();
+        });
+        
+        this.chatInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                this.sendMessage();
+            }
+        });
+    }
+
+    sendMessage() {
+        const message = this.chatInput.value.trim();
+        if (!message || !this.socket || this.socket.readyState !== WebSocket.OPEN) {
+            return;
+        }
+        
+        // 立即顯示用戶訊息
+        const userMessageData = {
+            type: 'user_message',
+            message: message,
+            timestamp: this.getCurrentTimestamp()
+        };
+        this.handleMessage(userMessageData);
+        
+        // 發送訊息到後端
+        this.socket.send(JSON.stringify({
+            'message': message
+        }));
+        
+        this.chatInput.value = '';
+    }
+
+    getCurrentTimestamp() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        return `${hours}:${minutes}:${seconds}`;
+    }
+
+    handleMessage(data) {
+        const messageElement = this.createMessageElement(data);
+        this.chatMessages.appendChild(messageElement);
+        this.scrollToBottom();
+    }
+
+    createMessageElement(data) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'mb-4';
+        
+        let messageClass, iconColor, bgColor, textColor, alignment;
+        
+        switch (data.type) {
+            case 'user_message':
+                alignment = 'justify-end';
+                messageClass = 'max-w-xs';
+                iconColor = 'bg-blue-500';
+                bgColor = 'bg-white border border-gray-200';
+                textColor = 'text-gray-800';
+                break;
+            case 'ai_message':
+                alignment = 'justify-start';
+                messageClass = 'max-w-sm';
+                iconColor = 'bg-green-500';
+                bgColor = 'bg-white border border-gray-200';
+                textColor = 'text-gray-800';
+                break;
+            case 'system_message':
+                alignment = 'justify-center';
+                messageClass = 'max-w-xs';
+                iconColor = 'bg-gray-500';
+                bgColor = 'bg-gray-100 border border-gray-200';
+                textColor = 'text-gray-700';
+                break;
+            case 'error':
+                alignment = 'justify-center';
+                messageClass = 'max-w-xs';
+                iconColor = 'bg-red-500';
+                bgColor = 'bg-red-50 border border-red-200';
+                textColor = 'text-red-700';
+                break;
+            default:
+                alignment = 'justify-start';
+                messageClass = 'max-w-xs';
+                iconColor = 'bg-gray-500';
+                bgColor = 'bg-gray-100';
+                textColor = 'text-gray-700';
+        }
+        
+        messageDiv.innerHTML = `
+            <div class="flex ${alignment}">
+                <div class="${messageClass}">
+                    <div class="flex items-start space-x-2">
+                        <div class="w-6 h-6 ${iconColor} rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                            ${this.getMessageIcon(data.type)}
+                        </div>
+                        <div class="flex-1">
+                            <div class="p-3 rounded-lg ${bgColor} ${textColor}">
+                                <p class="text-sm leading-relaxed">${this.escapeHtml(data.message)}</p>
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1 px-1">
+                                ${data.timestamp}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        return messageDiv;
+    }
+
+    getMessageIcon(type) {
+        const iconClass = 'w-3 h-3 text-white';
+        switch (type) {
+            case 'user_message':
+                return `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>`;
+            case 'ai_message':
+                return `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>`;
+            case 'system_message':
+                return `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`;
+            case 'error':
+                return `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`;
+            default:
+                return `<svg class="${iconClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>`;
+        }
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    scrollToBottom() {
+        this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+    }
+
+    showConnectionStatus(message) {
+        this.connectionStatus.querySelector('div').innerHTML = `
+            <div class="w-2 h-2 bg-yellow-400 rounded-full mr-2 animate-pulse"></div>
+            ${message}
+        `;
+        this.connectionStatus.classList.remove('hidden');
+    }
+
+    hideConnectionStatus() {
+        this.connectionStatus.classList.add('hidden');
+    }
+}
+
+// 初始化對話管理器
+document.addEventListener('DOMContentLoaded', function() {
+    new ChatManager();
+});
+</script> 
