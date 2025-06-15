@@ -88,9 +88,17 @@ OPENAI_API_KEY="你的 OpenAI API 金鑰" # 必填
 
 ### 4️⃣ 執行應用程式
 
+**重要：由於本專案使用了 Django Channels 和 WebSocket 功能，必須使用 ASGI 服務器運行**
+
 ```bash
-python manage.py runserver
+# 使用 daphne ASGI 服務器（推薦）
+daphne -p 8000 DataHunter.asgi:application
+
+# 或者使用 uvicorn（替代方案）
+uvicorn DataHunter.asgi:application --host 127.0.0.1 --port 8000
 ```
+
+**注意：不要使用 `python manage.py runserver`，因為它不支援 WebSocket 連線**
 
 ---
 

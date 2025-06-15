@@ -17,6 +17,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.urls import include
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('', include('home.urls')),
@@ -25,3 +27,7 @@ urlpatterns = [
     path('symptoms/', include('symptoms.urls')),
     path('gov-data/', include('gov_datas.urls')),
 ]
+
+# 在開發模式下提供靜態檔案
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
