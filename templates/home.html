@@ -342,11 +342,28 @@
                 return;
             }
             
+            // 立即顯示用戶訊息
+            const userMessageData = {
+                type: 'user_message',
+                message: message,
+                timestamp: this.getCurrentTimestamp()
+            };
+            this.handleMessage(userMessageData);
+            
+            // 發送訊息到後端
             this.socket.send(JSON.stringify({
                 'message': message
             }));
             
             this.chatInput.value = '';
+        }
+
+        getCurrentTimestamp() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            return `${hours}:${minutes}:${seconds}`;
         }
 
         handleMessage(data) {

@@ -3,6 +3,8 @@ import asyncio
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import User
+from langchain_openai import ChatOpenAI
+from langchain_core.output_parsers import StrOutputParser
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -39,21 +41,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             if not message:
                 return
             
-            # 回傳用戶訊息確認
-            await self.send(text_data=json.dumps({
-                'type': 'user_message',
-                'message': message,
-                'timestamp': self.get_current_timestamp()
-            }))
-            
-            # 模擬思考時間
-            await asyncio.sleep(1)
-            
-            # 發送 AI 回覆（目前固定回覆）
-            ai_response = "功能測試中"
+            # 不再回傳用戶訊息，因為前端已經立即顯示了
+            # 直接處理 AI 回覆
+            llm = ChatOpenAI(model="gpt-4o-mini")
+            ai_response = llm.invoke(message)
             await self.send(text_data=json.dumps({
                 'type': 'ai_message',
-                'message': ai_response,
+                'message': ai_response.content,
                 'timestamp': self.get_current_timestamp()
             }))
             
