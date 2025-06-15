@@ -8,7 +8,12 @@
             </svg>
             智能助手 - DataHunter AI
         </h3>
-        <p class="text-blue-100 text-sm mt-1">協助您查詢和分析資料</p>
+        <div class="text-blue-100 text-sm mt-1">
+            <div class="flex items-center">
+                <span>協助您查詢和分析資料</span>
+                {% block chat-data-source %}{% endblock %}
+            </div>
+        </div>
     </div>
 
     <!-- 對話訊息區域 -->

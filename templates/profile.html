@@ -248,12 +248,19 @@
                                     載入中...
                                 </span>
                             </h3>
-                            <button type="button" class="btn btn-primary btn-sm" id="add-new-key">
-                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                                </svg>
-                                新增
-                            </button>
+                            <div class="flex space-x-2">
+                                <button type="button" class="btn btn-ghost btn-sm" id="refresh-keys" title="重新載入">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                    </svg>
+                                </button>
+                                <button type="button" class="btn btn-primary btn-sm" id="add-new-key">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                    </svg>
+                                    新增
+                                </button>
+                            </div>
                         </div>
                         
                         <!-- 新增 API Key 表單 -->
@@ -438,6 +445,8 @@ class ApiKeyManager {
     constructor() {
         this.currentEditingPrefix = null;
         this.currentEditingElement = null;
+        this.isLoading = false;
+        this.hasLoadedOnce = false;
         this.init();
     }
 
@@ -472,6 +481,9 @@ class ApiKeyManager {
 
         // 新增按鈕
         document.getElementById('add-new-key')?.addEventListener('click', () => this.showCreateForm());
+        
+        // 刷新按鈕
+        document.getElementById('refresh-keys')?.addEventListener('click', () => this.refreshApiKeys());
         
         // 表單按鈕
         document.getElementById('cancel-create-btn')?.addEventListener('click', () => this.hideCreateForm());
@@ -518,13 +530,31 @@ class ApiKeyManager {
         
         // 如果切換到 API Key 標籤，載入數據
         if (targetTab === 'apikey') {
-            this.loadApiKeys();
+            // 如果從未載入過，則載入
+            if (!this.hasLoadedOnce && !this.isLoading) {
+                this.loadApiKeys();
+            }
+            // 如果已經載入過，顯示現有資料（用戶可以手動刷新）
         }
     }
 
-    async loadApiKeys() {
+    async loadApiKeys(forceReload = false) {
+        // 防止重複載入
+        if (this.isLoading) {
+            console.log('API Keys 正在載入中，跳過重複請求');
+            return;
+        }
+        
+        // 如果已經載入過且不是強制重新載入，則跳過
+        if (this.hasLoadedOnce && !forceReload) {
+            console.log('API Keys 已載入，跳過重複請求');
+            return;
+        }
+        
         try {
+            this.isLoading = true;
             this.showLoading();
+            
             const response = await fetch('/profile/api-keys/');
             const data = await response.json();
             
@@ -532,6 +562,7 @@ class ApiKeyManager {
                 this.updateKeyCount(data.total_keys, data.max_keys);
                 this.renderKeys(data.keys);
                 this.updateAddButton(data.can_create_more, data.max_keys);
+                this.hasLoadedOnce = true;
             } else {
                 this.showToast('載入 API Keys 失敗：' + data.error, 'error');
             }
@@ -539,6 +570,7 @@ class ApiKeyManager {
             console.error('載入 API Keys 錯誤:', error);
             this.showToast('載入 API Keys 時發生錯誤', 'error');
         } finally {
+            this.isLoading = false;
             this.hideLoading();
         }
     }
@@ -551,6 +583,12 @@ class ApiKeyManager {
 
     hideLoading() {
         document.getElementById('api-key-loading')?.classList.add('hidden');
+    }
+
+    refreshApiKeys() {
+        console.log('手動刷新 API Keys');
+        this.hasLoadedOnce = false; // 重置載入狀態
+        this.loadApiKeys(true); // 強制重新載入
     }
 
     updateKeyCount(current, max) {
@@ -713,7 +751,7 @@ class ApiKeyManager {
                 this.showToast(data.message, 'success');
                 this.hideCreateForm();
                 this.showApiKeyModal(data.key_data);
-                this.loadApiKeys();
+                this.loadApiKeys(true); // 強制重新載入
             } else {
                 this.showToast(data.error, 'error');
             }
@@ -844,7 +882,7 @@ class ApiKeyManager {
             
             if (data.success) {
                 this.showToast(data.message, 'success');
-                this.loadApiKeys();
+                this.loadApiKeys(true); // 強制重新載入
             } else {
                 this.showToast(data.error, 'error');
             }
