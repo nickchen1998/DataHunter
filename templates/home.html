@@ -12,6 +12,7 @@
                 <h2 class="text-xl font-bold mb-6">📑 資料獵人 - DataHunter</h2>
             </a>
 
+            {% if request_path != '/' %}
             <div class="mb-4">
                 <label for="source-select" class="block font-semibold mb-1">資料來源：</label>
                 <select id="source-select" class="select select-bordered w-full">
@@ -20,6 +21,7 @@
                     <option value="/gov-data/list/" {% if request_path == '/gov-data/list/' %}selected{% endif %}>政府資料開放平臺</option>
                 </select>
             </div>
+            {% endif %}
 
             <div class="mb-4">
                 {% block source-description %}{% endblock %}
@@ -258,11 +260,14 @@
         }, 3000);
     }
 
-    document.getElementById('source-select').addEventListener('change', function () {
-        if (this.value) {
-            window.location.href = this.value;
-        }
-    });
+    const sourceSelect = document.getElementById('source-select');
+    if (sourceSelect) {
+        sourceSelect.addEventListener('change', function () {
+            if (this.value) {
+                window.location.href = this.value;
+            }
+        });
+    }
 
     // AJAX 分頁功能
     function loadPage(pageNumber) {
