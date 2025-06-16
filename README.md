@@ -139,32 +139,8 @@ docker-compose --profile production up -d
 
 ### 自動排程
 
-- **衛生福利部-台灣 e 院**: 每天凌晨 1:00 自動爬取
+- **衛生福利部-台灣 e 院**: 每週日凌晨 1:00 自動爬取
 - **政府開放資料**: 每天凌晨 1:00 自動爬取
-
-### 手動執行
-
-```bash
-# 進入 Celery Beat 容器
-docker exec -it celery-beat bash
-
-# 手動執行症狀爬蟲
-celery -A DataHunter call celery_app.crawlers.symptoms.period_send_symptom_crawler_task
-
-# 手動執行政府資料爬蟲
-celery -A DataHunter call celery_app.crawlers.gov_datas.period_crawl_government_datasets
-```
-
-### 監控狀態
-
-```bash
-# 查看 Celery 日誌
-docker-compose logs -f celery-beat
-docker-compose logs -f celery-static-worker
-
-# 查看所有服務狀態
-docker-compose ps
-```
 
 ---
 
