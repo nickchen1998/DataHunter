@@ -33,4 +33,4 @@ ENV DJANGO_SETTINGS_MODULE=DataHunter.settings
 EXPOSE 8000
 
 # 預設命令
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"] 
+CMD ["daphne","-b","0.0.0.0","-p","8000","DataHunter.asgi"]
