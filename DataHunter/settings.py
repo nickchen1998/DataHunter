@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -129,6 +130,26 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
+# Heroku 部署所需的 STATIC_ROOT 設定
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# 生產環境設定
+if 'DATABASE_URL' in os.environ:
+    # Heroku 生產環境設定
+    DEBUG = False
+    ALLOWED_HOSTS = ['*']  # 或者指定您的 Heroku 應用域名
+    
+    # 使用 Heroku 的 PostgreSQL 資料庫
+    DATABASES['default'] = dj_database_url.parse(os.environ.get('DATABASE_URL'))
+    
+    # 安全設定
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    
+    # 靜態檔案設定 - 使用 WhiteNoise
+    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
@@ -142,9 +163,21 @@ LOGOUT_REDIRECT_URL = '/login/'
 # Django Channels 設置
 ASGI_APPLICATION = 'DataHunter.asgi.application'
 
-# Channel layers 設置 (使用 Redis)
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
-    },
-}
+# Channel layers 設置
+if 'REDIS_URL' in os.environ:
+    # Heroku 生產環境使用 Redis
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                "hosts": [os.environ.get('REDIS_URL')],
+            },
+        },
+    }
+else:
+    # 開發環境使用內存
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        },
+    }

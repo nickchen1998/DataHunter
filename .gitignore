@@ -12,6 +12,9 @@ yarn-error.log*
 # Tailwind CSS 生成文件
 static/css/output.css
 
+# Django 靜態檔案收集目錄
+staticfiles/
+
 # 目錄名稱
 venv/
 .idea/
@@ -29,3 +32,7 @@ redis_data/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Heroku 相關
+.env.local
+.env.production
