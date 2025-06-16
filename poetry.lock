@@ -827,23 +827,6 @@ argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
-name = "django-environ"
-version = "0.12.0"
-description = "A package that allows you to utilize 12factor inspired environment variables to configure your Django application."
-optional = false
-python-versions = "<4,>=3.9"
-groups = ["main"]
-files = [
-    {file = "django_environ-0.12.0-py2.py3-none-any.whl", hash = "sha256:92fb346a158abda07ffe6eb23135ce92843af06ecf8753f43adf9d2366dcc0ca"},
-    {file = "django_environ-0.12.0.tar.gz", hash = "sha256:227dc891453dd5bde769c3449cf4a74b6f2ee8f7ab2361c93a07068f4179041a"},
-]
-
-[package.extras]
-develop = ["coverage[toml] (>=5.0a4)", "furo (>=2024.8.6)", "pytest (>=4.6.11)", "setuptools (>=71.0.0)", "sphinx (>=5.0)", "sphinx-notfound-page"]
-docs = ["furo (>=2024.8.6)", "sphinx (>=5.0)", "sphinx-notfound-page"]
-testing = ["coverage[toml] (>=5.0a4)", "pytest (>=4.6.11)", "setuptools (>=71.0.0)"]
-
-[[package]]
 name = "django-rest-framework"
 version = "0.1.0"
 description = "alias."
@@ -3898,4 +3881,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "e0d512be26e47fc4aae1a8316b17eef2c72c7b05c75cf3aa13abb53dad720c0a"
+content-hash = "3a694932736ae8797c357c8446a929947f39f3b4d03b6bf561e208b267a9faf1"
