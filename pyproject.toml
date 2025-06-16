@@ -26,10 +26,6 @@ pymongo = "^4.13.1"
 channels = "^4.2.2"
 channels-redis = "^4.2.1"
 daphne = "^4.2.0"
-# Heroku 部署所需依賴
-dj-database-url = "^2.1.0"
-whitenoise = "^6.6.0"
-gunicorn = "^21.2.0"
 
 
 [build-system]

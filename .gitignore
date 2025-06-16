@@ -9,9 +9,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Tailwind CSS 生成文件
-static/css/output.css
-
 # Django 靜態檔案收集目錄
 staticfiles/
 
@@ -32,7 +29,3 @@ redis_data/
 .Trashes
 ehthumbs.db
 Thumbs.db
-
-# Heroku 相關
-.env.local
-.env.production

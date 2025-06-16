@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,12 +22,13 @@ load_dotenv(BASE_DIR / '.env')
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-bz%jdc6_*sk14c06vtq!33&zl_oh8g&6qbp^4!o&kc5o=wh)3g'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-bz%jdc6_*sk14c06vtq!33&zl_oh8g&6qbp^4!o&kc5o=wh)3g')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = []
+# 允許的主機
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0').split(',')
 
 # Application definition
 
@@ -83,15 +83,13 @@ WSGI_APPLICATION = 'DataHunter.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': "DataHunter",
+        'NAME': os.getenv("POSTGRES_DB", "DataHunter"),
         'USER': os.getenv("POSTGRES_USER", "postgres"),
         'PASSWORD': os.getenv("POSTGRES_PASSWORD", "postgres"),
         'HOST': os.getenv("POSTGRES_HOST", "localhost"),
-        'PORT': "5432",
+        'PORT': os.getenv("POSTGRES_PORT", "5432"),
     }
 }
-
-# Database router removed - using simple multi-database setup
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -130,40 +128,8 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
-# Heroku 部署所需的 STATIC_ROOT 設定
+# 生產環境靜態檔案收集目錄
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-# 生產環境設定
-if 'DATABASE_URL' in os.environ:
-    # Heroku 生產環境設定
-    DEBUG = False
-    
-    # 更智能的 ALLOWED_HOSTS 配置
-    ALLOWED_HOSTS = []
-    if 'ALLOWED_HOSTS' in os.environ:
-        ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(',')
-    else:
-        # 自動允許 Heroku 域名和常見域名
-        ALLOWED_HOSTS = [
-            '.herokuapp.com',  # 允許所有 herokuapp.com 子域名
-            'localhost',
-            '127.0.0.1',
-        ]
-        # 如果有 HEROKU_APP_NAME，添加具體的應用域名
-        if 'HEROKU_APP_NAME' in os.environ:
-            app_name = os.environ.get('HEROKU_APP_NAME')
-            ALLOWED_HOSTS.append(f'{app_name}.herokuapp.com')
-    
-    # 使用 Heroku 的 PostgreSQL 資料庫
-    DATABASES['default'] = dj_database_url.parse(os.environ.get('DATABASE_URL'))
-    
-    # 安全設定
-    SECURE_SSL_REDIRECT = True
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    
-    # 靜態檔案設定 - 使用 WhiteNoise
-    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -179,18 +145,20 @@ LOGOUT_REDIRECT_URL = '/login/'
 ASGI_APPLICATION = 'DataHunter.asgi.application'
 
 # Channel layers 設置
-if 'REDIS_URL' in os.environ:
-    # Heroku 生產環境使用 Redis
+REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+
+if REDIS_URL and REDIS_URL != 'redis://localhost:6379/0':
+    # 使用 Redis Channel Layer
     CHANNEL_LAYERS = {
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
             'CONFIG': {
-                "hosts": [os.environ.get('REDIS_URL')],
+                "hosts": [REDIS_URL],
             },
         },
     }
 else:
-    # 開發環境使用內存
+    # 開發環境使用內存 Channel Layer
     CHANNEL_LAYERS = {
         'default': {
             'BACKEND': 'channels.layers.InMemoryChannelLayer',
