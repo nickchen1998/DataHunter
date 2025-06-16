@@ -172,7 +172,6 @@
                             "files": [
                                 {% for file in data.file_set.all %}
                                 {
-                                    "table_name": "{{ file.table_name|escapejs }}",
                                     "original_download_url": "{{ file.original_download_url|escapejs }}",
                                     "encoding": "{{ file.encoding|escapejs }}",
                                     "original_format": "{{ file.original_format|escapejs }}"
@@ -337,7 +336,6 @@ function showFileList(datasetId, datasetName) {
                 <table class="table table-zebra w-full">
                     <thead>
                         <tr>
-                            <th>資料表名稱</th>
                             <th>原始下載網址</th>
                             <th>編碼格式</th>
                             <th>原始格式</th>
@@ -349,14 +347,13 @@ function showFileList(datasetId, datasetName) {
             data.files.forEach(file => {
                 tableHTML += `
                     <tr>
-                        <td class="font-medium">${file.table_name}</td>
                         <td>
                             <a href="${file.original_download_url}" target="_blank" 
                                class="link link-primary text-xs break-all">
                                 ${file.original_download_url}
                             </a>
                         </td>
-                        <td><span class="badge badge-outline">${file.encoding}</span></td>
+                        <td><span class="badge badge-outline whitespace-nowrap">${file.encoding}</span></td>
                         <td><span class="badge badge-secondary">${file.original_format}</span></td>
                     </tr>
                 `;
