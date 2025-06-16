@@ -25,6 +25,7 @@ pymongo = "^4.13.1"
 channels = "^4.2.2"
 channels-redis = "^4.2.1"
 daphne = "^4.2.0"
+django-allauth = "^65.9.0"
 
 
 [build-system]

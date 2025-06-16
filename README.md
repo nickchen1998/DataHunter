@@ -9,6 +9,7 @@
 - [Python](https://www.python.org/) - Python Programming Language
 - [Django](https://www.djangoproject.com/) - Python Web Framework
 - [Django Channels](https://channels.readthedocs.io/) - WebSocket Support
+- [django-allauth](https://django-allauth.readthedocs.io/) - Authentication & Social Login
 - [Postgres](https://www.postgresql.org/) - Database with pgvector
 - [Redis](https://redis.io/) - Channel Layer & Caching
 - [OpenAI](https://openai.com/) - AI Model
@@ -76,6 +77,10 @@ REDIS_URL=redis://localhost:6379/0
 # API 金鑰
 OPENAI_API_KEY=your-openai-api-key
 COHERE_API_KEY=your-cohere-api-key
+
+# Google OAuth 設定（可選）
+GOOGLE_OAUTH2_CLIENT_ID=your-google-client-id
+GOOGLE_OAUTH2_CLIENT_SECRET=your-google-client-secret
 ```
 
 ### 3️⃣ 啟動資料庫服務
@@ -107,7 +112,55 @@ daphne -p 8000 -b 0.0.0.0 DataHunter.asgi:application
 celery -A DataHunter worker --loglevel=info
 ```
 
-### 6️⃣ 訪問應用
+### 6️⃣ Google OAuth 設定（可選）
+
+本專案支援 Google OAuth 登入功能，讓用戶可以使用 Google 帳戶快速註冊和登入。
+
+#### 🔧 Google Cloud Console 設定
+
+1. **創建 OAuth 應用程式**：
+   - 前往 [Google Cloud Console](https://console.cloud.google.com/)
+   - 創建新專案或選擇現有專案
+   - 啟用 Google+ API（在「API 和服務」→「程式庫」中搜尋並啟用）
+
+2. **設定 OAuth 2.0 憑證**：
+   - 在「API 和服務」→「憑證」中點擊「建立憑證」→「OAuth 用戶端 ID」
+   - 選擇應用程式類型：「網路應用程式」
+   - 設定授權重新導向 URI：
+     - 開發環境：`http://localhost:8000/accounts/google/login/callback/`
+     - 生產環境：`https://yourdomain.com/accounts/google/login/callback/`
+
+3. **複製憑證**：
+   - 複製 Client ID 和 Client Secret 到 `.env` 檔案
+
+#### ⚙️ Django 設定
+
+執行以下命令來設置 Google OAuth 應用程式：
+
+```bash
+python manage.py setup_google_oauth --client-id YOUR_CLIENT_ID --client-secret YOUR_CLIENT_SECRET
+```
+
+#### 🎯 功能特色
+
+- **登入頁面 Google 登入**：在 `/login/` 頁面提供「使用 Google 登入」選項
+- **第三方登入管理**：在個人資料頁面（`/profile/`）的「🔗 第三方登入」標籤中管理連結
+- **自動跳轉**：連結或登入後自動跳轉到適當頁面
+- **安全性**：使用 OAuth 2.0 標準協議，支援 PKCE
+
+#### 🧪 測試流程
+
+1. **新用戶註冊**：點擊「使用 Google 登入」→ 完成授權 → 自動創建帳戶
+2. **現有用戶連結**：個人資料頁面 → 第三方登入標籤 → 連結 Google
+3. **快速登入**：使用已連結的 Google 帳戶一鍵登入
+
+#### ⚠️ 注意事項
+
+- 確保重定向 URI 在 Google Cloud Console 中設定正確
+- 生產環境請使用 HTTPS
+- 妥善保管 Client Secret，不要提交到版本控制
+
+### 7️⃣ 訪問應用
 
 - **Web 應用**: http://localhost:8000
 - **管理後台**: http://localhost:8000/admin/
@@ -132,6 +185,23 @@ docker-compose --profile production up -d
 - **redis** - Redis 服務 (Channel Layer & Celery)
 - **celery-beat** - Celery 排程服務
 - **celery-*-worker** - Celery 工作進程
+
+---
+
+## 👤 用戶認證系統
+
+### 登入方式
+
+- **傳統登入**: 使用 Email/用戶名稱 + 密碼
+- **Google OAuth**: 一鍵 Google 帳戶登入
+- **自動註冊**: Google 登入時自動創建帳戶
+
+### 個人資料管理
+
+- **基本資料編輯**: 用戶名稱、姓名修改
+- **密碼管理**: 安全的密碼修改功能
+- **第三方登入**: Google 帳戶連結/取消連結
+- **帳戶安全**: 雙重確認的帳戶刪除功能
 
 ---
 
@@ -204,6 +274,42 @@ python manage.py test
 2. **資料庫**: 需要 PostgreSQL 並啟用 pgvector 擴展
 3. **API 金鑰**: 確保設定正確的 OpenAI 和 Cohere API 金鑰
 4. **環境變數**: 生產環境請使用安全的 SECRET_KEY 和密碼
+5. **Google OAuth**: 如啟用，請確保重定向 URI 設定正確
+
+---
+
+## 🔧 故障排除
+
+### Google OAuth 常見問題
+
+1. **redirect_uri_mismatch 錯誤**：
+   - 檢查 Google Cloud Console 中的重定向 URI 設定
+   - 確保 URI 完全匹配（包括協議、域名、端口和路径）
+   - 開發環境：`http://localhost:8000/accounts/google/login/callback/`
+
+2. **invalid_client 錯誤**：
+   - 檢查 `.env` 檔案中的 `GOOGLE_OAUTH2_CLIENT_ID` 和 `GOOGLE_OAUTH2_CLIENT_SECRET`
+   - 確認是否已執行 `setup_google_oauth` 命令
+
+3. **Google 登入後無法跳轉**：
+   - 檢查 `CustomSocialAccountAdapter` 是否正確設定
+   - 確認 `SOCIALACCOUNT_ADAPTER` 設定正確
+
+4. **檢查 Google OAuth 設定**：
+   ```bash
+   python manage.py shell -c "
+   from allauth.socialaccount.models import SocialApp
+   from django.contrib.sites.models import Site
+   print('Sites:', list(Site.objects.all()))
+   print('Google Apps:', list(SocialApp.objects.filter(provider='google')))
+   "
+   ```
+
+### 一般問題
+
+1. **WebSocket 連線失敗**：確保使用 Daphne 而非 Django runserver
+2. **資料庫連線問題**：檢查 PostgreSQL 服務是否啟動
+3. **Redis 連線問題**：檢查 Redis 服務狀態和 `REDIS_URL` 設定
 
 ---
 

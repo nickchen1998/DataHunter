@@ -26,6 +26,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('symptoms/', include('symptoms.urls')),
     path('gov-data/', include('gov_datas.urls')),
+    path('accounts/', include('allauth.urls')),  # allauth URLs
 ]
 
 # 在開發模式下提供靜態檔案
