@@ -1,12 +1,7 @@
 import json
-import asyncio
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, List
 from channels.generic.websocket import AsyncWebsocketConsumer
-from channels.db import database_sync_to_async
-from django.contrib.auth.models import User
 from asgiref.sync import sync_to_async
-from langchain_openai import ChatOpenAI
-from langchain_core.output_parsers import StrOutputParser
 
 # 導入聊天代理
 from home.agents import ChatAgent

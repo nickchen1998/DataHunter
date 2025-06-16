@@ -164,14 +164,37 @@ class ChatManager {
     }
 
     addReference(button) {
+        // 構建參考資料物件 - 支援不同資料類型
         const referenceData = {
-            id: button.dataset.id,
-            department: button.dataset.department,
-            gender: button.dataset.gender,
-            symptom: button.dataset.symptom,
-            question: button.dataset.question,
-            answer: button.dataset.answer
+            id: button.dataset.id
         };
+        
+        // 檢測資料類型並構建相應的資料結構
+        if (button.dataset.department && button.dataset.gender && button.dataset.symptom) {
+            // 症狀資料
+            referenceData.department = button.dataset.department;
+            referenceData.gender = button.dataset.gender;
+            referenceData.symptom = button.dataset.symptom;
+            referenceData.question = button.dataset.question;
+            referenceData.answer = button.dataset.answer;
+        } else if (button.dataset.name && button.dataset.category) {
+            // 政府資料
+            referenceData.dataset_id = button.dataset.id;
+            referenceData.name = button.dataset.name;
+            referenceData.category = button.dataset.category;
+            referenceData.department = button.dataset.department;
+            referenceData.description = button.dataset.description;
+            referenceData.columns_description = button.dataset.columnsDescription;
+            referenceData.update_frequency = button.dataset.updateFrequency;
+            referenceData.license = button.dataset.license;
+            referenceData.price = button.dataset.price;
+            referenceData.url = button.dataset.url;
+        } else {
+            // 通用資料結構 - 複製所有 data 屬性
+            Object.keys(button.dataset).forEach(key => {
+                referenceData[key] = button.dataset[key];
+            });
+        }
         
         if (this.references.has(referenceData.id)) {
             // 已存在，顯示提示
@@ -261,10 +284,14 @@ class ChatManager {
         const div = document.createElement('div');
         div.className = 'reference-item card shadow-md bg-white p-4 border border-gray-200 mb-4';
         
-        div.innerHTML = `
-            <div class="flex justify-between items-start">
+        let contentHTML = '';
+        
+        // 根據資料類型決定顯示內容
+        if (data.gender && data.symptom && data.question && data.answer) {
+            // 症狀資料
+            contentHTML = `
                 <div class="flex-1 space-y-2 text-sm text-gray-800">
-                    <div><span class="font-semibold">科別：</span>${data.department}</div>
+                    <div><span class="font-semibold">科別：</span>${data.department || '未知'}</div>
                     <div><span class="font-semibold">性別：</span>${data.gender}</div>
                     <div><span class="font-semibold">主訴：</span>${data.symptom}</div>
                     <div>
@@ -276,6 +303,45 @@ class ChatManager {
                         <span class="text-gray-600">${data.answer.length > 100 ? data.answer.substring(0, 100) + '...' : data.answer}</span>
                     </div>
                 </div>
+            `;
+        } else if (data.name && data.category && data.description) {
+            // 政府資料
+            contentHTML = `
+                <div class="flex-1 space-y-2 text-sm text-gray-800">
+                    <div><span class="font-semibold">資料集名稱：</span>${data.name}</div>
+                    <div><span class="font-semibold">服務分類：</span>${data.category}</div>
+                    <div><span class="font-semibold">資料提供機關：</span>${data.department || '未知'}</div>
+                    <div>
+                        <span class="font-semibold">資料集描述：</span>
+                        <span class="text-gray-600">${data.description.length > 100 ? data.description.substring(0, 100) + '...' : data.description}</span>
+                    </div>
+                    ${data.columns_description ? `
+                    <div>
+                        <span class="font-semibold">主要欄位：</span>
+                        <span class="text-gray-600">${data.columns_description.length > 100 ? data.columns_description.substring(0, 100) + '...' : data.columns_description}</span>
+                    </div>
+                    ` : ''}
+                    ${data.update_frequency ? `<div><span class="font-semibold">更新頻率：</span>${data.update_frequency}</div>` : ''}
+                    ${data.license ? `<div><span class="font-semibold">授權方式：</span>${data.license}</div>` : ''}
+                </div>
+            `;
+        } else {
+            // 通用資料 - 顯示所有可用欄位
+            const fields = Object.keys(data).filter(key => key !== 'id' && data[key]);
+            contentHTML = `
+                <div class="flex-1 space-y-2 text-sm text-gray-800">
+                    ${fields.map(field => {
+                        const value = data[field];
+                        const displayValue = value.length > 100 ? value.substring(0, 100) + '...' : value;
+                        return `<div><span class="font-semibold">${field}：</span><span class="text-gray-600">${displayValue}</span></div>`;
+                    }).join('')}
+                </div>
+            `;
+        }
+        
+        div.innerHTML = `
+            <div class="flex justify-between items-start">
+                ${contentHTML}
                 <div class="ml-4 flex-shrink-0">
                     <button class="btn btn-sm btn-outline btn-error remove-reference-btn" 
                             data-id="${data.id}">

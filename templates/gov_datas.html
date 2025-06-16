@@ -87,79 +87,96 @@
         {% if object_list %}
             {% for data in object_list %}
                 <div class="card shadow-md bg-white p-4 border border-gray-200">
-                    <div class="space-y-2 text-sm text-gray-800">
-                        <div><span class="font-semibold">資料集 ID：</span>{{ data.dataset_id }}</div>
-                        <div><span class="font-semibold">資料集名稱：</span>{{ data.name }}</div>
-                        <div><span class="font-semibold">服務分類：</span>{{ data.category }}</div>
-                        <div><span class="font-semibold">資料提供機關：</span>{{ data.department }}</div>
-                        
-                        <!-- 資料集描述欄 -->
-                        <div>
-                            <span class="font-semibold">資料集描述：</span>
-                            {% if data.description|length > 100 %}
-                                <span id="description-preview-{{ data.dataset_id }}">{{ data.description|slice:":100" }}...</span>
-                                <span id="description-full-{{ data.dataset_id }}" class="hidden">{{ data.description }}</span>
-                                <button data-id="{{ data.dataset_id }}" data-field="description"
-                                        class="btn btn-xs btn-outline btn-info ml-2 toggle-button">展開
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1 space-y-2 text-sm text-gray-800">
+                            <div><span class="font-semibold">資料集 ID：</span>{{ data.dataset_id }}</div>
+                            <div><span class="font-semibold">資料集名稱：</span>{{ data.name }}</div>
+                            <div><span class="font-semibold">服務分類：</span>{{ data.category }}</div>
+                            <div><span class="font-semibold">資料提供機關：</span>{{ data.department }}</div>
+                            
+                            <!-- 資料集描述欄 -->
+                            <div>
+                                <span class="font-semibold">資料集描述：</span>
+                                {% if data.description|length > 100 %}
+                                    <span id="description-preview-{{ data.dataset_id }}">{{ data.description|slice:":100" }}...</span>
+                                    <span id="description-full-{{ data.dataset_id }}" class="hidden">{{ data.description }}</span>
+                                    <button data-id="{{ data.dataset_id }}" data-field="description"
+                                            class="btn btn-xs btn-outline btn-info ml-2 toggle-button">展開
+                                    </button>
+                                {% else %}
+                                    {{ data.description }}
+                                {% endif %}
+                            </div>
+                            
+                            <!-- 主要欄位說明 - 支援展開/收合 -->
+                            <div>
+                                <span class="font-semibold">主要欄位說明：</span>
+                                {% if data.columns_description %}
+                                    <div id="columns-preview-{{ data.dataset_id }}" class="inline">
+                                        {% for column in data.columns_description|slice:":3" %}
+                                            <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs mr-1 mb-1">{{ column }}</span>
+                                        {% endfor %}
+                                        {% if data.columns_description|length > 3 %}
+                                            <button data-id="{{ data.dataset_id }}" data-field="columns"
+                                                    class="btn btn-xs btn-outline btn-info ml-2 toggle-button">
+                                                展開 ({{ data.columns_description|length|add:"-3" }} 個更多)
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                    <div id="columns-full-{{ data.dataset_id }}" class="hidden">
+                                        {% for column in data.columns_description %}
+                                            <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs mr-1 mb-1">{{ column }}</span>
+                                        {% endfor %}
+                                        {% if data.columns_description|length > 3 %}
+                                            <button data-id="{{ data.dataset_id }}" data-field="columns"
+                                                    class="btn btn-xs btn-outline btn-info ml-2 toggle-button">收合
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    無
+                                {% endif %}
+                            </div>
+                            
+                            <div><span class="font-semibold">更新頻率：</span>{{ data.update_frequency }}</div>
+                            <div><span class="font-semibold">授權方式：</span>{{ data.license }}</div>
+                            <div><span class="font-semibold">計費方式：</span>{{ data.price }}</div>
+                            
+                            {% if data.contact_person %}
+                            <div><span class="font-semibold">聯絡人：</span>{{ data.contact_person }}</div>
+                            {% endif %}
+                            
+                            {% if data.contact_phone %}
+                            <div><span class="font-semibold">聯絡電話：</span>{{ data.contact_phone }}</div>
+                            {% endif %}
+                            
+                            <div><span class="font-semibold">上架時間：</span>{{ data.upload_time|date:"Y-m-d H:i:s" }}</div>
+                            <div><span class="font-semibold">最後更新時間：</span>{{ data.update_time|date:"Y-m-d H:i:s" }}</div>
+                            
+                            <!-- 其他操作按鈕區域 -->
+                            <div class="pt-2 border-t border-gray-200 flex gap-2">
+                                <a href="{{ data.url }}" target="_blank" class="btn btn-xs btn-outline btn-primary">
+                                    查看原始資料集
+                                </a>
+                                <button onclick="showFileList('{{ data.dataset_id }}', '{{ data.name|escapejs }}')" 
+                                        class="btn btn-xs btn-outline btn-secondary">
+                                    檔案列表 ({{ data.file_set.count }})
                                 </button>
-                            {% else %}
-                                {{ data.description }}
-                            {% endif %}
+                            </div>
                         </div>
-                        
-                        <!-- 主要欄位說明 - 支援展開/收合 -->
-                        <div>
-                            <span class="font-semibold">主要欄位說明：</span>
-                            {% if data.columns_description %}
-                                <div id="columns-preview-{{ data.dataset_id }}" class="inline">
-                                    {% for column in data.columns_description|slice:":3" %}
-                                        <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs mr-1 mb-1">{{ column }}</span>
-                                    {% endfor %}
-                                    {% if data.columns_description|length > 3 %}
-                                        <button data-id="{{ data.dataset_id }}" data-field="columns"
-                                                class="btn btn-xs btn-outline btn-info ml-2 toggle-button">
-                                            展開 ({{ data.columns_description|length|add:"-3" }} 個更多)
-                                        </button>
-                                    {% endif %}
-                                </div>
-                                <div id="columns-full-{{ data.dataset_id }}" class="hidden">
-                                    {% for column in data.columns_description %}
-                                        <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs mr-1 mb-1">{{ column }}</span>
-                                    {% endfor %}
-                                    {% if data.columns_description|length > 3 %}
-                                        <button data-id="{{ data.dataset_id }}" data-field="columns"
-                                                class="btn btn-xs btn-outline btn-info ml-2 toggle-button">收合
-                                        </button>
-                                    {% endif %}
-                                </div>
-                            {% else %}
-                                無
-                            {% endif %}
-                        </div>
-                        
-                        <div><span class="font-semibold">更新頻率：</span>{{ data.update_frequency }}</div>
-                        <div><span class="font-semibold">授權方式：</span>{{ data.license }}</div>
-                        <div><span class="font-semibold">計費方式：</span>{{ data.price }}</div>
-                        
-                        {% if data.contact_person %}
-                        <div><span class="font-semibold">聯絡人：</span>{{ data.contact_person }}</div>
-                        {% endif %}
-                        
-                        {% if data.contact_phone %}
-                        <div><span class="font-semibold">聯絡電話：</span>{{ data.contact_phone }}</div>
-                        {% endif %}
-                        
-                        <div><span class="font-semibold">上架時間：</span>{{ data.upload_time|date:"Y-m-d H:i:s" }}</div>
-                        <div><span class="font-semibold">最後更新時間：</span>{{ data.update_time|date:"Y-m-d H:i:s" }}</div>
-                        
-                        <!-- 操作按鈕區域 -->
-                        <div class="pt-2 border-t border-gray-200 flex gap-2">
-                            <a href="{{ data.url }}" target="_blank" class="btn btn-xs btn-outline btn-primary">
-                                查看原始資料集
-                            </a>
-                            <button onclick="showFileList('{{ data.dataset_id }}', '{{ data.name|escapejs }}')" 
-                                    class="btn btn-xs btn-outline btn-secondary">
-                                檔案列表 ({{ data.file_set.count }})
+                        <div class="ml-4 flex-shrink-0">
+                            <button class="btn btn-sm btn-outline btn-success add-reference-btn"
+                                    data-id="{{ data.dataset_id }}"
+                                    data-name="{{ data.name }}"
+                                    data-category="{{ data.category }}"
+                                    data-department="{{ data.department }}"
+                                    data-description="{{ data.description }}"
+                                    data-columns-description="{% for col in data.columns_description %}{{ col }}{% if not forloop.last %}、{% endif %}{% endfor %}"
+                                    data-update-frequency="{{ data.update_frequency }}"
+                                    data-license="{{ data.license }}"
+                                    data-price="{{ data.price }}"
+                                    data-url="{{ data.url }}">
+                                加入對話當中作為參考資料
                             </button>
                         </div>
                     </div>
