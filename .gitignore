@@ -1,7 +1,6 @@
 # 單個檔案
 *.env
 MediGuide/.streamlit/secrets.toml
-poetry.lock
 db.sqlite3
 
 # Node.js 相關
