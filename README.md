@@ -82,7 +82,7 @@ COHERE_API_KEY=your-cohere-api-key
 
 ```bash
 # 使用 Docker 啟動 PostgreSQL 和 Redis
-docker-compose up -d postgres redis
+docker-compose up -d
 ```
 
 ### 4️⃣ 資料庫初始化
