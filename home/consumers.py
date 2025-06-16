@@ -1,21 +1,36 @@
 import json
 import asyncio
+from typing import Dict, Any, Optional, List
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import User
+from asgiref.sync import sync_to_async
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 
+# 導入聊天代理
+from home.agents import ChatAgent
+
 
 class ChatConsumer(AsyncWebsocketConsumer):
+    """統一的聊天 WebSocket 消費者，支援一般聊天和症狀查詢"""
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.chat_agent = ChatAgent()
+    
     async def connect(self):
-        # 檢查用戶是否已登入
+        # 處理用戶身份
         if self.scope["user"].is_anonymous:
-            await self.close()
-            return
+            # 為匿名用戶創建臨時 ID
+            self.user_id = f"anonymous_{id(self)}"
+            self.is_anonymous = True
+        else:
+            self.user = self.scope["user"]
+            self.user_id = str(self.user.id)
+            self.is_anonymous = False
         
-        self.user = self.scope["user"]
-        self.room_group_name = f'chat_{self.user.id}'
+        self.room_group_name = f'chat_{self.user_id}'
         
         # 加入房間群組
         await self.channel_layer.group_add(
@@ -37,17 +52,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
         try:
             text_data_json = json.loads(text_data)
             message = text_data_json.get('message', '').strip()
+            references = text_data_json.get('references', [])
             
             if not message:
                 return
             
-            # 不再回傳用戶訊息，因為前端已經立即顯示了
-            # 直接處理 AI 回覆
-            llm = ChatOpenAI(model="gpt-4o-mini")
-            ai_response = llm.invoke(message)
+            # 使用聊天代理處理查詢
+            result = await self.process_query_with_agent(message, references)
+            
+            # 發送 AI 回覆
             await self.send(text_data=json.dumps({
                 'type': 'ai_message',
-                'message': ai_response.content,
+                'message': result,
                 'timestamp': self.get_current_timestamp()
             }))
             
@@ -60,9 +76,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             await self.send(text_data=json.dumps({
                 'type': 'error',
-                'message': '處理訊息時發生錯誤',
+                'message': f'處理訊息時發生錯誤：{str(e)}',
                 'timestamp': self.get_current_timestamp()
             }))
+
+    @sync_to_async
+    def process_query_with_agent(self, user_message: str, references: List[Dict[str, Any]]) -> str:
+        """使用聊天代理處理查詢"""
+        try:
+            # 調用聊天代理
+            result = self.chat_agent.process_query(user_message, references)
+            return result
+            
+        except Exception as e:
+            return f"處理查詢時發生錯誤：{str(e)}"
 
     def get_current_timestamp(self):
         from datetime import datetime

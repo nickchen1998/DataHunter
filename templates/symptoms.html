@@ -1,11 +1,9 @@
 {% extends 'home.html' %}
 
-{% block source-name %}{% endblock %}
+{% block source-name %}衛生福利部 - 台灣 e 院{% endblock %}
 
-{% block chat-data-source %}
-<div class="ml-2 px-2 py-1 bg-blue-400 bg-opacity-50 rounded text-xs font-medium">
-    衛生福利部 - 台灣 e 院
-</div>
+{% block chat_widget %}
+    {% include 'chat_widget.html' %}
 {% endblock %}
 
 {% block source-description %}
@@ -15,7 +13,7 @@
 
 {% block filter_section %}
     <form id="filter-form" method="get" action="{% url 'symptom_list' %}" class="bg-gray-50 p-4 rounded-lg shadow-inner mb-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
                 <label for="department-select" class="block font-semibold mb-1">科別：</label>
                 <select id="department-select" name="department" class="select select-bordered w-full">
@@ -29,15 +27,15 @@
                 <label for="gender-select" class="block font-semibold mb-1">性別：</label>
                 <select id="gender-select" name="gender" class="select select-bordered w-full">
                     <option value="">所有性別</option>
-                    {% for g in genders %}
-                        <option value="{{ g }}" {% if g == gender %}selected{% endif %}>{{ g }}</option>
+                    {% for gender_option in genders %}
+                        <option value="{{ gender_option }}" {% if gender_option == gender %}selected{% endif %}>{{ gender_option }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div>
                 <label for="question-input" class="block font-semibold mb-1">症狀描述：</label>
-                <input id="question-input" type="text" name="question" value="{{ question }}" placeholder="症狀描述或症狀關鍵字"
-                       class="input input-bordered w-full"/>
+                <input id="question-input" name="question" type="text" placeholder="輸入症狀關鍵字..." 
+                       value="{{ question }}" class="input input-bordered w-full">
             </div>
         </div>
         <div class="flex justify-end mt-4 space-x-2">
@@ -52,33 +50,46 @@
         {% if object_list %}
             {% for data in object_list %}
                 <div class="card shadow-md bg-white p-4 border border-gray-200">
-                    <div class="space-y-2 text-sm text-gray-800">
-                        <div><span class="font-semibold">科別：</span>{{ data.department }}</div>
-                        <div><span class="font-semibold">性別：</span>{{ data.gender }}</div>
-                        <div><span class="font-semibold">主訴：</span>{{ data.symptom }}</div>
-                        <div>
-                            <span class="font-semibold">症狀描述：</span>
-                            {% if data.question|length > 100 %}
-                                <span id="question-preview-{{ data.id }}">{{ data.question|slice:":100" }}...</span>
-                                <span id="question-full-{{ data.id }}" style="display: none;">{{ data.question }}</span>
-                                <button data-id="{{ data.id }}" data-field="question"
-                                        class="btn btn-xs btn-outline btn-info ml-2 toggle-button">展開
-                                </button>
-                            {% else %}
-                                {{ data.question }}
-                            {% endif %}
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1 space-y-2 text-sm text-gray-800">
+                            <div><span class="font-semibold">科別：</span>{{ data.department }}</div>
+                            <div><span class="font-semibold">性別：</span>{{ data.gender }}</div>
+                            <div><span class="font-semibold">主訴：</span>{{ data.symptom }}</div>
+                            <div>
+                                <span class="font-semibold">症狀描述：</span>
+                                {% if data.question|length > 100 %}
+                                    <span id="question-preview-{{ data.id }}">{{ data.question|slice:":100" }}...</span>
+                                    <span id="question-full-{{ data.id }}" style="display: none;">{{ data.question }}</span>
+                                    <button data-id="{{ data.id }}" data-field="question"
+                                            class="btn btn-xs btn-outline btn-info ml-2 toggle-button">展開
+                                    </button>
+                                {% else %}
+                                    {{ data.question }}
+                                {% endif %}
+                            </div>
+                            <div>
+                                <span class="font-semibold">醫師回覆：</span>
+                                {% if data.answer|length > 100 %}
+                                    <span id="answer-preview-{{ data.id }}">{{ data.answer|slice:":100" }}...</span>
+                                    <span id="answer-full-{{ data.id }}" style="display: none;">{{ data.answer }}</span>
+                                    <button data-id="{{ data.id }}" data-field="answer"
+                                            class="btn btn-xs btn-outline btn-info ml-2 toggle-button">展開
+                                    </button>
+                                {% else %}
+                                    {{ data.answer }}
+                                {% endif %}
+                            </div>
                         </div>
-                        <div>
-                            <span class="font-semibold">醫師回覆：</span>
-                            {% if data.answer|length > 100 %}
-                                <span id="answer-preview-{{ data.id }}">{{ data.answer|slice:":100" }}...</span>
-                                <span id="answer-full-{{ data.id }}" style="display: none;">{{ data.answer }}</span>
-                                <button data-id="{{ data.id }}" data-field="answer"
-                                        class="btn btn-xs btn-outline btn-info ml-2 toggle-button">展開
-                                </button>
-                            {% else %}
-                                {{ data.answer }}
-                            {% endif %}
+                        <div class="ml-4 flex-shrink-0">
+                            <button class="btn btn-sm btn-outline btn-success add-reference-btn" 
+                                    data-id="{{ data.id }}"
+                                    data-department="{{ data.department }}"
+                                    data-gender="{{ data.gender }}"
+                                    data-symptom="{{ data.symptom }}"
+                                    data-question="{{ data.question }}"
+                                    data-answer="{{ data.answer }}">
+                                加入對話當中作為參考資料
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -86,11 +97,7 @@
         {% else %}
             <div class="card shadow-md bg-white p-4 border border-gray-200">
                 <div class="space-y-2 text-sm text-gray-800">
-                    <div><span class="font-semibold">科別：</span>測試科別</div>
-                    <div><span class="font-semibold">性別：</span>測試性別</div>
-                    <div><span class="font-semibold">年齡：</span>測試年齡</div>
-                    <div><span class="font-semibold">症狀描述：</span>測試症狀描述</div>
-                    <div><span class="font-semibold">醫師回覆：</span>測試醫師回覆</div>
+                    <div class="text-center text-gray-500">沒有找到符合條件的資料</div>
                 </div>
             </div>
         {% endif %}

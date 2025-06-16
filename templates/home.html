@@ -109,7 +109,9 @@
             <div class="flex h-full space-x-6">
                 <!-- 左側：對話區域 -->
                 <div class="w-96 flex flex-col">
-                    {% include 'chat_widget.html' %}
+                    {% block chat_widget %}
+                        {% include 'chat_widget.html' %}
+                    {% endblock %}
                 </div>
                 
                 <!-- 右側：資料區域 -->
