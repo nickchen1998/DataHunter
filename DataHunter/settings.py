@@ -137,7 +137,22 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 if 'DATABASE_URL' in os.environ:
     # Heroku 生產環境設定
     DEBUG = False
-    ALLOWED_HOSTS = ['*']  # 或者指定您的 Heroku 應用域名
+    
+    # 更智能的 ALLOWED_HOSTS 配置
+    ALLOWED_HOSTS = []
+    if 'ALLOWED_HOSTS' in os.environ:
+        ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(',')
+    else:
+        # 自動允許 Heroku 域名和常見域名
+        ALLOWED_HOSTS = [
+            '.herokuapp.com',  # 允許所有 herokuapp.com 子域名
+            'localhost',
+            '127.0.0.1',
+        ]
+        # 如果有 HEROKU_APP_NAME，添加具體的應用域名
+        if 'HEROKU_APP_NAME' in os.environ:
+            app_name = os.environ.get('HEROKU_APP_NAME')
+            ALLOWED_HOSTS.append(f'{app_name}.herokuapp.com')
     
     # 使用 Heroku 的 PostgreSQL 資料庫
     DATABASES['default'] = dj_database_url.parse(os.environ.get('DATABASE_URL'))

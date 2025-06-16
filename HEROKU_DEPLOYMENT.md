@@ -26,8 +26,11 @@ heroku config:set SECRET_KEY="your-super-secret-key-here"
 # 設定除錯模式（生產環境應為 False）
 heroku config:set DEBUG=False
 
-# 設定允許的主機（可選，預設為 *）
-heroku config:set ALLOWED_HOSTS="your-app-name.herokuapp.com"
+# 設定允許的主機（可選，系統會自動處理 .herokuapp.com）
+heroku config:set ALLOWED_HOSTS="your-app-name.herokuapp.com,your-custom-domain.com"
+
+# 設定 Heroku 應用名稱（可選，用於自動配置）
+heroku config:set HEROKU_APP_NAME="your-app-name"
 
 # 其他 API 金鑰
 heroku config:set OPENAI_API_KEY="your-openai-key"
@@ -84,6 +87,23 @@ Heroku Dyno
 - [ ] 背景任務正常執行
 
 ## 🐛 常見問題
+
+### DisallowedHost 錯誤
+如果遇到 `Invalid HTTP_HOST header` 錯誤：
+
+```bash
+# 方法 1: 設定具體的域名
+heroku config:set ALLOWED_HOSTS="your-app-name.herokuapp.com"
+
+# 方法 2: 設定應用名稱（系統會自動添加）
+heroku config:set HEROKU_APP_NAME="your-app-name"
+
+# 檢查目前設定
+heroku config:get ALLOWED_HOSTS
+
+# 重啟應用
+heroku restart
+```
 
 ### WebSocket 連接失敗
 ```bash
