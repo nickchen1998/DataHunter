@@ -91,9 +91,6 @@ docker-compose up -d
 # 執行資料庫遷移
 python manage.py migrate
 
-# 啟用 pgvector 擴展
-docker-compose exec postgres psql -U postgres -d DataHunter -c "CREATE EXTENSION IF NOT EXISTS vector;"
-
 # 創建超級用戶
 python manage.py createsuperuser
 ```
