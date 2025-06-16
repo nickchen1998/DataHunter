@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% block body_class %}min-h-screen bg-gray-50{% endblock %}
+
 {% block content %}
 <!-- 導航欄 -->
 <nav class="bg-white shadow-sm border-b">
@@ -18,7 +20,6 @@
 </nav>
 
 <div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8 mt-8">
-
 
     <!-- 訊息提示 -->
     {% if messages %}
@@ -61,15 +62,19 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- 標籤導航 -->
             <div class="mt-6 space-y-4">
                 <button class="btn btn-outline w-full justify-between border-2 tab tab-active" data-tab="profile">
                     <span>👤 個人資料</span>
                     <span></span>
                 </button>
-                <button class="btn btn-outline w-full justify-between border-2 tab" data-tab="apikey">
-                    <span>🔑 API Key管理</span>
+                <button class="btn btn-outline w-full justify-between border-2 tab" data-tab="password">
+                    <span>🔒 密碼修改</span>
+                    <span></span>
+                </button>
+                <button class="btn btn-outline w-full justify-between border-2 tab" data-tab="danger">
+                    <span>⚠️ 危險區域</span>
                     <span></span>
                 </button>
             </div>
@@ -87,75 +92,77 @@
                             </svg>
                             個人資料
                         </h3>
-                    <form method="post" class="space-y-6">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="update_profile">
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="form-control">
-                                <label class="label">
-                                    <span class="label-text font-medium">{{ profile_form.username.label }}</span>
-                                </label>
-                                {{ profile_form.username }}
-                                {% if profile_form.username.errors %}
+                        <form method="post" class="space-y-6">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="update_profile">
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="form-control">
                                     <label class="label">
-                                        <span class="label-text-alt text-error">
-                                            {% for error in profile_form.username.errors %}{{ error }}{% endfor %}
-                                        </span>
+                                        <span class="label-text font-medium">{{ profile_form.username.label }}</span>
                                     </label>
-                                {% endif %}
+                                    {{ profile_form.username }}
+                                    {% if profile_form.username.errors %}
+                                        <label class="label">
+                                            <span class="label-text-alt text-error">
+                                                {% for error in profile_form.username.errors %}{{ error }}{% endfor %}
+                                            </span>
+                                        </label>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="form-control">
+                                    <label class="label">
+                                        <span class="label-text font-medium">Email</span>
+                                        <span class="label-text-alt text-gray-500">不可修改</span>
+                                    </label>
+                                    <input type="email" value="{{ user.email }}" class="input input-bordered w-full bg-gray-50" readonly>
+                                </div>
                             </div>
                             
-                            <div class="form-control">
-                                <label class="label">
-                                    <span class="label-text font-medium">Email</span>
-                                    <span class="label-text-alt text-gray-500">不可修改</span>
-                                </label>
-                                <input type="email" value="{{ user.email }}" class="input input-bordered w-full bg-gray-50" readonly>
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="form-control">
-                                <label class="label">
-                                    <span class="label-text font-medium">{{ profile_form.first_name.label }}</span>
-                                </label>
-                                {{ profile_form.first_name }}
-                                {% if profile_form.first_name.errors %}
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="form-control">
                                     <label class="label">
-                                        <span class="label-text-alt text-error">
-                                            {% for error in profile_form.first_name.errors %}{{ error }}{% endfor %}
-                                        </span>
+                                        <span class="label-text font-medium">{{ profile_form.first_name.label }}</span>
                                     </label>
-                                {% endif %}
+                                    {{ profile_form.first_name }}
+                                    {% if profile_form.first_name.errors %}
+                                        <label class="label">
+                                            <span class="label-text-alt text-error">
+                                                {% for error in profile_form.first_name.errors %}{{ error }}{% endfor %}
+                                            </span>
+                                        </label>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="form-control">
+                                    <label class="label">
+                                        <span class="label-text font-medium">{{ profile_form.last_name.label }}</span>
+                                    </label>
+                                    {{ profile_form.last_name }}
+                                    {% if profile_form.last_name.errors %}
+                                        <label class="label">
+                                            <span class="label-text-alt text-error">
+                                                {% for error in profile_form.last_name.errors %}{{ error }}{% endfor %}
+                                            </span>
+                                        </label>
+                                    {% endif %}
+                                </div>
                             </div>
                             
-                            <div class="form-control">
-                                <label class="label">
-                                    <span class="label-text font-medium">{{ profile_form.last_name.label }}</span>
-                                </label>
-                                {{ profile_form.last_name }}
-                                {% if profile_form.last_name.errors %}
-                                    <label class="label">
-                                        <span class="label-text-alt text-error">
-                                            {% for error in profile_form.last_name.errors %}{{ error }}{% endfor %}
-                                        </span>
-                                    </label>
-                                {% endif %}
+                            <div class="card-actions justify-end">
+                                <button type="submit" class="btn btn-primary">
+                                    💾 儲存
+                                </button>
                             </div>
-                        </div>
-                        
-                        <div class="card-actions justify-end">
-                            <button type="submit" class="btn btn-primary">
-                                💾 儲存
-                            </button>
-                        </div>
-                    </form>
+                        </form>
                     </div>
                 </div>
+            </div>
 
-                <!-- 密碼修改 -->
-                <div class="card bg-base-100 shadow mt-8">
+            <!-- 密碼修改 -->
+            <div id="password-content" class="tab-content" style="display: none;">
+                <div class="card bg-base-100 shadow">
                     <div class="card-body">
                         <h3 class="card-title text-xl flex items-center">
                             <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -233,106 +240,62 @@
                     </div>
                 </div>
             </div>
-            
-            <!-- API Key管理 -->
-            <div id="apikey-content" class="tab-content" style="display: none;">
-                <div class="card bg-base-100 shadow">
+
+            <!-- 危險區域 -->
+            <div id="danger-content" class="tab-content" style="display: none;">
+                <div class="card bg-base-100 shadow border-error">
                     <div class="card-body">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="card-title">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                                </svg>
-                                API Key管理
-                                <span id="api-key-count" class="text-sm font-normal text-base-content/60 ml-2">
-                                    載入中...
-                                </span>
-                            </h3>
-                            <div class="flex space-x-2">
-                                <button type="button" class="btn btn-ghost btn-sm" id="refresh-keys" title="重新載入">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                                    </svg>
-                                </button>
-                                <button type="button" class="btn btn-primary btn-sm" id="add-new-key">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                                    </svg>
-                                    新增
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- 新增 API Key 表單 -->
-                        <div id="create-api-key-form" class="card bg-info/10 border border-info/20 mb-6 hidden">
-                            <div class="card-body">
-                                <h4 class="font-bold text-lg mb-4">新增 API Key</h4>
-                                <form id="new-api-key-form">
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div class="form-control">
-                                            <label class="label">
-                                                <span class="label-text font-medium">Key 名稱 *</span>
-                                            </label>
-                                            <input type="text" name="name" class="input input-bordered w-full" 
-                                                   placeholder="例：生產環境API Key" maxlength="100" required>
-                                        </div>
-                                        <div class="form-control">
-                                            <label class="label">
-                                                <span class="label-text font-medium">到期時間</span>
-                                            </label>
-                                            <select name="expires_period" class="select select-bordered w-full">
-                                                <option value="never">永不過期</option>
-                                                <option value="1month">1 個月</option>
-                                                <option value="3months" selected>3 個月</option>
-                                                <option value="6months">6 個月</option>
-                                                <option value="1year">1 年</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="alert alert-info mt-4">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                        <div>
-                                            <p class="text-sm">API Key 建立後將只顯示一次，請妥善保存。每個使用者最多可建立 5 個 API Keys。</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="card-actions justify-end mt-4">
-                                        <button type="button" class="btn btn-ghost" id="cancel-create-btn">取消</button>
-                                        <button type="submit" class="btn btn-primary" id="create-api-key-btn">
-                                            建立
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                        
-                        <!-- 載入中狀態 -->
-                        <div id="api-key-loading" class="flex flex-col items-center justify-center py-12">
-                            <span class="loading loading-spinner loading-lg text-primary"></span>
-                            <p class="mt-4 text-base-content/60">載入 API Keys...</p>
-                        </div>
-                        
-                        <!-- API Key 清單 -->
-                        <div class="space-y-4 hidden" id="api-key-list">
-                            <!-- 動態載入的內容 -->
-                        </div>
-                        
-                        <!-- 沒有 API Key 時的提示 -->
-                        <div id="no-api-keys" class="text-center py-12 hidden">
-                            <svg class="w-16 h-16 mx-auto text-base-content/40 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        <h3 class="card-title text-xl flex items-center text-error">
+                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
                             </svg>
-                            <h3 class="text-lg font-medium mb-2">尚未建立 API Key</h3>
-                            <p class="text-base-content/60 mb-4">建立您的第一個 API Key 來開始使用我們的服務</p>
-                            <button type="button" class="btn btn-primary show-create-form-btn">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                                </svg>
-                                建立第一個 API Key
-                            </button>
+                            危險區域
+                        </h3>
+                        
+                        <div class="alert alert-warning mb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                            </svg>
+                            <div>
+                                <h4 class="font-bold">注意！</h4>
+                                <p class="text-sm">以下操作將永久刪除您的帳號和所有相關資料，此操作無法復原。</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <h4 class="text-lg font-semibold text-error">刪除帳號</h4>
+                            <p class="text-sm text-gray-600">
+                                刪除帳號將會：
+                            </p>
+                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 ml-4">
+                                <li>永久刪除您的個人資料</li>
+                                <li>移除所有相關的使用記錄</li>
+                                <li>立即登出並無法再次登入</li>
+                                <li>此操作無法復原</li>
+                            </ul>
+                            
+                            <div class="divider"></div>
+                            
+                            <form method="post" class="space-y-4" onsubmit="return confirmDeletion()">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete_account">
+                                
+                                <div class="form-control">
+                                    <label class="label">
+                                        <span class="label-text font-medium text-error">
+                                            請輸入您的使用者名稱 "{{ user.username }}" 以確認刪除：
+                                        </span>
+                                    </label>
+                                    <input type="text" name="confirmation" class="input input-bordered input-error w-full" 
+                                           placeholder="請輸入您的使用者名稱" required>
+                                </div>
+                                
+                                <div class="card-actions justify-end">
+                                    <button type="submit" class="btn btn-error">
+                                        🗑️ 永久刪除帳號
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -341,616 +304,44 @@
     </div>
 </div>
 
-<!-- API Key 成功建立的 Modal -->
-<dialog id="api-key-modal" class="modal">
-    <div class="modal-box">
-        <h3 class="font-bold text-lg mb-4">✅ API Key 建立成功！</h3>
-        <div class="alert alert-warning mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-            </svg>
-            <div>
-                <p class="text-sm">請立即複製並保存您的 API Key，它將不會再次顯示。</p>
-            </div>
-        </div>
-        <div class="space-y-3">
-            <div>
-                <label class="block text-sm font-medium mb-1">Key 名稱：</label>
-                <p id="modal-key-name" class="text-base-content"></p>
-            </div>
-            <div>
-                <label class="block text-sm font-medium mb-1">API Key：</label>
-                <div class="flex items-center space-x-2 bg-base-200 p-3 rounded-lg">
-                    <code id="modal-key-value" class="flex-1 text-sm font-mono break-all"></code>
-                    <button type="button" class="btn btn-sm btn-primary" id="copy-key-btn">
-                        📋 複製
-                    </button>
-                </div>
-            </div>
-            <div>
-                <label class="block text-sm font-medium mb-1">到期時間：</label>
-                <p id="modal-key-expires" class="text-base-content"></p>
-            </div>
-        </div>
-        <div class="modal-action">
-            <button type="button" class="btn btn-primary" id="close-modal-btn">我已保存</button>
-        </div>
-    </div>
-</dialog>
-
-<!-- 到期時間編輯 Modal -->
-<dialog id="expiry-edit-modal" class="modal">
-    <div class="modal-box">
-        <h3 class="font-bold text-lg mb-4">修改到期時間</h3>
-        <div class="mb-4">
-            <p class="mb-3">當前設定：<span id="current-expiry" class="font-semibold"></span></p>
-            <div class="form-control">
-                <label class="label">
-                    <span class="label-text font-medium">選擇新的到期時間：</span>
-                </label>
-                <select id="expiry-period-select" class="select select-bordered w-full">
-                    <option value="never">永不過期</option>
-                    <option value="1month">1 個月後過期</option>
-                    <option value="3months">3 個月後過期</option>
-                    <option value="6months">6 個月後過期</option>
-                    <option value="1year">1 年後過期</option>
-                </select>
-                <div class="label">
-                    <span class="label-text-alt">新的到期時間將從現在開始計算</span>
-                </div>
-            </div>
-        </div>
-        <div class="modal-action">
-            <button type="button" class="btn btn-ghost" id="cancel-expiry-btn">取消</button>
-            <button type="button" class="btn btn-primary" id="confirm-expiry-btn">確認修改</button>
-        </div>
-    </div>
-</dialog>
-
-<!-- 刪除確認 Modal -->
-<dialog id="delete-confirm-modal" class="modal">
-    <div class="modal-box">
-        <div class="flex items-center mb-4">
-            <div class="flex-shrink-0 w-10 h-10 bg-error/20 rounded-full flex items-center justify-center">
-                <svg class="w-6 h-6 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                </svg>
-            </div>
-            <div class="ml-4">
-                <h3 class="text-lg font-bold">確認刪除 API Key</h3>
-                <p class="text-sm text-base-content/60 font-medium">此操作無法復原</p>
-            </div>
-        </div>
-        
-        <div class="mb-6">
-            <p class="font-medium mb-3">您確定要刪除以下 API Key 嗎？</p>
-            <div class="p-3 bg-base-200 rounded-lg">
-                <p id="delete-key-name" class="font-bold"></p>
-                <p class="text-sm text-base-content/60 font-medium">刪除後此 API Key 將立即失效，所有使用此 Key 的應用程式將無法存取 API。</p>
-            </div>
-        </div>
-        
-        <div class="modal-action">
-            <button type="button" class="btn btn-error font-bold" id="confirm-delete-btn">刪除</button>
-            <button type="button" class="btn btn-ghost font-bold" id="cancel-delete-btn">取消</button>
-        </div>
-    </div>
-</dialog>
-{% endblock %}
-
-{% block extra_js %}
 <script>
-// API Key 管理類
-class ApiKeyManager {
-    constructor() {
-        this.currentEditingPrefix = null;
-        this.currentEditingElement = null;
-        this.isLoading = false;
-        this.hasLoadedOnce = false;
-        this.init();
-    }
-
-    init() {
-        this.setupEventListeners();
-        this.initializeTabDisplay();
-        // 只有在 API Key 標籤是活動狀態時才載入
-        if (document.querySelector('.tab[data-tab="apikey"]')?.classList.contains('tab-active')) {
-            this.loadApiKeys();
-        }
-    }
-
-    initializeTabDisplay() {
-        // 確保個人資料標籤預設顯示，API Key 標籤隱藏
-        const profileContent = document.getElementById('profile-content');
-        const apikeyContent = document.getElementById('apikey-content');
-        const profileTab = document.querySelector('.tab[data-tab="profile"]');
-        const apikeyTab = document.querySelector('.tab[data-tab="apikey"]');
-        
-        // 設置預設狀態：個人資料標籤活動
-        if (profileContent) profileContent.style.display = 'block';
-        if (apikeyContent) apikeyContent.style.display = 'none';
-        profileTab?.classList.add('tab-active');
-        apikeyTab?.classList.remove('tab-active');
-    }
-
-    setupEventListeners() {
-        // 標籤切換
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', (e) => this.handleTabSwitch(e));
-        });
-
-        // 新增按鈕
-        document.getElementById('add-new-key')?.addEventListener('click', () => this.showCreateForm());
-        
-        // 刷新按鈕
-        document.getElementById('refresh-keys')?.addEventListener('click', () => this.refreshApiKeys());
-        
-        // 表單按鈕
-        document.getElementById('cancel-create-btn')?.addEventListener('click', () => this.hideCreateForm());
-        document.getElementById('new-api-key-form')?.addEventListener('submit', (e) => this.handleCreateSubmit(e));
-        
-        // Modal 按鈕
-        document.getElementById('close-modal-btn')?.addEventListener('click', () => this.closeApiKeyModal());
-        document.getElementById('copy-key-btn')?.addEventListener('click', () => this.copyModalKey());
-        
-        // 到期時間編輯 Modal
-        document.getElementById('cancel-expiry-btn')?.addEventListener('click', () => this.closeExpiryModal());
-        document.getElementById('confirm-expiry-btn')?.addEventListener('click', () => this.confirmExpiryEdit());
-        
-        // 刪除確認 Modal
-        document.getElementById('cancel-delete-btn')?.addEventListener('click', () => this.closeDeleteModal());
-        document.getElementById('confirm-delete-btn')?.addEventListener('click', () => this.confirmDelete());
-        
-        // 空狀態按鈕
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.show-create-form-btn')) {
-                this.showCreateForm();
+// 標籤切換功能
+document.addEventListener('DOMContentLoaded', function() {
+    // 標籤切換
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetTab = this.getAttribute('data-tab');
+            
+            // 更新標籤樣式
+            document.querySelectorAll('.tab').forEach(t => {
+                t.classList.remove('tab-active');
+            });
+            this.classList.add('tab-active');
+            
+            // 切換內容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            const targetContent = document.getElementById(targetTab + '-content');
+            if (targetContent) {
+                targetContent.style.display = 'block';
             }
         });
-    }
-
-    handleTabSwitch(e) {
-        e.preventDefault();
-        const targetTab = e.target.getAttribute('data-tab');
-        
-        // 更新標籤樣式
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.classList.remove('tab-active');
-        });
-        e.target.classList.add('tab-active');
-        
-        // 切換內容
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.style.display = 'none';
-        });
-        const targetContent = document.getElementById(targetTab + '-content');
-        if (targetContent) {
-            targetContent.style.display = 'block';
-        }
-        
-        // 如果切換到 API Key 標籤，載入數據
-        if (targetTab === 'apikey') {
-            // 如果從未載入過，則載入
-            if (!this.hasLoadedOnce && !this.isLoading) {
-                this.loadApiKeys();
-            }
-            // 如果已經載入過，顯示現有資料（用戶可以手動刷新）
-        }
-    }
-
-    async loadApiKeys(forceReload = false) {
-        // 防止重複載入
-        if (this.isLoading) {
-            console.log('API Keys 正在載入中，跳過重複請求');
-            return;
-        }
-        
-        // 如果已經載入過且不是強制重新載入，則跳過
-        if (this.hasLoadedOnce && !forceReload) {
-            console.log('API Keys 已載入，跳過重複請求');
-            return;
-        }
-        
-        try {
-            this.isLoading = true;
-            this.showLoading();
-            
-            const response = await fetch('/profile/api-keys/');
-            const data = await response.json();
-            
-            if (data.success) {
-                this.updateKeyCount(data.total_keys, data.max_keys);
-                this.renderKeys(data.keys);
-                this.updateAddButton(data.can_create_more, data.max_keys);
-                this.hasLoadedOnce = true;
-            } else {
-                this.showToast('載入 API Keys 失敗：' + data.error, 'error');
-            }
-        } catch (error) {
-            console.error('載入 API Keys 錯誤:', error);
-            this.showToast('載入 API Keys 時發生錯誤', 'error');
-        } finally {
-            this.isLoading = false;
-            this.hideLoading();
-        }
-    }
-
-    showLoading() {
-        document.getElementById('api-key-loading')?.classList.remove('hidden');
-        document.getElementById('api-key-list')?.classList.add('hidden');
-        document.getElementById('no-api-keys')?.classList.add('hidden');
-    }
-
-    hideLoading() {
-        document.getElementById('api-key-loading')?.classList.add('hidden');
-    }
-
-    refreshApiKeys() {
-        console.log('手動刷新 API Keys');
-        this.hasLoadedOnce = false; // 重置載入狀態
-        this.loadApiKeys(true); // 強制重新載入
-    }
-
-    updateKeyCount(current, max) {
-        const countElement = document.getElementById('api-key-count');
-        if (countElement) {
-            countElement.textContent = `(${current}/${max})`;
-        }
-    }
-
-    renderKeys(keys) {
-        const listElement = document.getElementById('api-key-list');
-        const noKeysElement = document.getElementById('no-api-keys');
-        
-        if (keys.length === 0) {
-            listElement?.classList.add('hidden');
-            noKeysElement?.classList.remove('hidden');
-        } else {
-            listElement?.classList.remove('hidden');
-            noKeysElement?.classList.add('hidden');
-            
-            if (listElement) {
-                listElement.innerHTML = '';
-                keys.forEach(key => {
-                    listElement.appendChild(this.createKeyElement(key));
-                });
-            }
-        }
-    }
-
-    createKeyElement(key) {
-        const div = document.createElement('div');
-        div.className = 'card bg-base-200/50 border';
-        div.setAttribute('data-key-prefix', key.prefix);
-        
-        div.innerHTML = `
-            <div class="card-body p-4">
-                <div class="flex justify-between items-start">
-                    <div class="flex-1 space-y-2">
-                        <div class="flex items-center space-x-2">
-                            <span class="text-sm font-medium text-base-content/60">Key名稱：</span>
-                            <span class="font-semibold editable-field" data-field="name">${key.name}</span>
-                            <button type="button" class="btn btn-ghost btn-xs edit-name-btn" title="編輯名稱">
-                                ✏️
-                            </button>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-sm font-medium text-base-content/60">Key識別碼：</span>
-                            <code class="bg-base-300 px-2 py-1 rounded text-sm font-mono">${key.prefix}...</code>
-                            <span class="text-xs text-base-content/40">(僅供識別，完整Key請在創建時複製)</span>
-                        </div>
-                        <div class="space-y-1 text-sm text-base-content/60">
-                            <div><strong>申請時間：</strong>${key.created_at}</div>
-                            <div class="flex items-center space-x-2">
-                                <span><strong>到期時間：</strong></span>
-                                <span class="editable-field" data-field="expires_at">${key.expires_at || '永不過期'}</span>
-                                <button type="button" class="btn btn-ghost btn-xs edit-expire-btn" title="編輯到期時間">
-                                    ✏️
-                                </button>
-                            </div>
-                            <div><strong>最近使用：</strong>${key.last_used_at}</div>
-                        </div>
-                    </div>
-                    <div class="flex space-x-2 ml-4">
-                        <button type="button" class="btn btn-error btn-sm delete-key-btn" data-key-name="${key.name}">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                            </svg>
-                            刪除
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // 添加事件監聽器
-        div.querySelector('.edit-name-btn')?.addEventListener('click', () => this.editName(key.prefix));
-        div.querySelector('.edit-expire-btn')?.addEventListener('click', () => this.editExpiry(key.prefix));
-        div.querySelector('.delete-key-btn')?.addEventListener('click', () => this.deleteKey(key.prefix, key.name));
-        
-        return div;
-    }
-
-    updateAddButton(canCreateMore, maxKeys) {
-        const addButton = document.getElementById('add-new-key');
-        if (!addButton) return;
-        
-        if (!canCreateMore) {
-            addButton.disabled = true;
-            addButton.innerHTML = `
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                </svg>
-                已達上限 (${maxKeys}個)
-            `;
-        } else {
-            addButton.disabled = false;
-            addButton.innerHTML = `
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                </svg>
-                新增
-            `;
-        }
-    }
-
-    showCreateForm() {
-        const form = document.getElementById('create-api-key-form');
-        const nameInput = document.querySelector('#new-api-key-form input[name="name"]');
-        
-        form?.classList.remove('hidden');
-        nameInput?.focus();
-        this.resetCreateButton();
-    }
-
-    hideCreateForm() {
-        const form = document.getElementById('create-api-key-form');
-        const formElement = document.getElementById('new-api-key-form');
-        
-        form?.classList.add('hidden');
-        formElement?.reset();
-        
-        // 延遲重置按鈕，避免與提交邏輯衝突
-        setTimeout(() => {
-            this.resetCreateButton();
-        }, 50);
-    }
-
-    resetCreateButton() {
-        const btn = document.getElementById('create-api-key-btn');
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = '建立';
-            // 確保移除任何可能的 loading 狀態
-            btn.classList.remove('loading');
-        }
-    }
-
-    async handleCreateSubmit(e) {
-        e.preventDefault();
-        
-        const btn = document.getElementById('create-api-key-btn');
-        const formData = new FormData(e.target);
-        
-        // 設置載入狀態
-        btn.disabled = true;
-        btn.innerHTML = '<span class="loading loading-spinner loading-sm mr-2"></span>建立中...';
-        
-        try {
-            const response = await fetch('/profile/api-keys/', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                }
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                this.showToast(data.message, 'success');
-                this.hideCreateForm();
-                this.showApiKeyModal(data.key_data);
-                this.loadApiKeys(true); // 強制重新載入
-            } else {
-                this.showToast(data.error, 'error');
-            }
-        } catch (error) {
-            console.error('建立 API Key 錯誤:', error);
-            this.showToast('建立 API Key 時發生錯誤', 'error');
-        } finally {
-            // 延遲重置按鈕，確保其他操作完成
-            setTimeout(() => {
-                this.resetCreateButton();
-            }, 100);
-        }
-    }
-
-    showApiKeyModal(keyData) {
-        const modal = document.getElementById('api-key-modal');
-        document.getElementById('modal-key-name').textContent = keyData.name;
-        document.getElementById('modal-key-value').textContent = keyData.key;
-        document.getElementById('modal-key-expires').textContent = keyData.expires_at || '永不過期';
-        
-        // 設置複製按鈕的數據
-        document.getElementById('copy-key-btn').dataset.key = keyData.key;
-        
-        modal?.showModal();
-    }
-
-    closeApiKeyModal() {
-        document.getElementById('api-key-modal')?.close();
-    }
-
-    copyModalKey() {
-        const keyValue = document.getElementById('copy-key-btn').dataset.key;
-        this.copyToClipboard(keyValue);
-    }
-
-    editName(prefix) {
-        const element = document.querySelector(`[data-key-prefix="${prefix}"] .editable-field[data-field="name"]`);
-        const currentValue = element?.textContent;
-        const newValue = prompt('請輸入新的 API Key 名稱：', currentValue);
-        
-        if (newValue && newValue.trim() !== currentValue) {
-            this.updateField(prefix, 'name', newValue.trim(), element);
-        }
-    }
-
-    editExpiry(prefix) {
-        const element = document.querySelector(`[data-key-prefix="${prefix}"] .editable-field[data-field="expires_at"]`);
-        const currentValue = element?.textContent;
-        
-        this.currentEditingPrefix = prefix;
-        this.currentEditingElement = element;
-        
-        document.getElementById('current-expiry').textContent = currentValue;
-        document.getElementById('expiry-edit-modal')?.showModal();
-    }
-
-    closeExpiryModal() {
-        document.getElementById('expiry-edit-modal')?.close();
-        this.currentEditingPrefix = null;
-        this.currentEditingElement = null;
-    }
-
-    async confirmExpiryEdit() {
-        const select = document.getElementById('expiry-period-select');
-        const selectedPeriod = select?.value;
-        
-        if (this.currentEditingPrefix && selectedPeriod) {
-            await this.updateField(this.currentEditingPrefix, 'expires_at', selectedPeriod, this.currentEditingElement);
-            this.closeExpiryModal();
-        }
-    }
-
-    async updateField(prefix, field, value, element) {
-        try {
-            const response = await fetch(`/profile/api-keys/${prefix}/`, {
-                method: 'PATCH',
-                body: JSON.stringify({ field, value }),
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                }
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                if (element) {
-                    element.textContent = data.updated_value || value;
-                }
-                this.showToast(data.message, 'success');
-            } else {
-                this.showToast(data.error, 'error');
-            }
-        } catch (error) {
-            console.error('更新欄位錯誤:', error);
-            this.showToast('更新時發生錯誤', 'error');
-        }
-    }
-
-    deleteKey(prefix, keyName) {
-        this.currentEditingPrefix = prefix;
-        document.getElementById('delete-key-name').textContent = keyName;
-        document.getElementById('delete-confirm-modal')?.showModal();
-    }
-
-    closeDeleteModal() {
-        document.getElementById('delete-confirm-modal')?.close();
-        this.currentEditingPrefix = null;
-    }
-
-    async confirmDelete() {
-        if (!this.currentEditingPrefix) return;
-        
-        const btn = document.getElementById('confirm-delete-btn');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="loading loading-spinner loading-sm mr-2"></span>刪除中...';
-        
-        try {
-            const response = await fetch(`/profile/api-keys/${this.currentEditingPrefix}/`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                this.showToast(data.message, 'success');
-                this.loadApiKeys(true); // 強制重新載入
-            } else {
-                this.showToast(data.error, 'error');
-            }
-        } catch (error) {
-            console.error('刪除 API Key 錯誤:', error);
-            this.showToast('刪除時發生錯誤', 'error');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = '刪除';
-            this.closeDeleteModal();
-        }
-    }
-
-    copyToClipboard(text) {
-        if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(text).then(() => {
-                this.showToast('✅ API Key 已複製到剪貼簿！', 'success');
-            }).catch(() => {
-                this.fallbackCopy(text);
-            });
-        } else {
-            this.fallbackCopy(text);
-        }
-    }
-
-    fallbackCopy(text) {
-        const textArea = document.createElement("textarea");
-        textArea.value = text;
-        textArea.style.position = "fixed";
-        textArea.style.opacity = "0";
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        
-        try {
-            const successful = document.execCommand('copy');
-            this.showToast(successful ? '✅ API Key 已複製到剪貼簿！' : '❌ 複製失敗，請手動選取複製', successful ? 'success' : 'error');
-        } catch (err) {
-            this.showToast('❌ 複製失敗，請手動選取複製', 'error');
-        }
-        
-        document.body.removeChild(textArea);
-    }
-
-    showToast(message, type) {
-        const toast = document.createElement('div');
-        const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
-        toast.className = `alert ${alertClass} fixed top-4 right-4 w-auto max-w-sm z-50 shadow-lg`;
-        toast.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${type === 'success' ? 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' : 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z'}" />
-            </svg>
-            <span>${message}</span>
-        `;
-        
-        document.body.appendChild(toast);
-        
-        setTimeout(() => {
-            if (document.body.contains(toast)) {
-                document.body.removeChild(toast);
-            }
-        }, 3000);
-    }
-}
-
-// 初始化
-document.addEventListener('DOMContentLoaded', () => {
-    new ApiKeyManager();
+    });
 });
+
+// 帳號刪除確認
+function confirmDeletion() {
+    const confirmation = document.querySelector('input[name="confirmation"]').value;
+    const username = "{{ user.username }}";
+    
+    if (confirmation !== username) {
+        alert('請正確輸入您的使用者名稱以確認刪除。');
+        return false;
+    }
+    
+    return confirm('您確定要永久刪除您的帳號嗎？此操作無法復原！');
+}
 </script>
 {% endblock %} 
