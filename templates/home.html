@@ -352,6 +352,13 @@
             filterForm.addEventListener('submit', function (e) {
                 e.preventDefault();
                 
+                // 獲取搜尋按鈕並添加載入狀態
+                const submitBtn = this.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.classList.add('loading');
+                    submitBtn.disabled = true;
+                }
+                
                 // 獲取表單數據
                 const formData = new FormData(filterForm);
                 const params = new URLSearchParams(formData);
@@ -384,6 +391,9 @@
 
     function loadFilteredData(url) {
         const dataContainer = document.getElementById('data-container');
+        const filterForm = document.getElementById('filter-form');
+        const submitBtn = filterForm ? filterForm.querySelector('button[type="submit"]') : null;
+        
         if (dataContainer) {
             dataContainer.style.opacity = '0.6';
             dataContainer.style.pointerEvents = 'none';
@@ -417,9 +427,16 @@
             window.location.href = url;
         })
         .finally(() => {
+            // 恢復資料容器狀態
             if (dataContainer) {
                 dataContainer.style.opacity = '1';
                 dataContainer.style.pointerEvents = 'auto';
+            }
+            
+            // 移除搜尋按鈕的載入狀態
+            if (submitBtn) {
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
             }
         });
     }

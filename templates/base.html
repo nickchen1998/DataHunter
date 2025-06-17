@@ -23,6 +23,11 @@
         // 通用的表單提交載入狀態
         function setupFormLoadingStates() {
             document.querySelectorAll('form').forEach(form => {
+                // 跳過使用 AJAX 的過濾器表單
+                if (form.id === 'filter-form') {
+                    return;
+                }
+                
                 form.addEventListener('submit', function(e) {
                     const submitBtn = this.querySelector('button[type="submit"]');
                     if (submitBtn) {
