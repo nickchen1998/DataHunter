@@ -15,8 +15,8 @@ class ChatAgent:
     }
     
     def process_query(self, user_question: str, reference_id_list: list[int], data_type: str = "Mixed") -> str:
+        tool = self.TOOL_FACTORY[data_type]()
         if reference_id_list:
-            tool = self.TOOL_FACTORY[data_type]()
             response = tool.invoke(dict(
                 reference_id_list=reference_id_list,
                 question=user_question,
@@ -24,7 +24,7 @@ class ChatAgent:
             
         else:
             agent = initialize_agent(
-                tools=[tmp() for tmp in self.TOOL_FACTORY.values()],
+                tools=[tool],
                 agent=AgentType.OPENAI_FUNCTIONS,
                 llm=ChatOpenAI(model="gpt-4o", temperature=0.7),
             )            
