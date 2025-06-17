@@ -31,4 +31,7 @@ urlpatterns = [
 
 # 在開發模式下提供靜態檔案
 if settings.DEBUG:
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
+    # 在開發模式下，Django 會自動尋找靜態檔案
+    # 但我們還是明確加上以確保正確
+    from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+    urlpatterns += staticfiles_urlpatterns()

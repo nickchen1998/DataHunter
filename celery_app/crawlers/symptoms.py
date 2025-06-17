@@ -1,8 +1,6 @@
 import random
 import re
 import time
-import json
-import pathlib
 from datetime import datetime
 from selenium.webdriver import Chrome
 from selenium.webdriver.common.by import By
@@ -10,9 +8,44 @@ from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
 from fake_useragent import UserAgent
 from DataHunter.celery import app
-
 from symptoms.models import Symptom
 from langchain_openai import OpenAIEmbeddings
+
+
+START_POINTS = [
+  {
+    "department": "內科",
+    "start_url": "https://sp1.hso.mohw.gov.tw/doctor/Often_question/type_detail.php?UrlClass=%A4%BA%AC%EC&q_like=0&q_type=%EBC%B3%C2%AFl%A9%CA%A6%E5%BA%DE%AA%A2",
+  },
+  {
+    "department": "外科",
+    "start_url": "https://sp1.hso.mohw.gov.tw/doctor/Often_question/type_detail.php?UrlClass=%A5%7E%AC%EC&q_like=0&q_type=%E6%B3%A6%D7",
+  },
+  {
+    "department": "牙科",
+    "start_url": "https://sp1.hso.mohw.gov.tw/doctor/Often_question/type_detail.php?UrlClass=%A4%FA%AC%EC&q_like=0&q_type=%F9%AF%B0%A9%B0%A9%A7%E9",
+  },
+  {
+    "department": "骨科",
+    "start_url": "https://sp1.hso.mohw.gov.tw/doctor/Often_question/type_detail.php?UrlClass=%B0%A9%AC%EC&q_like=0&q_type=%F9%AF%B0%A9%B0%A9%A7%E9%B3N%AB%E1",
+  },
+  {
+    "department": "眼科",
+    "start_url": "https://sp1.hso.mohw.gov.tw/doctor/Often_question/type_detail.php?UrlClass=%B2%B4%AC%EC&q_like=0&q_type=%C5%E7%A5%FA%B0%DD%C3D",
+  },
+  {
+    "department": "肝膽腸胃科",
+    "start_url": "https://sp1.hso.mohw.gov.tw/doctor/Often_question/type_detail.php?UrlClass=%A8x%C1x%B8z%ADG%AC%EC&q_like=0&q_type=%E4%FA%A4%DF",
+  },
+  {
+    "department": "耳鼻喉科",
+    "start_url": "https://sp1.hso.mohw.gov.tw/doctor/Often_question/type_detail.php?UrlClass=%A6%D5%BB%F3%B3%EF%AC%EC&q_like=0&q_type=%F9%AE%C3E%B5o%AA%A2",
+  },
+  {
+    "department": "皮膚科",
+    "start_url": "https://sp1.hso.mohw.gov.tw/doctor/Often_question/type_detail.php?UrlClass=%A5%D6%BD%A7%AC%EC&q_like=0&q_type=%F9%AF%B0%A9%A5%C0%B4%B3",
+  }
+]
 
 
 def get_paragraph(browser: Chrome, symptom: str, department: str):
@@ -56,21 +89,19 @@ def get_paragraph(browser: Chrome, symptom: str, department: str):
 
 @app.task()
 def period_send_symptom_crawler_task(demo=False):
-    dataset_path = pathlib.Path(__file__).parent.parent / "datasets" / "symptoms.json"
-    with open(dataset_path, "r", encoding="utf-8") as f:
-        for dataset in json.load(f):
-            if demo:
-                symptom_crawler_task(
-                    department=dataset["department"],
-                    start_url=dataset["start_url"],
-                    demo=demo,
-                )
-                break
-            else:
-                symptom_crawler_task.delay(
-                    department=dataset["department"],
-                    start_url=dataset["start_url"],
-                )
+    for start_point in START_POINTS:
+        if demo:
+            symptom_crawler_task(
+                department=start_point["department"],
+                start_url=start_point["start_url"],
+                demo=demo,
+            )
+            break
+        else:
+            symptom_crawler_task.delay(
+                department=start_point["department"],
+                start_url=start_point["start_url"],
+            )
 
 
 @app.task()
