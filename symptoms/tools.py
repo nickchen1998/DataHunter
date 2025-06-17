@@ -1,3 +1,4 @@
+import json
 from typing import Dict, List, Optional, Any
 from langchain.tools import BaseTool
 from langchain.prompts import ChatPromptTemplate
@@ -11,10 +12,10 @@ from symptoms.utils import build_symptom_queryset
 
 class SymptomQueryInput(BaseModel):
     """症狀查詢工具的輸入參數"""
-    reference_id_list: List[int] = Field(default=[], description="參考資料ID列表")
+    reference_id_list: str = Field(default="", description="參考資料ID列表，請以 json 格式傳遞，例如：[1, 2, 3]")
     department: str = Field(default="", description="科別")
     gender: str = Field(default="", description="性別")
-    question: str = Field(default="", description="症狀關鍵字")
+    question: str = Field(default="", description="使用者原本的問題（不包含參考資料ID）")
 
 
 class SymptomDataRetrievalTool(BaseTool):
@@ -57,26 +58,31 @@ class SymptomDataRetrievalTool(BaseTool):
     
     def _run(
         self, 
-        reference_id_list: List[int] = [],
+        reference_id_list: str = "",
         department: str = "",
         gender: str = "",
         question: str = "",
     ) -> str:
         
         if reference_id_list:
-            queryset = Symptom.objects.filter(id__in=reference_id_list)
-            queryset = hybrid_search_with_rerank(
-                queryset=queryset, 
-                vector_field_name="question_embeddings",
-                text_field_name="question",
-                original_question=question
-            )
+            try:
+                reference_id_list = json.loads(reference_id_list)
+                queryset = Symptom.objects.filter(id__in=reference_id_list)
+                # 只有當有參考資料且需要重新排序時才使用 hybrid_search_with_rerank
+                if question and question != "一般症狀諮詢":
+                    queryset = hybrid_search_with_rerank(
+                        queryset=queryset, 
+                        vector_field_name="question_embeddings",
+                        text_field_name="question",
+                        original_question=question
+                    )
+            except (json.JSONDecodeError, ValueError):
+                return "參考資料ID格式錯誤，請提供正確的JSON格式。"
         else:
             queryset = build_symptom_queryset(department, gender, question)
         
         if not queryset:
             return "沒有找到符合條件的症狀資料。"
-
 
         result = f"找到 {queryset.count()} 筆症狀資料：\n\n"
 
@@ -87,11 +93,14 @@ class SymptomDataRetrievalTool(BaseTool):
             result += f"   回答：{symptom.answer[:100]}{'...' if len(symptom.answer) > 100 else ''}\n\n"
         
         symptom_prompt = self._get_symptom_prompt()
-        prompt = ChatPromptTemplate.from_template(symptom_prompt)
-        chain = prompt | ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
+        prompt = ChatPromptTemplate.from_template(
+            symptom_prompt
+        ).format(input=question, context=result)
+        return prompt
 
-        result = chain.invoke({"context": result, "input": question})
-        return result.content
+
+        # result = chain.invoke({"context": result, "input": question})
+        # return result.content
     
     @staticmethod
     def _get_symptom_prompt() -> str:
