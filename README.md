@@ -173,7 +173,7 @@ python manage.py setup_google_oauth --client-id YOUR_CLIENT_ID --client-secret Y
 
 ```bash
 # 啟動基本服務（PostgreSQL + Redis）
-docker-compose up -d postgres redis
+docker-compose up -d
 
 # 啟動完整服務（包含 Celery）
 docker-compose --profile production up -d
@@ -245,7 +245,7 @@ docker-compose --profile production up -d
 
 ```bash
 # 開發模式啟動
-DEBUG=True daphne -p 8000 -b 0.0.0.0 DataHunter.asgi:application
+daphne -p 8000 -b 0.0.0.0 DataHunter.asgi:application
 
 # 或使用 Django runserver（僅限不需要 WebSocket 的開發）
 python manage.py runserver 8000
@@ -278,38 +278,52 @@ python manage.py test
 
 ---
 
-## 🔧 故障排除
+## 🛜 Google Cloud SQL 連線方式
 
-### Google OAuth 常見問題
+Google Cloud SQL 部署相關連線資訊請找專案負責人索取。
 
-1. **redirect_uri_mismatch 錯誤**：
-   - 檢查 Google Cloud Console 中的重定向 URI 設定
-   - 確保 URI 完全匹配（包括協議、域名、端口和路径）
-   - 開發環境：`http://localhost:8000/accounts/google/login/callback/`
+### 1. 本機環境首次設定 (每台電腦只需一次)
 
-2. **invalid_client 錯誤**：
-   - 檢查 `.env` 檔案中的 `GOOGLE_OAUTH2_CLIENT_ID` 和 `GOOGLE_OAUTH2_CLIENT_SECRET`
-   - 確認是否已執行 `setup_google_oauth` 命令
+在開始之前，請確保您的 macOS 電腦已安裝 [Homebrew](https://brew.sh/)。以下步驟將為您的電腦安裝必要的工具並完成授權。
 
-3. **Google 登入後無法跳轉**：
-   - 檢查 `CustomSocialAccountAdapter` 是否正確設定
-   - 確認 `SOCIALACCOUNT_ADAPTER` 設定正確
+#### **步驟 1.1：安裝 Google Cloud CLI**
+Google Cloud CLI (`gcloud`) 是與 GCP 互動的主要命令列工具。
+```bash
+brew install --cask google-cloud-sdk
+```
 
-4. **檢查 Google OAuth 設定**：
-   ```bash
-   python manage.py shell -c "
-   from allauth.socialaccount.models import SocialApp
-   from django.contrib.sites.models import Site
-   print('Sites:', list(Site.objects.all()))
-   print('Google Apps:', list(SocialApp.objects.filter(provider='google')))
-   "
-   ```
+#### **步驟 1.2：安裝 Cloud SQL Auth Proxy**
+此工具會在您的本機與雲端資料庫之間建立一條安全的加密通道。
+```bash
+brew install cloud-sql-proxy
+```
 
-### 一般問題
+#### **步驟 1.3：授權您的 Google 帳號**
+這個步驟會將您的本機 CLI 與您的 Google 帳號綁定，並取得使用 Proxy 的權限。
+```bash
+# 首次執行，引導您登入並選擇專案
+gcloud init
 
-1. **WebSocket 連線失敗**：確保使用 Daphne 而非 Django runserver
-2. **資料庫連線問題**：檢查 PostgreSQL 服務是否啟動
-3. **Redis 連線問題**：檢查 Redis 服務狀態和 `REDIS_URL` 設定
+# 取得應用程式的預設憑證
+gcloud auth application-default login
+```
+請依照終端機的指示，在瀏覽器中完成登入與授權。
+
+### 2. 每日開發連線流程
+
+完成首次設定後，每天要開始工作時，請遵循以下流程。
+
+#### **步驟 2.1：啟動 Cloud SQL Auth Proxy**
+開啟一個**新的終端機視窗**，執行以下指令。
+**注意：此視窗在您工作期間必須保持開啟，最小化即可。**
+
+```bash
+# 將 <INSTANCE_CONNECTION_NAME> 換成您資料庫的連線名稱
+cloud-sql-proxy <INSTANCE_CONNECTION_NAME>
+```
+當您看到 `Ready for new connections` 訊息時，代表通道已成功建立，這時候請不要關閉這個終端機，您可以直接使用前方提到的指令在另一個終端機當中啟動整個 Django 服務。
+
+
 
 ---
 

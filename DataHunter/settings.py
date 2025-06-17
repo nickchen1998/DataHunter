@@ -208,21 +208,8 @@ ASGI_APPLICATION = 'DataHunter.asgi.application'
 
 # Channel layers 設置
 REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
-
-if REDIS_URL and REDIS_URL != 'redis://localhost:6379/0':
-    # 使用 Redis Channel Layer
-    CHANNEL_LAYERS = {
-        'default': {
-            'BACKEND': 'channels_redis.core.RedisChannelLayer',
-            'CONFIG': {
-                "hosts": [REDIS_URL],
-            },
-        },
-    }
-else:
-    # 開發環境使用內存 Channel Layer
-    CHANNEL_LAYERS = {
-        'default': {
-            'BACKEND': 'channels.layers.InMemoryChannelLayer',
-        },
-    }
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
