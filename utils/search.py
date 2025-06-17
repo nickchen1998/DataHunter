@@ -31,7 +31,7 @@ def hybrid_search_with_rerank(
     if keywords:
         for keyword in keywords:
             keyword_query |= Q(**{f"{text_field_name}__icontains": keyword})
-        keyword_results = list(queryset.filter(keyword_query)[:100])
+        keyword_results = list(queryset.filter(keyword_query)[:10])
     else:
         keyword_results = []
 
@@ -40,7 +40,7 @@ def hybrid_search_with_rerank(
     question_embeddings = OpenAIEmbeddings(model="text-embedding-3-small").embed_query(original_question)
     vector_results = list(queryset.annotate(
         distance=CosineDistance(vector_field_name, question_embeddings)
-    ).order_by("distance")[:100])
+    ).order_by("distance")[:10])
 
     # 4. Combine and deduplicate results
     combined_results = []
@@ -54,7 +54,7 @@ def hybrid_search_with_rerank(
     # 5. Rerank using Cohere
     reranker = CohereRerank(
         model="rerank-multilingual-v3.0",
-        top_n=100
+        top_n=10
     )
 
     docs_to_rerank = [

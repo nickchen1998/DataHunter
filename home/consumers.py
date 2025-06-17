@@ -1,4 +1,5 @@
 import json
+import traceback
 from typing import Dict, Any, List
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
@@ -75,6 +76,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return result
             
         except Exception as e:
+            traceback.print_exc()
             return f"處理查詢時發生錯誤：{str(e)}"
 
     def get_current_timestamp(self):
