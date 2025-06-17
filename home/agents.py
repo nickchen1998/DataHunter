@@ -56,7 +56,6 @@ class ChatAgent:
         # 取得回答與 Tool 回傳的原始資料
         response = result["output"]
         steps = result["intermediate_steps"]
-        print(steps)
 
         # ✅ 嘗試解析回傳的 id list
         id_list = None
