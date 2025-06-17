@@ -21,14 +21,39 @@ class SymptomDataRetrievalTool(BaseTool):
     """症狀資料檢索工具 - 純粹的資料檢索功能"""
     
     name: str = "symptom_data_retrieval"
-    description: str = """
-    檢索症狀資料的工具。
-    
-    輸入參數：
-    - department: 科別 (可選)
-    - gender: 性別 (可選) 
-    - question: 症狀關鍵字 (可選)
-    """
+    description: str = """檢索症狀資料的工具。
+
+使用情境：
+- 若有參考資料ID (reference_id_list)，請直接使用這些 ID 進行查詢。
+- 若無參考資料，請根據用戶提供的內容自動分析適合的科別 (department)、性別 (gender) 與問題 (question) 後進行查詢。
+
+參數描述：
+- gender 除了支援的性別之外，也可以填寫空字串，表示不限制性別
+- department 除了支援的科別之外，也可以填寫空字串，表示不限制科別
+"""
+   
+    def __init__(self):
+        supported_departments = Symptom.objects.values_list("department", flat=True).distinct()
+        supported_genders = Symptom.objects.values_list("gender", flat=True).distinct()
+
+        description = """檢索症狀資料的工具。
+
+使用情境：
+- 若有參考資料ID (reference_id_list)，請直接使用這些 ID 進行查詢。
+- 若無參考資料，請根據用戶提供的內容自動分析適合的科別 (department)、性別 (gender) 與問題 (question) 後進行查詢。
+
+參數描述：
+- gender 除了支援的性別之外，也可以填寫空字串，表示不限制性別
+- department 除了支援的科別之外，也可以填寫空字串，表示不限制科別
+"""
+
+        description += f"\n\n支援的科別：{list(supported_departments)}\n支援的性別：{list(supported_genders)}"
+
+        super().__init__(
+            name="symptom_data_retrieval",
+            description=description,
+            args_schema=SymptomQueryInput,
+        )
     
     def _run(
         self, 
@@ -87,3 +112,4 @@ class SymptomDataRetrievalTool(BaseTool):
 
 請基於以上參考資料詳細回答用戶問題。如果參考資料中沒有直接答案，請基於相關資料提供有用的建議和資訊。"""
         return prompt
+    
