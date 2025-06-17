@@ -19,10 +19,9 @@ class ChatAgent:
     }
     
     def process_query(self, user_question: str, reference_id_list: list[int], data_type: str = "Mixed") -> str:
-        # 動態組 prompt
+
         if reference_id_list:
-            reference_str = f"請使用我指定的參考資料ID（格式為 JSON，例如：[1, 2, 3]）：{reference_id_list}。"
-            user_question += "\n" + reference_str
+            user_question = f"請使用我指定的參考資料ID：\n{reference_id_list}\n我的問題是：\n{user_question}"
 
         # Tool 與 Prompt 準備
         tool = self.TOOL_FACTORY[data_type]()
@@ -58,15 +57,15 @@ class ChatAgent:
         steps = result["intermediate_steps"]
 
         # ✅ 嘗試解析回傳的 id list
-        id_list = None
+        final_reference_id_list = None
         if steps:
             _, tool_output = steps[-1]
             if isinstance(tool_output, tuple) and isinstance(tool_output[1], list):
-                id_list = tool_output[1]
+                final_reference_id_list = tool_output[1]
 
         # ✅ 組合最終結果
-        response += f"\n\n📄 參考資料 ID：{id_list if id_list else '無'}"
+        # response += f"\n\n📄 參考資料 ID：{id_list if id_list else '無'}"
         response += f"\n\n⚠️ **重要提醒**：以上資訊僅供參考，實際應用時請諮詢相關專業人士。"
 
-        return response
+        return response, final_reference_id_list
     

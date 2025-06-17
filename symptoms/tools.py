@@ -9,10 +9,10 @@ from symptoms.utils import build_symptom_queryset
 
 class SymptomQueryInput(BaseModel):
     """症狀查詢工具的輸入參數"""
-    reference_id_list: str = Field(default="", description="參考資料ID列表，請以 json 格式傳遞，例如：[1, 2, 3]")
     department: str = Field(default="", description="科別")
     gender: str = Field(default="", description="性別")
-    question: str = Field(default="", description="使用者原本的問題（不包含參考資料ID）")
+    question: str = Field(description="使用者原本的問題")
+    reference_id_list: str = Field(default="", description="參考資料 ID，以 JSON 字串格式傳入，例如：[1, 2, 3]")
 
 
 class SymptomDataRetrievalTool(BaseTool):
@@ -23,11 +23,10 @@ class SymptomDataRetrievalTool(BaseTool):
     def __init__(self):
         supported_departments = Symptom.objects.values_list("department", flat=True).distinct()
         supported_genders = Symptom.objects.values_list("gender", flat=True).distinct()
-
         description = """檢索症狀資料的工具。
 
 使用情境：
-- 若有參考資料ID (reference_id_list)，請直接使用這些 ID 進行查詢。
+- 若有參考資料ID (reference_id_list)，請將其轉換為 JSON 字串格式傳入給 reference_id_list，例如：[1, 2, 3]，並將使用者原本的問題擷取後傳入給 question。
 - 若無參考資料，請根據用戶提供的內容自動分析適合的科別 (department)、性別 (gender) 與問題 (question) 後進行查詢。
 
 參數描述：
@@ -44,23 +43,24 @@ class SymptomDataRetrievalTool(BaseTool):
     
     def _run(
         self, 
-        reference_id_list: str = "",
+        question: str,
         department: str = "",
         gender: str = "",
-        question: str = "",
+        reference_id_list: str = "",
     ) -> str:
         
         if reference_id_list:
             try:
                 reference_id_list = json.loads(reference_id_list)
-                queryset = hybrid_search_with_rerank(
-                    queryset=Symptom.objects.filter(id__in=reference_id_list), 
-                    vector_field_name="question_embeddings",
-                    text_field_name="question",
-                    original_question=question
-                )
             except (json.JSONDecodeError, ValueError):
                 return "參考資料ID格式錯誤，請提供正確的JSON格式。"
+            
+            queryset = hybrid_search_with_rerank(
+                queryset=Symptom.objects.filter(id__in=reference_id_list), 
+                vector_field_name="question_embeddings",
+                text_field_name="question",
+                original_question=question
+            )
         else:
             queryset = build_symptom_queryset(department, gender, question)
         
