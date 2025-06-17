@@ -492,10 +492,14 @@ class ChatManager {
         // 準備參考資料
         const references = Array.from(this.references.values());
         
+        // 檢測當前頁面的資料源類型
+        const dataType = this.detectCurrentDataType();
+        
         // 發送訊息到後端
         this.socket.send(JSON.stringify({
             'message': message,
-            'references': references
+            'references': references,
+            'data_type': dataType
         }));
         
         this.chatInput.value = '';
@@ -634,6 +638,19 @@ class ChatManager {
             localStorage.setItem('symptom_references', JSON.stringify(referencesData));
         } catch (error) {
             console.error('保存參考資料時發生錯誤:', error);
+        }
+    }
+
+    detectCurrentDataType() {
+        // 檢測當前頁面的資料源類型
+        const currentPath = window.location.pathname;
+        
+        if (currentPath.includes('/symptoms/')) {
+            return 'Symptom';
+        } else if (currentPath.includes('/gov-data/')) {
+            return 'Dataset';
+        } else {
+            return 'Mixed'; // 預設值
         }
     }
 

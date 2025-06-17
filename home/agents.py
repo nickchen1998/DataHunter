@@ -21,33 +21,41 @@ class ChatAgent:
             openai_api_key=os.getenv('OPENAI_API_KEY')
         )
     
-    def process_query(self, user_question: str, references: List[Dict[str, Any]]) -> str:
-        """
-        處理用戶查詢
+    def process_query(self, user_question: str, references: List[Dict[str, Any]], data_type: str = "Mixed") -> str:
+        """處理用戶查詢
         
         Args:
             user_question: 用戶問題
             references: 參考資料列表
-            
-        Returns:
-            AI 回答字串
+            data_type: 資料源類型，由前台傳入，可能的值：'Symptom', 'Dataset', 'Mixed'
+                      當為 'Mixed' 時，忽略參考資料，當作沒有參考資料處理
         """
-        if references:
-            return self._answer_with_references(user_question, references)
-        else:
+        # 當 data_type 為 "Mixed" 時，忽略參考資料
+        if data_type == "Mixed":
             return self._answer_without_references(user_question)
+        
+        # 其他情況下，如果有參考資料則使用參考資料回答
+        if references:
+            return self._answer_with_references(user_question, references, data_type)
+        
+        return self._answer_without_references(user_question)
 
-    def _answer_with_references(self, user_question: str, references: List[Dict[str, Any]]) -> str:
-        """基於參考資料回答問題"""
+    def _answer_with_references(self, user_question: str, references: List[Dict[str, Any]], data_type: str = "Mixed") -> str:
+        """基於參考資料回答問題
+        
+        Args:
+            user_question: 用戶問題
+            references: 參考資料列表
+            data_type: 資料源類型，由前台傳入
+        """
         try:
-            # 檢測參考資料類型並創建文檔
-            documents = self._create_documents_from_references(references)
+            # 直接使用傳入的data_type創建文檔
+            documents = self._create_documents_from_references(references, data_type)
             
             if not documents:
                 return self._answer_without_references(user_question)
 
-            # 根據資料類型創建相應的提示模板
-            data_type = self._detect_data_type(references)
+            # 根據傳入的資料類型創建相應的提示模板
             system_prompt = self._get_system_prompt(data_type)
             
             # 將所有文檔內容合併作為上下文
@@ -94,56 +102,19 @@ class ChatAgent:
         except Exception as e:
             return f"處理問題時發生錯誤：{str(e)}"
 
-    def _create_documents_from_references(self, references: List[Dict[str, Any]]) -> List[Document]:
-        """從參考資料創建 Document 列表"""
+    def _create_documents_from_references(self, references: List[Dict[str, Any]], data_type: str = "Mixed") -> List[Document]:
+        """從參考資料創建 Document 列表
+        
+        Args:
+            references: 參考資料列表
+            data_type: 資料源類型，由前台傳入
+        """
         if not references:
             return []
         
-        # 檢測資料類型
-        data_type = self._detect_data_type(references)
-        
-        try:
-            # 使用 DocumentFactory 創建文檔
-            factory = DocumentFactory(references, data_type)
-            return factory.get_documents()
-        except Exception as e:
-            print(f"創建文檔時發生錯誤：{e}")
-            return []
-
-    def _detect_data_type(self, references: List[Dict[str, Any]]) -> str:
-        """檢測參考資料的類型"""
-        if not references:
-            return Symptom.__name__  # 預設類型
-        
-        # 檢查第一筆資料來判斷類型
-        first_ref = references[0]
-        
-        # 症狀資料通常有這些欄位
-        symptom_fields = {'department', 'gender', 'symptom', 'question', 'answer'}
-        
-        # 政府資料通常有這些欄位 (根據實際的 Dataset 模型)
-        gov_data_fields = {'name', 'category', 'department', 'description', 'dataset_id', 'columns_description', 'license', 'price'}
-        
-        ref_keys = set(first_ref.keys())
-        
-        # 計算欄位匹配度
-        symptom_match = len(symptom_fields.intersection(ref_keys))
-        gov_data_match = len(gov_data_fields.intersection(ref_keys))
-        
-        # 特別檢查：如果有 dataset_id 或 category 且沒有 gender/symptom，很可能是政府資料
-        if ('dataset_id' in ref_keys or 'category' in ref_keys) and 'gender' not in ref_keys and 'symptom' not in ref_keys:
-            return Dataset.__name__
-        
-        # 特別檢查：如果有 gender 和 symptom，很可能是症狀資料
-        if 'gender' in ref_keys and 'symptom' in ref_keys:
-            return Symptom.__name__
-        
-        # 否則根據匹配度決定
-        if gov_data_match > symptom_match:
-            return Dataset.__name__
-        else:
-            return Symptom.__name__
-
+        factory = DocumentFactory(references, data_type)
+        return factory.get_documents()
+       
     def _get_system_prompt(self, data_type: str) -> str:
         """根據資料類型獲取相應的系統提示"""
         if data_type == Symptom.__name__:
@@ -179,7 +150,6 @@ class ChatAgent:
 用戶問題：{input}
 
 請基於以上參考資料詳細回答用戶問題。如果參考資料中沒有直接答案，請基於相關資料提供有用的建議和資訊。"""
-        
         else:
             # 通用提示
             return """你是一個專業的資料分析助手。請根據用戶提供的參考資料回答問題。
@@ -197,16 +167,3 @@ class ChatAgent:
 用戶問題：{input}
 
 請基於以上參考資料詳細回答用戶問題。"""
-
-    def _get_data_type_name(self, data_type: str) -> str:
-        """獲取資料類型的中文名稱"""
-        type_names = {
-            Symptom.__name__: "醫療症狀",
-            Dataset.__name__: "政府開放資料"
-        }
-        return type_names.get(data_type, "")
-
-    @classmethod
-    def get_supported_data_types(cls) -> List[str]:
-        """獲取支援的資料類型"""
-        return DocumentFactory.get_supported_types() 

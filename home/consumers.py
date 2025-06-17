@@ -15,19 +15,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.chat_agent = ChatAgent()
     
     async def connect(self):
-        # 處理用戶身份
         if self.scope["user"].is_anonymous:
-            # 為匿名用戶創建臨時 ID
-            self.user_id = f"anonymous_{id(self)}"
-            self.is_anonymous = True
-        else:
-            self.user = self.scope["user"]
-            self.user_id = str(self.user.id)
-            self.is_anonymous = False
+            await self.close()
+            return
         
+        self.user = self.scope["user"]
+        self.user_id = str(self.user.id)
         self.room_group_name = f'chat_{self.user_id}'
         
-        # 加入房間群組
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
@@ -36,7 +31,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
     async def disconnect(self, close_code):
-        # 離開房間群組
         if hasattr(self, 'room_group_name'):
             await self.channel_layer.group_discard(
                 self.room_group_name,
@@ -46,14 +40,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         try:
             text_data_json = json.loads(text_data)
-            message = text_data_json.get('message', '').strip()
-            references = text_data_json.get('references', [])
-            
-            if not message:
-                return
-            
-            # 使用聊天代理處理查詢
-            result = await self.process_query_with_agent(message, references)
+            result = await self.process_query_with_agent(
+                text_data_json.get('message', '').strip(), 
+                text_data_json.get('references', []),
+                text_data_json.get('data_type', 'Mixed')  # 添加data_type參數，預設為Mixed
+            )
             
             # 發送 AI 回覆
             await self.send(text_data=json.dumps({
@@ -76,11 +67,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
             }))
 
     @sync_to_async
-    def process_query_with_agent(self, user_message: str, references: List[Dict[str, Any]]) -> str:
+    def process_query_with_agent(self, user_message: str, references: List[Dict[str, Any]], data_type: str = "Mixed") -> str:
         """使用聊天代理處理查詢"""
         try:
-            # 調用聊天代理
-            result = self.chat_agent.process_query(user_message, references)
+            # 調用聊天代理，直接使用前台傳入的data_type
+            result = self.chat_agent.process_query(user_message, references, data_type)
             return result
             
         except Exception as e:

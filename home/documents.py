@@ -13,9 +13,15 @@ class DocumentFactory:
         
         Args:
             datas: 要轉換的資料列表
-            data_type: 資料類型 (Symptom.__name__ 或 Dataset.__name__)
+            data_type: 資料類型 (可以是 "Symptom", "Dataset", "Mixed" 或模型類名)
         """
+        # 支援字串形式和模型類名形式的映射
         self.factory_mapping = {
+            # 新的字串形式
+            "Symptom": self.format_symptom_to_document,
+            "Dataset": self.format_gov_data_to_document,
+            "Mixed": self.format_mixed_to_document,
+            # 舊的模型類名形式（向後兼容）
             Symptom.__name__: self.format_symptom_to_document,
             Dataset.__name__: self.format_gov_data_to_document
         }
@@ -154,5 +160,5 @@ class DocumentFactory:
     @classmethod
     def get_supported_types(cls) -> List[str]:
         """取得支援的資料類型列表"""
-        return [Symptom.__name__, Dataset.__name__]
+        return ["Mixed", Symptom.__name__, Dataset.__name__]
     
