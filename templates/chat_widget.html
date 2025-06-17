@@ -489,8 +489,8 @@ class ChatManager {
         };
         this.handleMessage(userMessageData);
         
-        // 準備參考資料
-        const references = Array.from(this.references.values());
+        // 準備參考資料ID列表
+        const referenceIdList = Array.from(this.references.keys()).map(id => parseInt(id));
         
         // 檢測當前頁面的資料源類型
         const dataType = this.detectCurrentDataType();
@@ -498,7 +498,7 @@ class ChatManager {
         // 發送訊息到後端
         this.socket.send(JSON.stringify({
             'message': message,
-            'references': references,
+            'reference_id_list': referenceIdList,
             'data_type': dataType
         }));
         

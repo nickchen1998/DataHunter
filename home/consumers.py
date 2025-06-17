@@ -42,7 +42,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             text_data_json = json.loads(text_data)
             result = await self.process_query_with_agent(
                 text_data_json.get('message', '').strip(), 
-                text_data_json.get('references', []),
+                text_data_json.get('reference_id_list', []),  # 改為接收 reference_id_list
                 text_data_json.get('data_type', 'Mixed')  # 添加data_type參數，預設為Mixed
             )
             
@@ -67,11 +67,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
             }))
 
     @sync_to_async
-    def process_query_with_agent(self, user_message: str, references: List[Dict[str, Any]], data_type: str = "Mixed") -> str:
+    def process_query_with_agent(self, user_message: str, reference_id_list: List[int], data_type: str = "Mixed") -> str:
         """使用聊天代理處理查詢"""
         try:
-            # 調用聊天代理，直接使用前台傳入的data_type
-            result = self.chat_agent.process_query(user_message, references, data_type)
+            # 調用聊天代理，傳入reference_id_list和data_type
+            result = self.chat_agent.process_query(user_message, reference_id_list, data_type)
             return result
             
         except Exception as e:

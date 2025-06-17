@@ -1,7 +1,9 @@
 from typing import Dict, List, Optional, Any
 from langchain.tools import BaseTool
+from langchain.prompts import ChatPromptTemplate
+from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
-import json
+from utils.search import hybrid_search_with_rerank
 
 from symptoms.models import Symptom
 from symptoms.utils import build_symptom_queryset
@@ -9,10 +11,10 @@ from symptoms.utils import build_symptom_queryset
 
 class SymptomQueryInput(BaseModel):
     """症狀查詢工具的輸入參數"""
+    reference_id_list: List[int] = Field(default=[], description="參考資料ID列表")
     department: str = Field(default="", description="科別")
     gender: str = Field(default="", description="性別")
     question: str = Field(default="", description="症狀關鍵字")
-    limit: int = Field(default=10, description="返回結果數量限制")
 
 
 class SymptomDataRetrievalTool(BaseTool):
@@ -26,63 +28,62 @@ class SymptomDataRetrievalTool(BaseTool):
     - department: 科別 (可選)
     - gender: 性別 (可選) 
     - question: 症狀關鍵字 (可選)
-    - limit: 返回結果數量限制 (預設10)
     """
     
     def _run(
         self, 
-        department: str = None, 
-        gender: str = None, 
-        question: str = None, 
-        limit: int = 10
+        reference_id_list: List[int] = [],
+        department: str = "",
+        gender: str = "",
+        question: str = "",
     ) -> str:
-        """檢索症狀資料"""
         
-        try:
+        if reference_id_list:
+            queryset = Symptom.objects.filter(id__in=reference_id_list)
+            queryset = hybrid_search_with_rerank(
+                queryset=queryset, 
+                vector_field_name="question_embeddings",
+                text_field_name="question",
+                original_question=question
+            )
+        else:
             queryset = build_symptom_queryset(department, gender, question)
-            symptoms = list(queryset[:limit])
-            
-            if not symptoms:
-                return "沒有找到符合條件的症狀資料。"
-            
-            result = f"找到 {len(symptoms)} 筆症狀資料：\n\n"
-            
-            for i, symptom in enumerate(symptoms, 1):
-                result += f"{i}. 【{symptom.department}】{symptom.gender}\n"
-                result += f"   主訴：{symptom.symptom}\n"
-                result += f"   問題：{symptom.question[:100]}{'...' if len(symptom.question) > 100 else ''}\n"
-                result += f"   回答：{symptom.answer[:100]}{'...' if len(symptom.answer) > 100 else ''}\n\n"
-            
-            return result
-            
-        except Exception as e:
-            return f"檢索資料時發生錯誤：{str(e)}"
+        
+        if not queryset:
+            return "沒有找到符合條件的症狀資料。"
 
-    def get_symptom_data(
-        self, 
-        department: str = None, 
-        gender: str = None, 
-        question: str = None, 
-        limit: int = 10
-    ) -> List[Dict[str, Any]]:
-        """獲取症狀資料，返回字典列表格式"""
+
+        result = f"找到 {queryset.count()} 筆症狀資料：\n\n"
+
+        for i, symptom in enumerate(queryset, 1):
+            result += f"{i}. 【{symptom.department}】{symptom.gender}\n"
+            result += f"   主訴：{symptom.symptom}\n"
+            result += f"   問題：{symptom.question[:100]}{'...' if len(symptom.question) > 100 else ''}\n"
+            result += f"   回答：{symptom.answer[:100]}{'...' if len(symptom.answer) > 100 else ''}\n\n"
         
-        try:
-            queryset = build_symptom_queryset(department, gender, question)
-            symptoms = list(queryset[:limit])
-            
-            result = []
-            for symptom in symptoms:
-                result.append({
-                    'id': symptom.id,
-                    'department': symptom.department,
-                    'gender': symptom.gender,
-                    'symptom': symptom.symptom,
-                    'question': symptom.question,
-                    'answer': symptom.answer
-                })
-            
-            return result
-            
-        except Exception as e:
-            return [] 
+        symptom_prompt = self._get_symptom_prompt()
+        prompt = ChatPromptTemplate.from_template(symptom_prompt)
+        chain = prompt | ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
+
+        result = chain.invoke({"context": result, "input": question})
+        return result.content
+    
+    @staticmethod
+    def _get_symptom_prompt() -> str:
+        prompt = """
+        你是一個專業的醫療資訊助手。請根據用戶提供的參考資料回答問題。
+
+回答原則：
+1. **優先使用參考資料**：主要基於用戶選擇的參考資料進行回答
+2. **靈活解釋**：可以基於參考資料進行合理的解釋、總結和建議
+3. **適度延伸**：如果參考資料相關但不完全匹配，可以進行適度的專業延伸
+4. **明確來源**：清楚說明回答是基於用戶提供的參考資料
+5. **專業提醒**：始終提醒這些資料僅供參考，具體診斷需諮詢專業醫師
+
+用戶提供的參考資料：
+{context}
+
+用戶問題：{input}
+
+請基於以上參考資料詳細回答用戶問題。如果參考資料中沒有直接答案，請基於相關資料提供有用的建議和資訊。"""
+        return prompt
