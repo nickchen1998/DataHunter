@@ -7,7 +7,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
 from fake_useragent import UserAgent
-from DataHunter.celery import app
+from RAGPilot.celery import app
 from symptoms.models import Symptom
 from langchain_openai import OpenAIEmbeddings
 

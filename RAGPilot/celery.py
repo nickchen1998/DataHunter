@@ -2,9 +2,9 @@ import os
 from celery import Celery
 from celery.schedules import crontab
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'DataHunter.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'RAGPilot.settings')
 app = Celery(
-    'DataHunter',
+    'RAGPilot',
     backend=f"redis://{os.getenv('REDIS_HOST', 'localhost')}:6379/0",
     broker=f"redis://{os.getenv('REDIS_HOST', 'localhost')}:6379/1"
 )

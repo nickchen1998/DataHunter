@@ -6,7 +6,7 @@ import json
 import psycopg2
 import xml.etree.ElementTree as ET
 from gov_datas.models import Dataset, File, ASSOCIATED_CATEGORIES_DATABASE_NAME
-from DataHunter.celery import app
+from RAGPilot.celery import app
 from langchain_openai import OpenAIEmbeddings
 from django.conf import settings
 from utils.str_date import parse_datetime_string

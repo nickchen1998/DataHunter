@@ -2,7 +2,7 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from gov_datas.models import Dataset
-from DataHunter.celery import app
+from RAGPilot.celery import app
 from langchain_openai import ChatOpenAI
 from django.conf import settings
 

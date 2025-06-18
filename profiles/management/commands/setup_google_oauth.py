@@ -28,7 +28,7 @@ class Command(BaseCommand):
             id=1,
             defaults={
                 'domain': 'localhost:8000',
-                'name': 'DataHunter Local'
+                'name': 'RAGPilot Local'
             }
         )
         

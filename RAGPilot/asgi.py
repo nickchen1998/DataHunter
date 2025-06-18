@@ -1,5 +1,5 @@
 """
-ASGI config for DataHunter project.
+ASGI config for RAGPilot project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
@@ -14,7 +14,7 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 from channels.security.websocket import AllowedHostsOriginValidator
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'DataHunter.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'RAGPilot.settings')
 
 # 確保 Django 完全初始化
 django.setup()

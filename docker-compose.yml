@@ -29,7 +29,7 @@ services:
     image: ankane/pgvector:latest
     container_name: poestgres
     environment:
-      - POSTGRES_DB=DataHunter
+      - POSTGRES_DB=RAGPilot
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
     ports:
@@ -37,7 +37,7 @@ services:
     volumes:
       - ${POSTGRES_VOLUME:-./postgres_data}:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d DataHunter"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d RAGPilot"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -51,7 +51,7 @@ services:
       - PGPASSWORD=${POSTGRES_PASSWORD:-postgres}
     command: |
       bash -c "
-        psql -h postgres -U postgres -d DataHunter -c 'CREATE EXTENSION IF NOT EXISTS vector;';
+        psql -h postgres -U postgres -d RAGPilot -c 'CREATE EXTENSION IF NOT EXISTS vector;';
         echo 'Vector extension enabled successfully';
       "
     restart: "no"
@@ -73,7 +73,7 @@ services:
   celery-beat:
     build: .
     container_name: celery-beat
-    command: celery -A DataHunter beat -l info
+    command: celery -A RAGPilot beat -l info
     volumes:
       - .:/app
     working_dir: /app
@@ -92,7 +92,7 @@ services:
   celery-static-worker:
     build: .
     container_name: celery-static-worker
-    command: celery -A DataHunter worker -Q static_crawler_queue -l info -c 5
+    command: celery -A RAGPilot worker -Q static_crawler_queue -l info -c 5
     volumes:
       - .:/app
     working_dir: /app
@@ -113,7 +113,7 @@ services:
   celery-dynamic-worker:
     build: .
     container_name: celery-dynamic-worker
-    command: celery -A DataHunter worker -Q dynamic_crawler_queue -l info -c 3
+    command: celery -A RAGPilot worker -Q dynamic_crawler_queue -l info -c 3
     volumes:
       - .:/app
     working_dir: /app
@@ -134,7 +134,7 @@ services:
   celery-default-worker:
     build: .
     container_name: celery-default-worker
-    command: celery -A DataHunter worker -Q default -l info -c 2
+    command: celery -A RAGPilot worker -Q default -l info -c 2
     volumes:
       - .:/app
     working_dir: /app

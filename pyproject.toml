@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "DataHunter"
+name = "RAGPilot"
 version = "0.1.0"
 description = ""
 authors = ["nick <nickchen1998@gmail.com>"]
 readme = "README.md"
-packages = [{include = "DataHunter"}]
+packages = [{include = "RAGPilot"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"

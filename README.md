@@ -1,4 +1,4 @@
-# 🎯 資料獵人（DataHunter）
+# 🎯 數據領航員（RAGPilot）
 
 > **_本專所呈現之資料皆為網路爬取之公開資料，站台僅提資料的呈現、查詢、請求，若要使用本站台中的內容進行任何的分析、商業、醫療...等其他功能，請務必核實資料正確性。_**
 
@@ -25,8 +25,8 @@
 ## 🗂️ 專案結構
 
 ```
-DataHunter/
-├── DataHunter/              # Django 專案設定
+RAGPilot/
+├── RAGPilot/              # Django 專案設定
 │   ├── settings.py          # 主要設定檔
 │   ├── asgi.py             # ASGI 配置
 │   └── urls.py             # URL 路由
@@ -65,7 +65,7 @@ DEBUG=True
 ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
 
 # 資料庫設定
-POSTGRES_DB=DataHunter
+POSTGRES_DB=RAGPilot
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=your-postgres-password
 POSTGRES_HOST=localhost
@@ -106,10 +106,10 @@ python manage.py createsuperuser
 
 ```bash
 # 啟動 Web 服務（支援 WebSocket）
-daphne -p 8000 -b 0.0.0.0 DataHunter.asgi:application
+daphne -p 8000 -b 0.0.0.0 RAGPilot.asgi:application
 
 # 在另一個終端啟動 Celery Worker（可選）
-celery -A DataHunter worker --loglevel=info
+celery -A RAGPilot worker --loglevel=info
 ```
 
 ### 6️⃣ Google OAuth 設定（可選）
@@ -245,7 +245,7 @@ docker-compose --profile production up -d
 
 ```bash
 # 開發模式啟動
-daphne -p 8000 -b 0.0.0.0 DataHunter.asgi:application
+daphne -p 8000 -b 0.0.0.0 RAGPilot.asgi:application
 
 # 或使用 Django runserver（僅限不需要 WebSocket 的開發）
 python manage.py runserver 8000

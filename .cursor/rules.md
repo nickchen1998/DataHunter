@@ -1,4 +1,4 @@
-# Cursor Rules for DataHunter Project
+# Cursor Rules for RAGPilot Project
 # Clean Code + Python flake8 Standards
 
 ## Core Principles

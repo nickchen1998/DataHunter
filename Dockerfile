@@ -29,10 +29,4 @@ RUN python manage.py collectstatic --noinput
 
 # 設定環境變數
 ENV PYTHONPATH=/app
-ENV DJANGO_SETTINGS_MODULE=DataHunter.settings
-
-# 暴露埠號
-EXPOSE 8000
-
-# 預設命令
-CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "DataHunter.asgi:application"]
+ENV DJANGO_SETTINGS_MODULE=RAGPilot.settings
