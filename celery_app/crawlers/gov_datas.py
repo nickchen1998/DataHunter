@@ -120,7 +120,7 @@ def process_dataset_files(data: dict, dataset_id: int):
             table_name = f"{dataset.dataset_id}_{df_md5}"
             
             # 儲存資料到資料表並創建 File 記錄
-            if _save_dataframe_to_table(dataset, df, table_name, download_url, file_format, df_md5, encoding):
+            if not df.empty and _save_dataframe_to_table(dataset, df, table_name, download_url, file_format, df_md5, encoding):
                 new_tables.append(table_name)
             else:
                 print(f"儲存失敗: {download_url}")
@@ -174,21 +174,54 @@ def _read_file_to_dataframe(content, file_format, encoding):
     return None
 
 
+def _generate_excel_column_names(num_columns):
+    """
+    生成 Excel 樣式的欄位名稱：a, b, c, ..., z, aa, ab, ac, ..., zz
+    最多支援到 zz (702 個欄位)
+    """
+    import string
+    
+    column_names = []
+    
+    if num_columns <= 26:
+        # a-z
+        for i in range(num_columns):
+            column_names.append(string.ascii_lowercase[i])
+    else:
+        # a-z
+        for i in range(26):
+            column_names.append(string.ascii_lowercase[i])
+        
+        # aa-zz
+        remaining = num_columns - 26
+        for i in range(min(remaining, 676)):  # 最多支援到 zz (26*26)
+            first_letter = string.ascii_lowercase[i // 26]
+            second_letter = string.ascii_lowercase[i % 26]
+            column_names.append(first_letter + second_letter)
+    
+    return column_names
+
+
 def _save_dataframe_to_table(dataset, df, table_name, download_url, file_format, content_md5, encoding):
     try:
-        # 驗證 DataFrame 結構
-        if df.empty:
-            print(f"DataFrame 為空，跳過: {download_url}")
-            return False
-            
-        # 檢查是否有重複的欄位名稱
-        if len(df.columns) != len(set(df.columns)):
-            print(f"發現重複欄位名稱，重新命名: {download_url}")
-            df.columns = [f"{col}_{i}" if list(df.columns).count(col) > 1 else col 
-                         for i, col in enumerate(df.columns)]
+        # 獲取欄位數量並生成 Excel 樣式的欄位名稱
+        num_columns = len(df.columns)
+        excel_column_names = _generate_excel_column_names(num_columns)
         
-        # 確保所有欄位名稱都是字串
-        df.columns = [str(col) for col in df.columns]
+        # 建立欄位對應列表，優先使用 dataset.columns_description
+        column_mapping_list = []
+        for i, new_col in enumerate(excel_column_names):
+            # 優先使用 dataset.columns_description 中的描述
+            if dataset.columns_description and i < len(dataset.columns_description):
+                column_description = dataset.columns_description[i]
+            else:
+                # 備用：使用序號格式
+                column_description = f"欄位_{i+1}"
+            
+            column_mapping_list.append([new_col, column_description])
+        
+        # 重新命名 DataFrame 的欄位為 Excel 格式
+        df.columns = excel_column_names
         
         # 在 DataFrame 中添加元資料欄位
         df_with_meta = df.copy()
@@ -202,7 +235,7 @@ def _save_dataframe_to_table(dataset, df, table_name, download_url, file_format,
         if not create_table_from_dataframe(df_with_meta, table_name, dataset.category):
             return False
         
-        # 創建 File 記錄
+        # 創建 File 記錄，包含 column_mapping_list
         File.objects.create(
             dataset=dataset,
             original_download_url=download_url,
@@ -211,6 +244,7 @@ def _save_dataframe_to_table(dataset, df, table_name, download_url, file_format,
             content_md5=content_md5,
             table_name=table_name,
             database_name=ASSOCIATED_CATEGORIES_DATABASE_NAME[dataset.category],
+            column_mapping_list=column_mapping_list,
         )
         
         return True

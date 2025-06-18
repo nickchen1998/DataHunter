@@ -30,7 +30,7 @@ class Dataset(models.Model):
     name = models.CharField(max_length=255, verbose_name="資料集名稱")
     category = models.CharField(max_length=100, verbose_name="服務分類", db_index=True)
     description = models.TextField(null=True, blank=True, verbose_name="資料集描述")
-    columns_description = models.JSONField(models.CharField(max_length=100))
+    columns_description = models.JSONField(verbose_name="欄位描述")
     department = models.CharField(max_length=100, verbose_name="提供機關")
     update_frequency = models.CharField(max_length=100, verbose_name="更新頻率")
     license = models.CharField(max_length=100, verbose_name="授權方式")
@@ -87,6 +87,7 @@ class File(models.Model):
         default="InvestmentAndFinancialManagementGovData",
         help_text="在 GovData 資料庫中的資料庫名稱"
     )
+    column_mapping_list = models.JSONField(verbose_name="欄位對應列表", help_text="欄位對應列表，格式為 [[a, 欄位描述], [b, 欄位描述], ...]")
     
     # 時間戳記
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")

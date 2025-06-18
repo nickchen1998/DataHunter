@@ -2,7 +2,7 @@ from django.db import models
 from pgvector.django import VectorField, HnswIndex
 
 
-SYMPTOM_PROMPT_TEMPLATE = """你是一個專業的醫療資訊助手。請根據用戶提供的參考資料回答問題。
+SYMPTOM_SYSTEM_PROMPT = """你是一個專業的醫療資訊助手。請根據用戶提供的參考資料回答問題。
 
 回答原則：
 1. **優先使用參考資料**：主要基於用戶選擇的參考資料進行回答
