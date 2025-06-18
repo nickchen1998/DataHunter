@@ -43,7 +43,6 @@ def period_crawl_government_datasets(demo=False):
                     'description': row.資料集描述,
                     'description_embeddings': OpenAIEmbeddings(
                         model="text-embedding-3-small").embed_query(row.資料集描述),
-                    'columns_description': row.主要欄位說明.split(';') if pd.notna(row.主要欄位說明) else [],
                     'department': row.提供機關,
                     'update_frequency': row.更新頻率,
                     'license': row.授權方式,
@@ -59,16 +58,16 @@ def period_crawl_government_datasets(demo=False):
                 print(f"新增資料集: {dataset.name}")
             
             if demo:
-                process_dataset_files(row.to_dict(), dataset.id)
+                process_dataset_files(row.to_dict(), dataset.id, row.主要欄位說明.split(';') if pd.notna(row.主要欄位說明) else [])
             else:
-                process_dataset_files.delay(row.to_dict(), dataset.id)
+                process_dataset_files.delay(row.to_dict(), dataset.id, row.主要欄位說明.split(';') if pd.notna(row.主要欄位說明) else [])
             processed_datasets += 1
 
     print(f"完成處理 {processed_datasets} 個資料集")
 
 
 @app.task()
-def process_dataset_files(data: dict, dataset_id: int):
+def process_dataset_files(data: dict, dataset_id: int, column_description: list[str]):
     dataset = Dataset.objects.get(id=dataset_id)
     data = pd.Series(data)
 
@@ -120,7 +119,7 @@ def process_dataset_files(data: dict, dataset_id: int):
             table_name = f"{dataset.dataset_id}_{df_md5}"
             
             # 儲存資料到資料表並創建 File 記錄
-            if not df.empty and _save_dataframe_to_table(dataset, df, table_name, download_url, file_format, df_md5, encoding):
+            if not df.empty and _save_dataframe_to_table(dataset, df, table_name, download_url, file_format, df_md5, encoding, column_description):
                 new_tables.append(table_name)
             else:
                 print(f"儲存失敗: {download_url}")
@@ -202,7 +201,7 @@ def _generate_excel_column_names(num_columns):
     return column_names
 
 
-def _save_dataframe_to_table(dataset, df, table_name, download_url, file_format, content_md5, encoding):
+def _save_dataframe_to_table(dataset, df, table_name, download_url, file_format, content_md5, encoding, column_description):
     try:
         # 獲取欄位數量並生成 Excel 樣式的欄位名稱
         num_columns = len(df.columns)
@@ -211,9 +210,9 @@ def _save_dataframe_to_table(dataset, df, table_name, download_url, file_format,
         # 建立欄位對應列表，優先使用 dataset.columns_description
         column_mapping_list = []
         for i, new_col in enumerate(excel_column_names):
-            # 優先使用 dataset.columns_description 中的描述
-            if dataset.columns_description and i < len(dataset.columns_description):
-                column_description = dataset.columns_description[i]
+            # 優先使用 column_description 中的描述
+            if column_description and i < len(column_description):
+                column_description = column_description[i]
             else:
                 # 備用：使用序號格式
                 column_description = f"欄位_{i+1}"

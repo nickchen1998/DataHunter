@@ -108,35 +108,7 @@
                                 {% endif %}
                             </div>
                             
-                            <!-- 主要欄位說明 - 支援展開/收合 -->
-                            <div>
-                                <span class="font-semibold">主要欄位說明：</span>
-                                {% if data.columns_description %}
-                                    <div id="columns-preview-{{ data.dataset_id }}" class="inline">
-                                        {% for column in data.columns_description|slice:":3" %}
-                                            <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs mr-1 mb-1">{{ column }}</span>
-                                        {% endfor %}
-                                        {% if data.columns_description|length > 3 %}
-                                            <button data-id="{{ data.dataset_id }}" data-field="columns"
-                                                    class="btn btn-xs btn-outline btn-info ml-2 toggle-button">
-                                                展開 ({{ data.columns_description|length|add:"-3" }} 個更多)
-                                            </button>
-                                        {% endif %}
-                                    </div>
-                                    <div id="columns-full-{{ data.dataset_id }}" class="hidden">
-                                        {% for column in data.columns_description %}
-                                            <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs mr-1 mb-1">{{ column }}</span>
-                                        {% endfor %}
-                                        {% if data.columns_description|length > 3 %}
-                                            <button data-id="{{ data.dataset_id }}" data-field="columns"
-                                                    class="btn btn-xs btn-outline btn-info ml-2 toggle-button">收合
-                                            </button>
-                                        {% endif %}
-                                    </div>
-                                {% else %}
-                                    無
-                                {% endif %}
-                            </div>
+                            
                             
                             <div><span class="font-semibold">更新頻率：</span>{{ data.update_frequency }}</div>
                             <div><span class="font-semibold">授權方式：</span>{{ data.license }}</div>

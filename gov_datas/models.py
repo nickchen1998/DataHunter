@@ -30,7 +30,6 @@ class Dataset(models.Model):
     name = models.CharField(max_length=255, verbose_name="資料集名稱")
     category = models.CharField(max_length=100, verbose_name="服務分類", db_index=True)
     description = models.TextField(null=True, blank=True, verbose_name="資料集描述")
-    columns_description = models.JSONField(verbose_name="欄位描述")
     department = models.CharField(max_length=100, verbose_name="提供機關")
     update_frequency = models.CharField(max_length=100, verbose_name="更新頻率")
     license = models.CharField(max_length=100, verbose_name="授權方式")
