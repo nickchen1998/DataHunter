@@ -7,7 +7,7 @@ from typing import Optional, List, Dict, Type
 from pydantic import BaseModel, Field
 from django.conf import settings
 from langchain_community.agent_toolkits.sql.toolkit import SQLDatabaseToolkit
-from langchain.agents import create_sql_agent
+from langchain_community.agent_toolkits.sql.base import create_sql_agent
 
 
 class NL2SQLQueryInput(BaseModel):
