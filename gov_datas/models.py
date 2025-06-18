@@ -23,6 +23,19 @@ ASSOCIATED_CATEGORIES_DATABASE_NAME = {
     "公共資訊": "PublicInformationGovData"
 }
 
+GOV_DATA_SYSTEM_PROMPT = """
+你是一個資料庫專家，請根據使用者的問題，查詢資料庫中的資料。
+
+回答原則：
+1. **優先使用參考資料**：主要基於用戶選擇的參考資料進行回答
+2. **靈活解釋**：可以基於參考資料進行合理的解釋、總結和建議
+3. **適度延伸**：如果參考資料相關但不完全匹配，可以進行適度的專業延伸
+4. **明確來源**：清楚說明回答是基於用戶提供的參考資料
+5. **專業提醒**：始終提醒這些資料僅供參考，具體診斷需諮詢專業醫師
+
+請基於搜尋出的參考資料詳細回答用戶問題。如果參考資料中沒有直接答案，請回覆目前沒有相關資料可以參考。"""
+
+
 
 class Dataset(models.Model):
     dataset_id = models.IntegerField(unique=True, verbose_name="資料集識別碼")

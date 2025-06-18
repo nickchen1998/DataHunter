@@ -89,7 +89,7 @@
                 <div class="card shadow-md bg-white p-4 border border-gray-200">
                     <div class="flex justify-between items-start">
                         <div class="flex-1 space-y-2 text-sm text-gray-800">
-                            <div><span class="font-semibold">資料集 ID：</span>{{ data.dataset_id }}</div>
+                            <div><span class="font-semibold">資料集識別碼：</span>{{ data.dataset_id }}</div>
                             <div><span class="font-semibold">資料集名稱：</span>{{ data.name }}</div>
                             <div><span class="font-semibold">服務分類：</span>{{ data.category }}</div>
                             <div><span class="font-semibold">資料提供機關：</span>{{ data.department }}</div>
@@ -138,12 +138,12 @@
                         </div>
                         <div class="ml-4 flex-shrink-0">
                             <button class="btn btn-sm btn-outline btn-success add-reference-btn"
-                                    data-id="{{ data.dataset_id }}"
+                                    data-id="{{ data.id }}"
+                                    data-dataset-id="{{ data.dataset_id }}"
                                     data-name="{{ data.name }}"
                                     data-category="{{ data.category }}"
                                     data-department="{{ data.department }}"
                                     data-description="{{ data.description }}"
-                                    data-columns-description="{% for col in data.columns_description %}{{ col }}{% if not forloop.last %}、{% endif %}{% endfor %}"
                                     data-update-frequency="{{ data.update_frequency }}"
                                     data-license="{{ data.license }}"
                                     data-price="{{ data.price }}"

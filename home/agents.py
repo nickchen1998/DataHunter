@@ -1,21 +1,25 @@
-from langchain.agents import OpenAIFunctionsAgent, AgentExecutor
+from langchain.agents import create_openai_functions_agent, AgentExecutor
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from utils.nl_to_sql import CustomNL2SQLQueryTool
 
 from symptoms.models import Symptom, SYMPTOM_SYSTEM_PROMPT
 from symptoms.tools import SymptomDataRetrievalTool
 
-
+from gov_datas.models import Dataset, GOV_DATA_SYSTEM_PROMPT
+from gov_datas.tools import GovDataDatasetQueryTool
 
 
 class ChatAgent:
     TOOL_FACTORY = {
         Symptom.__name__: SymptomDataRetrievalTool,
+        Dataset.__name__: GovDataDatasetQueryTool,
     }
 
     SYSTEM_PROMPT_FACTORY = {
         Symptom.__name__: SYMPTOM_SYSTEM_PROMPT,
+        Dataset.__name__: GOV_DATA_SYSTEM_PROMPT,
     }
     
     def process_query(self, user_question: str, reference_id_list: list[int], data_type: str = "Mixed") -> str:
@@ -32,17 +36,20 @@ class ChatAgent:
             MessagesPlaceholder(variable_name="agent_scratchpad"),
         ])
 
-        agent = OpenAIFunctionsAgent(
+        tools = [tool, CustomNL2SQLQueryTool()]
+        
+        agent = create_openai_functions_agent(
             llm=llm,
-            tools=[tool],
+            tools=tools,
             prompt=prompt
         )
 
         agent_executor = AgentExecutor(
             agent=agent,
-            tools=[tool],
+            tools=tools,
             verbose=True,
-            return_intermediate_steps=True
+            return_intermediate_steps=True,
+            handle_parsing_errors=True
         )
 
         result = agent_executor.invoke({"input": user_question})

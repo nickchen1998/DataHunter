@@ -178,17 +178,17 @@ class ChatManager {
             referenceData.question = button.dataset.question;
             referenceData.answer = button.dataset.answer;
         } else if (button.dataset.name && button.dataset.category) {
-            // 政府資料
-            referenceData.dataset_id = button.dataset.id;
+            // 政府資料 - 注意：這裡只儲存顯示用的資訊，主鍵仍是 Django 的 id
             referenceData.name = button.dataset.name;
             referenceData.category = button.dataset.category;
             referenceData.department = button.dataset.department;
             referenceData.description = button.dataset.description;
-            referenceData.columns_description = button.dataset.columnsDescription;
             referenceData.update_frequency = button.dataset.updateFrequency;
             referenceData.license = button.dataset.license;
             referenceData.price = button.dataset.price;
             referenceData.url = button.dataset.url;
+            // 如果需要顯示政府資料集識別碼，可以額外儲存
+            referenceData.dataset_id = button.getAttribute('data-dataset-id');
         } else {
             // 通用資料結構 - 複製所有 data 屬性
             Object.keys(button.dataset).forEach(key => {
@@ -291,6 +291,7 @@ class ChatManager {
             // 症狀資料
             contentHTML = `
                 <div class="flex-1 space-y-2 text-sm text-gray-800">
+                    <div><span class="font-semibold">參考ID：</span>${data.id}</div>
                     <div><span class="font-semibold">科別：</span>${data.department || '未知'}</div>
                     <div><span class="font-semibold">性別：</span>${data.gender}</div>
                     <div><span class="font-semibold">主訴：</span>${data.symptom}</div>
@@ -308,6 +309,7 @@ class ChatManager {
             // 政府資料
             contentHTML = `
                 <div class="flex-1 space-y-2 text-sm text-gray-800">
+                    <div><span class="font-semibold">參考ID：</span>${data.id}${data.dataset_id ? ` (資料集識別碼：${data.dataset_id})` : ''}</div>
                     <div><span class="font-semibold">資料集名稱：</span>${data.name}</div>
                     <div><span class="font-semibold">服務分類：</span>${data.category}</div>
                     <div><span class="font-semibold">資料提供機關：</span>${data.department || '未知'}</div>
@@ -315,12 +317,6 @@ class ChatManager {
                         <span class="font-semibold">資料集描述：</span>
                         <span class="text-gray-600">${data.description.length > 100 ? data.description.substring(0, 100) + '...' : data.description}</span>
                     </div>
-                    ${data.columns_description ? `
-                    <div>
-                        <span class="font-semibold">主要欄位：</span>
-                        <span class="text-gray-600">${data.columns_description.length > 100 ? data.columns_description.substring(0, 100) + '...' : data.columns_description}</span>
-                    </div>
-                    ` : ''}
                     ${data.update_frequency ? `<div><span class="font-semibold">更新頻率：</span>${data.update_frequency}</div>` : ''}
                     ${data.license ? `<div><span class="font-semibold">授權方式：</span>${data.license}</div>` : ''}
                 </div>
