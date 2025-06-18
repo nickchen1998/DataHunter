@@ -130,14 +130,22 @@ celery -A RAGPilot worker --loglevel=info
      - 開發環境：`http://localhost:8000/accounts/google/login/callback/`
      - 生產環境：`https://yourdomain.com/accounts/google/login/callback/`
 
-3. **複製憑證**：
-   - 複製 Client ID 和 Client Secret 到 `.env` 檔案
+3. **設定環境變數**：
+   - 將 Client ID 和 Client Secret 添加到 `.env` 檔案：
+   ```
+   GOOGLE_OAUTH_CLIENT_ID=your_google_client_id_here
+   GOOGLE_OAUTH_CLIENT_SECRET=your_google_client_secret_here
+   ```
 
 #### ⚙️ Django 設定
 
-執行以下命令來設置 Google OAuth 應用程式：
+現在只需要執行一個簡單的命令來設置 Google OAuth 應用程式：
 
 ```bash
+# 推薦方式：從 .env 環境變數自動讀取
+python manage.py setup_google_oauth
+
+# 或者手動指定參數（不推薦）
 python manage.py setup_google_oauth --client-id YOUR_CLIENT_ID --client-secret YOUR_CLIENT_SECRET
 ```
 
