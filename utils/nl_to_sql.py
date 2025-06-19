@@ -12,9 +12,16 @@ from langchain_community.agent_toolkits.sql.base import create_sql_agent
 
 class NL2SQLQueryInput(BaseModel):
     question: str = Field(description="使用者原本的問題")
-    db_name: str = Field(default="", description="資料庫名稱")
-    table_name: str = Field(default="", description="資料表名稱")
-    column_name_mapping_list: str = Field(default="", description="欄位對應列表，JSON 格式，例如：[[\"a\", \"欄位描述\"], [\"b\", \"欄位描述\"]......]")
+    table_info_list: str = Field(default="", description="""資料表資訊列表，格式如下：
+[
+    {
+        "database_name": "資料庫名稱",
+        "table_name": "資料表名稱",
+        "column_name_mapping_list": [[\"a\", \"欄位描述\"], [\"b\", \"欄位描述\"]] (不一定會有，若無則表示資料表無欄位對應說明，可直接使用欄位名稱查詢)
+    },
+    ...
+]
+""")
 
 
 class CustomNL2SQLQueryTool(BaseTool):
@@ -23,57 +30,109 @@ class CustomNL2SQLQueryTool(BaseTool):
 
 使用方法：
 1. 先使用其他工具獲取要查詢的資訊
-2. 從返回結果中提取：db_name（資料庫名稱）、table_name（資料表名稱）、完整欄位對應 (JSON格式)
-3. 將完整欄位對應的 JSON 字串直接傳入 column_name_mapping_list 參數
-4. 一次只能查詢一張資料表
+2. 使用 table_info_list 參數傳入所有可用資料表資訊，工具會自動篩選出指定資料庫中的資料表
 
-注意：column_name_mapping_list 參數需要是有效的 JSON 字串格式，例如：[["a", "欄位描述"], ["b", "欄位描述"]]"""
+table_info_list 格式：
+[
+    {
+        "database_name": "資料庫名稱",
+        "table_name": "資料表名稱",
+        "column_name_mapping_list": [[\"a\", \"欄位描述\"], [\"b\", \"欄位描述\"]] (不一定會有，若無則表示資料表無欄位對應說明，可直接使用欄位名稱查詢)
+    },
+    ...
+]"""
     args_schema: Type[BaseModel] = NL2SQLQueryInput        
 
     def _run(
         self,
         question: str,
-        db_name: str,
-        table_name: str,
-        column_name_mapping_list: str = None,
+        table_info_list: str,
     ):
         llm = ChatOpenAI(model="gpt-4o", temperature=0.7)
-        db_uri = f"postgresql://{settings.DATABASES['default']['USER']}:{settings.DATABASES['default']['PASSWORD']}@{settings.DATABASES['default']['HOST']}:{settings.DATABASES['default']['PORT']}/{db_name}"
-        toolkit = SQLDatabaseToolkit(
-            db=SQLDatabase.from_uri(db_uri, include_tables=[table_name]), 
-            llm=llm
-        )
         
-        # 建立 prompt context
-        additional_prompt = f"你只能查詢資料表 `{table_name}`。"
-        if column_name_mapping_list:
-            try:
-                # 嘗試解析 JSON 格式的欄位對應列表
-                mappings = json.loads(column_name_mapping_list)
-                additional_prompt += "\n以下是欄位對應說明：\n"
-                for mapping in mappings:
-                    if isinstance(mapping, list) and len(mapping) >= 2:
-                        col = mapping[0]
-                        desc = mapping[1]
-                        additional_prompt += f"- `{col}`：{desc}\n"
-            except (json.JSONDecodeError, ValueError, TypeError) as e:
-                # 如果 JSON 解析失敗，記錄錯誤並繼續執行
-                print(f"警告：無法解析欄位對應列表：{column_name_mapping_list}，錯誤：{e}")
-                additional_prompt += f"\n注意：欄位對應資訊格式錯誤，請直接查詢資料表 `{table_name}`。"
-
-        agent_executor = create_sql_agent(
-            llm=llm,
-            toolkit=toolkit,
-            verbose=True,
-            handle_parsing_errors=True,
-        )
-
-        # 將額外的 prompt 信息與問題結合
-        enhanced_question = f"{additional_prompt}\n\n用戶問題：{question}"
+        # 解析 table_info_list 並按照 database_name 彙整
+        table_info_list = json.loads(table_info_list)
         
-        try:
-            result = agent_executor.run(enhanced_question)
-            return f"查詢結果：{result}"
-        except Exception as e:
-            return f"查詢過程中發生錯誤：{str(e)}"
-    
+        # 按照 database_name 分組
+        db_tables = {}
+        for table_info in table_info_list:
+            database_name = table_info.get("database_name")
+            if database_name not in db_tables:
+                db_tables[database_name] = []
+            db_tables[database_name].append({
+                "table_name": table_info.get("table_name"),
+                "column_name_mapping_list": table_info.get("column_name_mapping_list")
+            })
+        
+        all_results = []
+        
+        for db_name, tables in db_tables.items():
+            db_uri = f"postgresql://{settings.DATABASES['default']['USER']}:{settings.DATABASES['default']['PASSWORD']}@{settings.DATABASES['default']['HOST']}:{settings.DATABASES['default']['PORT']}/{db_name}"
+            
+            # 將資料表分批處理，每批最多2個資料表
+            batch_size = 2
+            for i in range(0, len(tables), batch_size):
+                batch_tables = tables[i:i + batch_size]
+                
+                print(f"處理資料庫 {db_name} 的第 {i//batch_size + 1} 批資料表: {[t.get('table_name') for t in batch_tables]}")
+                
+                # 為此批次建立提示
+                additional_prompt = f"你可以查詢資料庫 `{db_name}` 中的以下資料表：\n"
+                
+                for table_info in batch_tables:
+                    table_name = table_info.get("table_name")
+                    column_name_mapping_list = table_info.get("column_name_mapping_list")
+                    
+                    if table_name and column_name_mapping_list:
+                        additional_prompt += f"\n資料表 `{table_name}` 的欄位對應說明：\n"
+                        for column_name, column_description in column_name_mapping_list:
+                            additional_prompt += f"- `{column_name}`：{column_description}\n"
+                    else:
+                        if table_name:
+                            additional_prompt += f"\n資料表 `{table_name}` 無欄位對應說明，可直接查詢。\n"
+                
+                # 建立 SQLDatabaseToolkit，只包含這批次的資料表
+                batch_table_names = [table["table_name"] for table in batch_tables if table.get("table_name")]
+                toolkit = SQLDatabaseToolkit(
+                    db=SQLDatabase.from_uri(db_uri, include_tables=batch_table_names), 
+                    llm=llm
+                )
+
+                agent_executor = create_sql_agent(
+                    llm=llm,
+                    toolkit=toolkit,
+                    verbose=True,
+                    handle_parsing_errors=True,
+                )
+
+                # 將額外的 prompt 信息與問題結合
+                enhanced_question = f"{additional_prompt}\n\n用戶問題：{question}"
+                
+                try:
+                    result = agent_executor.run(enhanced_question)
+                    if result and "I don't know" not in result:
+                        all_results.append({
+                            "database": db_name,
+                            "tables": batch_table_names,
+                            "result": result
+                        })
+                        print(f"成功查詢批次，獲得結果")
+                    else:
+                        print(f"此批次查詢無相關結果")
+                except Exception as e:
+                    print(f"批次查詢錯誤：{str(e)}")
+                    continue
+        
+        # 組合所有查詢結果
+        if not all_results:
+            return "在所有可用資料表中都沒有找到相關資訊。"
+        
+        combined_result = "查詢結果摘要：\n\n"
+        for idx, result_info in enumerate(all_results, 1):
+            combined_result += f"=== 結果 {idx} ===\n"
+            combined_result += f"資料庫：{result_info['database']}\n"
+            combined_result += f"資料表：{', '.join(result_info['tables'])}\n"
+            combined_result += f"內容：{result_info['result']}\n\n"
+        
+        return combined_result
+        

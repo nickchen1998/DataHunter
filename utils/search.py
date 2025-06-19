@@ -11,8 +11,7 @@ def hybrid_search_with_rerank(
     queryset: QuerySet,
     vector_field_name: str,
     text_field_name: str,
-    original_question: str,
-    min_score: float = 0.80
+    original_question: str
 ) -> QuerySet:
     # 1. Extract keywords with OpenAI
     prompt = ChatPromptTemplate.from_template(
@@ -26,17 +25,15 @@ def hybrid_search_with_rerank(
     keywords_str = chain.invoke({"question": original_question})
     keywords = [keyword.strip() for keyword in keywords_str.split(',') if keyword.strip()]
 
-    # 2. Keyword-based search (Fuzzy search)
-    keyword_query = Q()
+    # 2. Keyword-based search (Fuzzy search) - 在原始 queryset 上進行
+    keyword_results = []
     if keywords:
+        keyword_query = Q()
         for keyword in keywords:
             keyword_query |= Q(**{f"{text_field_name}__icontains": keyword})
         keyword_results = list(queryset.filter(keyword_query)[:10])
-    else:
-        keyword_results = []
 
-
-    # 3. Vector-based search
+    # 3. Vector-based search - 在原始 queryset 上進行
     question_embeddings = OpenAIEmbeddings(model="text-embedding-3-small").embed_query(original_question)
     vector_results = list(queryset.annotate(
         distance=CosineDistance(vector_field_name, question_embeddings)
@@ -46,10 +43,17 @@ def hybrid_search_with_rerank(
     combined_results = []
     seen_ids = set()
 
+    # 添加調試信息
+    print(f"關鍵字搜尋結果數量: {len(keyword_results)}")
+    print(f"向量搜尋結果數量: {len(vector_results)}")
+
+    # 合併兩個結果集並去重
     for result in keyword_results + vector_results:
         if result.id not in seen_ids:
             combined_results.append(result)
             seen_ids.add(result.id)
+
+    print(f"合併去重後結果數量: {len(combined_results)}")
 
     # 5. Rerank using Cohere
     reranker = CohereRerank(
@@ -67,16 +71,13 @@ def hybrid_search_with_rerank(
         query=original_question
     )
 
-    # 6. Filter by minimum score and get sorted IDs
-    high_score_docs = [doc for doc in reranked_docs]
-    
-    if not high_score_docs:
-        # 如果沒有符合分數條件的結果，回傳空的 QuerySet
-        return queryset.model.objects.none()
-    
-    sorted_ids = [doc.metadata["id"] for doc in high_score_docs]
+    print(f"Rerank 後結果數量: {len(reranked_docs)}")
+
+    # 6. 建立最終排序結果
+    sorted_ids = [doc.metadata["id"] for doc in reranked_docs]
     preserved_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(sorted_ids)])
 
     final_queryset = queryset.model.objects.filter(pk__in=sorted_ids).order_by(preserved_order)
-
+    
+    print(f"最終結果數量: {final_queryset.count()}")
     return final_queryset 

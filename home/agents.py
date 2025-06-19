@@ -49,7 +49,8 @@ class ChatAgent:
             tools=tools,
             verbose=True,
             return_intermediate_steps=True,
-            handle_parsing_errors=True
+            handle_parsing_errors=True,
+            max_iterations=3
         )
 
         result = agent_executor.invoke({"input": user_question})
