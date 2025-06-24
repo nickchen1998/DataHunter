@@ -154,7 +154,7 @@ python manage.py setup_google_oauth
 # 啟動基本服務（PostgreSQL + Redis + Selenium Hub + Chrome）
 docker-compose up -d
 
-# 啟動完整服務（包含爬蟲、站台）
+# 啟動完整服務（包含爬蟲、站台），在本地開發時不需要使用
 docker-compose --profile production up -d
 ```
 
