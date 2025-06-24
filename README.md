@@ -47,6 +47,8 @@ RAGPilot/
 
 ### 1️⃣ 安裝依賴套件
 
+**請先下載 Python3.11 以上版本以及 Poetry 套件管理器**
+
 建議使用 Poetry 管理依賴：
 
 ```bash
