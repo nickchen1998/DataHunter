@@ -101,9 +101,6 @@ python manage.py createsuperuser
 ```bash
 # 啟動 Web 服務（支援 WebSocket）
 daphne -p 8000 -b 0.0.0.0 RAGPilot.asgi:application
-
-# 在另一個終端啟動 Celery Worker（可選）
-celery -A RAGPilot worker --loglevel=info
 ```
 
 ### 6️⃣ Google OAuth 設定
@@ -131,13 +128,11 @@ celery -A RAGPilot worker --loglevel=info
    GOOGLE_OAUTH_CLIENT_SECRET=your_google_client_secret_here
    ```
 
-#### ⚙️ Django 設定
-
-現在只需要執行一個簡單的命令來設置 Google OAuth 應用程式：
-
-```bash
-python manage.py setup_google_oauth
-```
+4. **將設定寫入 Postgres**：
+   - 現在只需要執行一個簡單的命令來設置 Google OAuth 應用程式：
+   ```bash
+   python manage.py setup_google_oauth
+   ```
 
 ### 7️⃣ 訪問應用
 
