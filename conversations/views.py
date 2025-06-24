@@ -21,8 +21,8 @@ def get_conversation_history(request):
                 'messages': []
             })
         
-        # 獲取所有訊息，按時間排序
-        messages = Message.objects.filter(session=session).order_by('created_at')
+        # 獲取所有未刪除的訊息，按時間排序
+        messages = Message.objects.filter(session=session, is_deleted=False).order_by('created_at')
         
         # 格式化訊息資料
         message_list = []
@@ -45,6 +45,36 @@ def get_conversation_history(request):
         return JsonResponse({
             'success': True,
             'messages': message_list
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def clear_conversation(request):
+    """清空使用者的對話記錄（軟刪除）"""
+    try:
+        # 取得使用者的 session
+        session = Session.objects.filter(user=request.user).first()
+        
+        if not session:
+            return JsonResponse({
+                'success': True,
+                'message': '沒有對話記錄需要清空'
+            })
+        
+        # 執行軟刪除
+        deleted_count = Message.clear_conversation(session)
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'已清空 {deleted_count} 筆對話記錄',
+            'deleted_count': deleted_count
         })
         
     except Exception as e:

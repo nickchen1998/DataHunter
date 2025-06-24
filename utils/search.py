@@ -58,7 +58,7 @@ def hybrid_search_with_rerank(
     # 5. Rerank using Cohere
     reranker = CohereRerank(
         model="rerank-multilingual-v3.0",
-        top_n=10
+        top_n=5
     )
 
     docs_to_rerank = [

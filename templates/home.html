@@ -26,19 +26,19 @@
                 {% block source-description %}{% endblock %}
             </div>
 
-            <!-- 資料使用政策 -->
+            <!-- 原始網站 -->
             {% if request_path != '/' %}
                 <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
-                    <p class="text-sm font-semibold text-blue-800 mb-2">📋 資料使用政策</p>
+                    <p class="text-sm font-semibold text-blue-800 mb-2">🌐 原始網站</p>
                     {% if request_path == '/symptoms/list/' %}
                         <a href="https://sp1.hso.mohw.gov.tw/doctor/" target="_blank" 
                            class="text-xs text-blue-600 hover:text-blue-800 hover:underline">
-                            台灣 e 院使用條款 ↗
+                            衛福部 - 台灣 e 院 ↗
                         </a>
                     {% elif request_path == '/gov-data/list/' %}
-                        <a href="https://data.gov.tw/privacy" target="_blank" 
+                        <a href="https://data.gov.tw/" target="_blank" 
                            class="text-xs text-blue-600 hover:text-blue-800 hover:underline">
-                            政府資料開放平臺隱私權政策 ↗
+                            政府資料開放平臺 ↗
                         </a>
                     {% endif %}
                 </div>

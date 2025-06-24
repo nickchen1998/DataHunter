@@ -68,6 +68,9 @@ class Message(models.Model):
     tool_name = models.CharField(max_length=64, blank=True)
     tool_keywords = models.JSONField(default=list, blank=True)  # 儲存 keyword 清單
 
+    # 軟刪除欄位
+    is_deleted = models.BooleanField(default=False, help_text="軟刪除標記")
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -81,6 +84,16 @@ class Message(models.Model):
         if self.sender == SenderChoices.TOOL:
             return f"[{sender_display}] {self.tool_name}: {preview}"
         return f"[{sender_display}] {preview}"
+
+    def soft_delete(self):
+        """軟刪除訊息"""
+        self.is_deleted = True
+        self.save(update_fields=['is_deleted'])
+
+    @classmethod
+    def clear_conversation(cls, session):
+        """清空對話（軟刪除所有訊息）"""
+        return cls.objects.filter(session=session, is_deleted=False).update(is_deleted=True)
 
     @classmethod
     def create_user_message(cls, session, user, text):
