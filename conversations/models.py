@@ -28,12 +28,10 @@ class Session(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     title = models.CharField(max_length=128, blank=True)
 
-    def __str__(self):
-        return f"Session {self.session_uuid} ({self.title})"
 
 class Message(models.Model):
     session = models.ForeignKey(Session, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     
     sender = models.CharField(
         max_length=16,

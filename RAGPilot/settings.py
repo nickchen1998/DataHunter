@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'profiles.apps.ProfilesConfig',
     'symptoms.apps.SymptomsConfig',
     'gov_datas.apps.GovDatasConfig',
+    'conversations.apps.ConversationsConfig',
 ]
 
 MIDDLEWARE = [
