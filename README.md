@@ -60,25 +60,14 @@ poetry install
 
 ```dotenv
 # Django 基本設定
-SECRET_KEY=your-super-secret-key-here
-DEBUG=True
+SECDJANGO_SECRET_KEYRET_KEY=your-super-secret-key-here
 ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
-
-# 資料庫設定
-POSTGRES_DB=RAGPilot
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=your-postgres-password
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-
-# Redis 設定
-REDIS_URL=redis://localhost:6379/0
 
 # API 金鑰
 OPENAI_API_KEY=your-openai-api-key
 COHERE_API_KEY=your-cohere-api-key
 
-# Google OAuth 設定（可選）
+# Google OAuth 設定（取得方式詳見第六步）
 GOOGLE_OAUTH2_CLIENT_ID=your-google-client-id
 GOOGLE_OAUTH2_CLIENT_SECRET=your-google-client-secret
 ```
@@ -93,6 +82,9 @@ docker-compose up -d
 ### 4️⃣ 資料庫初始化
 
 ```bash
+# 若日後資料表有更動（選用）
+python manage.py makemigrations
+
 # 執行資料庫遷移
 python manage.py migrate
 
@@ -112,7 +104,7 @@ daphne -p 8000 -b 0.0.0.0 RAGPilot.asgi:application
 celery -A RAGPilot worker --loglevel=info
 ```
 
-### 6️⃣ Google OAuth 設定（可選）
+### 6️⃣ Google OAuth 設定
 
 本專案支援 Google OAuth 登入功能，讓用戶可以使用 Google 帳戶快速註冊和登入。
 
@@ -142,31 +134,8 @@ celery -A RAGPilot worker --loglevel=info
 現在只需要執行一個簡單的命令來設置 Google OAuth 應用程式：
 
 ```bash
-# 推薦方式：從 .env 環境變數自動讀取
 python manage.py setup_google_oauth
-
-# 或者手動指定參數（不推薦）
-python manage.py setup_google_oauth --client-id YOUR_CLIENT_ID --client-secret YOUR_CLIENT_SECRET
 ```
-
-#### 🎯 功能特色
-
-- **登入頁面 Google 登入**：在 `/login/` 頁面提供「使用 Google 登入」選項
-- **第三方登入管理**：在個人資料頁面（`/profile/`）的「🔗 第三方登入」標籤中管理連結
-- **自動跳轉**：連結或登入後自動跳轉到適當頁面
-- **安全性**：使用 OAuth 2.0 標準協議，支援 PKCE
-
-#### 🧪 測試流程
-
-1. **新用戶註冊**：點擊「使用 Google 登入」→ 完成授權 → 自動創建帳戶
-2. **現有用戶連結**：個人資料頁面 → 第三方登入標籤 → 連結 Google
-3. **快速登入**：使用已連結的 Google 帳戶一鍵登入
-
-#### ⚠️ 注意事項
-
-- 確保重定向 URI 在 Google Cloud Console 中設定正確
-- 生產環境請使用 HTTPS
-- 妥善保管 Client Secret，不要提交到版本控制
 
 ### 7️⃣ 訪問應用
 
@@ -180,10 +149,10 @@ python manage.py setup_google_oauth --client-id YOUR_CLIENT_ID --client-secret Y
 ### 啟動所有服務
 
 ```bash
-# 啟動基本服務（PostgreSQL + Redis）
+# 啟動基本服務（PostgreSQL + Redis + Selenium Hub + Chrome）
 docker-compose up -d
 
-# 啟動完整服務（包含 Celery）
+# 啟動完整服務（包含爬蟲、站台）
 docker-compose --profile production up -d
 ```
 
@@ -193,23 +162,6 @@ docker-compose --profile production up -d
 - **redis** - Redis 服務 (Channel Layer & Celery)
 - **celery-beat** - Celery 排程服務
 - **celery-*-worker** - Celery 工作進程
-
----
-
-## 👤 用戶認證系統
-
-### 登入方式
-
-- **傳統登入**: 使用 Email/用戶名稱 + 密碼
-- **Google OAuth**: 一鍵 Google 帳戶登入
-- **自動註冊**: Google 登入時自動創建帳戶
-
-### 個人資料管理
-
-- **基本資料編輯**: 用戶名稱、姓名修改
-- **密碼管理**: 安全的密碼修改功能
-- **第三方登入**: Google 帳戶連結/取消連結
-- **帳戶安全**: 雙重確認的帳戶刪除功能
 
 ---
 
@@ -236,43 +188,8 @@ docker-compose --profile production up -d
 1. **修改 HTML 模板**: 直接在 `templates/` 中編輯 HTML
 2. **使用 Tailwind 類**: 無需建構步驟，直接使用 Tailwind CSS 類
 3. **daisyUI 組件**: 直接使用 daisyUI 提供的組件類
-4. **即時預覽**: 重新載入頁面即可看到效果
-
-### 優點
-
-- ✅ **無需建構步驟**: 不需要 Node.js 或建構工具
-- ✅ **快速開發**: 修改後立即生效
-- ✅ **自動更新**: CDN 自動提供最新版本
-- ✅ **減少檔案大小**: 不需要本地 CSS 檔案
-
----
-
-## 🔧 開發工具
-
-### 推薦的開發環境
-
-```bash
-# 開發模式啟動
-daphne -p 8000 -b 0.0.0.0 RAGPilot.asgi:application
-
-# 或使用 Django runserver（僅限不需要 WebSocket 的開發）
-python manage.py runserver 8000
-```
-
-### 常用命令
-
-```bash
-# 資料庫操作
-python manage.py makemigrations
-python manage.py migrate
-python manage.py shell
-
-# 靜態檔案（如有需要）
-python manage.py collectstatic
-
-# 測試
-python manage.py test
-```
+4. **重啟服務**: 由於使用 ASGI 方式保持前後台同步，需要重啟服務。
+5. **即時預覽**: 若修改部分與 WebSocket 無關，可使用 `python manage.py runserver 8000` 即可在儲存後即時預覽。
 
 ---
 
@@ -338,9 +255,3 @@ cloud-sql-proxy <INSTANCE_CONNECTION_NAME>
 ## 🤝 貢獻
 
 歡迎提交 Issue 和 Pull Request 來改善這個專案！
-
----
-
-## 📄 授權
-
-本專案採用 MIT 授權條款。
