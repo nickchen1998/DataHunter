@@ -73,5 +73,4 @@ class SymptomDataRetrievalTool(BaseTool):
             result += f"   問題：{symptom.question}\n"
             result += f"   回答：{symptom.answer}\n\n"
         
-        return result, sorted(list(queryset.values_list("id", flat=True)))
-    
+        return result

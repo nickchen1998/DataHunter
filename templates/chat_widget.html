@@ -126,6 +126,7 @@ class ChatManager {
         this.loadReferencesFromStorage(); // 載入保存的參考資料
         this.updateButtonStates(); // 更新按鈕狀態
         this.setupNavigationListener();
+        this.loadConversationHistory(); // 載入對話歷史
     }
 
     setupReferenceSystem() {
@@ -520,28 +521,48 @@ class ChatManager {
         const messageDiv = document.createElement('div');
         messageDiv.className = 'mb-4';
         
-        let messageClass, iconColor, bgColor, textColor, alignment, icon;
+        let messageClass, iconColor, bgColor, textColor, alignment, icon, messageType;
         
-        switch (data.type) {
+        // 處理從API載入的歷史訊息格式
+        if (data.sender) {
+            messageType = data.sender === 'user' ? 'user_message' : 
+                         data.sender === 'ai' ? 'ai_message' : 
+                         data.sender === 'tool' ? 'tool_message' : data.type;
+        } else {
+            messageType = data.type;
+        }
+        
+        switch (messageType) {
             case 'user_message':
+            case 'user':
                 alignment = 'justify-end';
-                messageClass = 'max-w-sm';
+                messageClass = 'max-w-2xl';
                 iconColor = 'bg-blue-500';
                 bgColor = 'bg-white border border-gray-200';
                 textColor = 'text-gray-800';
                 icon = '👤';
                 break;
             case 'ai_message':
+            case 'ai':
                 alignment = 'justify-start';
-                messageClass = 'max-w-lg';
+                messageClass = 'max-w-4xl';
                 iconColor = 'bg-green-500';
                 bgColor = 'bg-white border border-gray-200';
                 textColor = 'text-gray-800';
                 icon = '🤖';
                 break;
+            case 'tool_message':
+            case 'tool':
+                alignment = 'justify-start';
+                messageClass = 'max-w-2xl';
+                iconColor = 'bg-purple-500';
+                bgColor = 'bg-purple-50 border border-purple-200';
+                textColor = 'text-purple-800';
+                icon = '🔧';
+                break;
             case 'error':
                 alignment = 'justify-center';
-                messageClass = 'max-w-md';
+                messageClass = 'max-w-2xl';
                 iconColor = 'bg-red-500';
                 bgColor = 'bg-red-50 border border-red-200';
                 textColor = 'text-red-700';
@@ -549,43 +570,139 @@ class ChatManager {
                 break;
             default:
                 alignment = 'justify-start';
-                messageClass = 'max-w-sm';
+                messageClass = 'max-w-2xl';
                 iconColor = 'bg-gray-500';
                 bgColor = 'bg-gray-100';
                 textColor = 'text-gray-700';
                 icon = '💬';
         }
         
-        messageDiv.innerHTML = `
-            <div class="flex ${alignment}">
-                <div class="${messageClass}">
-                    <div class="flex items-start space-x-2">
-                        <div class="w-8 h-8 ${iconColor} rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
-                            ${icon}
-                        </div>
-                        <div class="flex-1">
-                            <div class="${bgColor} ${textColor} p-3 rounded-lg shadow-sm">
-                                <div class="text-sm whitespace-pre-wrap">${this.formatMessage(data.message)}</div>
-                            </div>
-                            <div class="text-xs text-gray-500 mt-1 px-1">
-                                ${data.timestamp}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
+        // 根據訊息類型準備內容
+        let messageContent = '';
+        const displayText = data.text || data.message || '';
+        
+        if (messageType === 'tool_message' || messageType === 'tool') {
+            // 工具訊息的特殊格式
+            const toolName = data.tool_name || '未知工具';
+            const messageId = data.id || Math.random().toString(36).substr(2, 9);
+            
+            messageContent = `<div class="text-sm"><div class="font-semibold text-purple-700 mb-2">🔧 工具調用：${toolName}</div>${displayText ? `<div><button class="btn btn-sm btn-outline text-purple-600 border-purple-300 hover:bg-purple-50 hover:border-purple-400 show-tool-result-btn" data-message-id="${messageId}">📄 顯示結果</button></div>` : ''}</div>`;
+        } else {
+            // 一般訊息格式
+            messageContent = `<div class="text-sm whitespace-pre-wrap">${this.formatMessage(displayText)}</div>`;
+        }
+
+        messageDiv.innerHTML = `<div class="flex ${alignment}"><div class="${messageClass}"><div class="flex items-start space-x-2"><div class="w-8 h-8 ${iconColor} rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">${icon}</div><div class="flex-1"><div class="${bgColor} ${textColor} p-3 rounded-lg shadow-sm">${messageContent}</div><div class="text-xs text-gray-500 mt-1 px-1">${data.timestamp}</div></div></div></div></div>`;
+        
+        // 為工具結果按鈕添加事件監聽器
+        const showResultBtn = messageDiv.querySelector('.show-tool-result-btn');
+        if (showResultBtn && displayText) {
+            // 將工具結果存儲在按鈕元素的屬性中
+            showResultBtn._toolResult = displayText;
+            showResultBtn.addEventListener('click', (e) => {
+                this.showToolResult(e.target);
+            });
+        }
         
         return messageDiv;
     }
 
     formatMessage(message) {
-        // 格式化訊息，支援基本的 markdown 樣式
-        return message
+        if (!message) return '';
+        
+        // 先進行 HTML 轉義，防止 HTML 注入
+        const escaped = this.escapeHtml(message);
+        
+        // 然後應用基本的 markdown 樣式
+        return escaped
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/`(.*?)`/g, '<code class="bg-gray-200 px-1 rounded">$1</code>')
+            .replace(/`(.*?)`/g, '<code class="bg-gray-200 px-1 rounded text-xs">$1</code>')
             .replace(/\n/g, '<br>');
+    }
+
+    escapeHtml(text) {
+        if (!text) return '';
+        
+        // 使用更安全的方式轉義 HTML 特殊字符
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#x27;')
+            .replace(/\//g, '&#x2F;');
+    }
+
+    showToolResult(button) {
+        const toolResult = button._toolResult;
+        if (!toolResult) return;
+
+        // 創建彈窗顯示工具結果
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+        
+        // 創建彈窗結構
+        const modalContent = document.createElement('div');
+        modalContent.className = 'bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] flex flex-col';
+        
+        // 標題欄
+        const header = document.createElement('div');
+        header.className = 'flex items-center justify-between p-6 border-b';
+        header.innerHTML = `
+            <h3 class="text-lg font-semibold text-gray-900">🔧 工具執行結果</h3>
+            <button class="text-gray-400 hover:text-gray-600 close-tool-result-btn">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        `;
+        
+        // 內容區域
+        const body = document.createElement('div');
+        body.className = 'flex-1 p-6 overflow-y-auto';
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'whitespace-pre-wrap text-sm text-gray-800 bg-gray-50 p-4 rounded-lg';
+        // 使用 textContent 避免 HTML 解析問題
+        contentDiv.textContent = toolResult;
+        body.appendChild(contentDiv);
+        
+        // 底部按鈕
+        const footer = document.createElement('div');
+        footer.className = 'flex justify-end p-6 border-t bg-gray-50';
+        footer.innerHTML = '<button class="btn btn-primary close-tool-result-btn">關閉</button>';
+        
+        modalContent.appendChild(header);
+        modalContent.appendChild(body);
+        modalContent.appendChild(footer);
+        modal.appendChild(modalContent);
+
+        // 添加關閉事件
+        const closeButtons = modal.querySelectorAll('.close-tool-result-btn');
+        closeButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                modal.remove();
+            });
+        });
+
+        // 點擊背景關閉
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+
+        // ESC 鍵關閉
+        const handleEsc = (e) => {
+            if (e.key === 'Escape') {
+                modal.remove();
+                document.removeEventListener('keydown', handleEsc);
+            }
+        };
+        document.addEventListener('keydown', handleEsc);
+
+        document.body.appendChild(modal);
     }
 
     scrollToBottom() {
@@ -666,6 +783,48 @@ class ChatManager {
                 button.disabled = false;
             }
         });
+    }
+
+    async loadConversationHistory() {
+        try {
+            const response = await fetch('/conversations/history/', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.messages && data.messages.length > 0) {
+                    // 清空現有訊息
+                    this.chatMessages.innerHTML = '';
+                    
+                    // 載入歷史訊息
+                    data.messages.forEach(message => {
+                        const messageElement = this.createMessageElement(message);
+                        this.chatMessages.appendChild(messageElement);
+                    });
+                    
+                    // 滾動到底部
+                    this.scrollToBottom();
+                }
+            }
+        } catch (error) {
+            console.error('載入對話歷史時發生錯誤:', error);
+        }
+    }
+
+    getCSRFToken() {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const [name, value] = cookie.trim().split('=');
+            if (name === 'csrftoken') {
+                return value;
+            }
+        }
+        return '';
     }
 
     setupNavigationListener() {

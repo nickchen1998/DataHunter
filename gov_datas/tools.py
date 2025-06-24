@@ -68,10 +68,8 @@ class GovDataDatasetQueryTool(BaseTool):
 
         result = f"找到 {queryset.count()} 筆相關資料集：\n\n"
 
-        dataset_ids = []
         table_info_list = []
         for i, dataset in enumerate(queryset, 1):
-            dataset_ids.append(dataset.id)
             result += f"{i}. 【{dataset.category}】{dataset.name}\n"
             # result += f"   資料集識別碼：{dataset.dataset_id}\n"
             result += f"   提供機關：{dataset.department}\n"
@@ -93,5 +91,5 @@ class GovDataDatasetQueryTool(BaseTool):
             result += "\n"
         result += f"table_info_list: {json.dumps(table_info_list, ensure_ascii=False)}\n"
         
-        return result, sorted(dataset_ids)
+        return result
     

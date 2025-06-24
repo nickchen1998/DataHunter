@@ -3,12 +3,15 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from utils.nl_to_sql import CustomNL2SQLQueryTool
+import json
 
 from symptoms.models import Symptom, SYMPTOM_SYSTEM_PROMPT
 from symptoms.tools import SymptomDataRetrievalTool
 
 from gov_datas.models import Dataset, GOV_DATA_SYSTEM_PROMPT
 from gov_datas.tools import GovDataDatasetQueryTool
+
+from conversations.models import Session, Message
 
 
 class ChatAgent:
@@ -22,7 +25,13 @@ class ChatAgent:
         Dataset.__name__: GOV_DATA_SYSTEM_PROMPT,
     }
     
-    def process_query(self, user_question: str, reference_id_list: list[int], data_type: str = "Mixed") -> str:
+    def process_query(self, user_question: str, reference_id_list: list[int], user, data_type: str = "Mixed") -> str:
+        """處理用戶查詢並記錄對話"""
+        # 取得或建立用戶的 session
+        session = Session.get_or_create_user_session(user)
+        # 記錄用戶訊息
+        Message.create_user_message(session, user, user_question)
+
         if reference_id_list:
             user_question = f"請使用我指定的參考資料ID：\n{reference_id_list}\n我的問題是：\n{user_question}"
 
@@ -58,13 +67,31 @@ class ChatAgent:
         response = result["output"]
         steps = result["intermediate_steps"]
 
-        final_reference_id_list = None
-        if steps:
-            _, tool_output = steps[-1]
-            if isinstance(tool_output, tuple) and isinstance(tool_output[1], list):
-                final_reference_id_list = tool_output[1]
+        # 記錄所有工具調用
+        self._log_tool_calls(session, user, steps)
 
         response += f"\n\n⚠️ **重要提醒**：以上資訊僅供參考，實際應用時請諮詢相關專業人士。"
 
-        return response, final_reference_id_list
+        # 記錄 AI 回覆
+        Message.create_ai_message(session, user, response)
+
+        return response
+
+    def _log_tool_calls(self, session, user, steps):
+        """記錄所有工具調用"""
+        for step in steps:
+            agent_action, tool_output = step
+            
+            # 提取工具名稱和參數
+            tool_name = agent_action.tool
+            tool_params = agent_action.tool_input
+            
+            # 記錄工具調用
+            Message.create_tool_message(
+                session=session,
+                user=user,
+                tool_name=tool_name,
+                tool_params=json.loads(json.dumps(tool_params, default=str)),
+                tool_result=tool_output
+            )
     

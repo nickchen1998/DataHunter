@@ -28,6 +28,23 @@ class Session(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     title = models.CharField(max_length=128, blank=True)
 
+    class Meta:
+        verbose_name = "對話會話"
+        verbose_name_plural = "對話會話"
+
+    def __str__(self):
+        user_info = self.user.email if self.user else "匿名用戶"
+        return f"{user_info} - {self.title or str(self.session_uuid)[:8]}"
+
+    @classmethod
+    def get_or_create_user_session(cls, user):
+        """取得或建立使用者的 session（目前每位使用者只有一個 session）"""
+        session, created = cls.objects.get_or_create(
+            user=user,
+            defaults={'title': f'{user.email} 的對話'}
+        )
+        return session
+
 
 class Message(models.Model):
     session = models.ForeignKey(Session, on_delete=models.CASCADE)
@@ -52,3 +69,50 @@ class Message(models.Model):
     tool_keywords = models.JSONField(default=list, blank=True)  # 儲存 keyword 清單
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "對話訊息"
+        verbose_name_plural = "對話訊息"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        sender_display = self.get_sender_display()
+        preview = (self.text[:50] + '...') if self.text and len(self.text) > 50 else (self.text or '')
+        if self.sender == SenderChoices.TOOL:
+            return f"[{sender_display}] {self.tool_name}: {preview}"
+        return f"[{sender_display}] {preview}"
+
+    @classmethod
+    def create_user_message(cls, session, user, text):
+        """建立使用者訊息記錄"""
+        return cls.objects.create(
+            session=session,
+            user=user,
+            sender=SenderChoices.USER,
+            content_type=ContentTypeChoices.TEXT,
+            text=text
+        )
+
+    @classmethod
+    def create_ai_message(cls, session, user, text):
+        """建立 AI 回覆訊息記錄"""
+        return cls.objects.create(
+            session=session,
+            user=user,
+            sender=SenderChoices.AI,
+            content_type=ContentTypeChoices.TEXT,
+            text=text
+        )
+
+    @classmethod
+    def create_tool_message(cls, session, user, tool_name, tool_params, tool_result=None):
+        """建立 Tool 調用訊息記錄"""
+        return cls.objects.create(
+            session=session,
+            user=user,
+            sender=SenderChoices.TOOL,
+            content_type=ContentTypeChoices.TEXT,
+            tool_name=tool_name,
+            tool_keywords=tool_params,
+            text=tool_result
+        )
