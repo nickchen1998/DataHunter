@@ -171,8 +171,30 @@ docker-compose --profile production up -d
 
 ### 自動排程
 
-- **衛生福利部-台灣 e 院**: 每週日凌晨 1:00 自動爬取
-- **政府開放資料**: 每天凌晨 1:00 自動爬取
+- **衛生福利部-台灣 e 院**: 每週日凌晨 1:00 自動爬取（celery_app.crawlers.symptoms）
+- **政府開放資料**: 每天凌晨 1:00 自動爬取（celery_app.crawlers.gov_datas）
+
+### 爬取範例資料
+
+#### 1️⃣ 開啟終端機並輸入下方指令進入 Python Interpreter
+
+```python
+python manage.py shell
+```
+
+#### 2️⃣ 依照你想爬取的範例資料，使用下方範例進行匯入
+
+**請 import 對應資料源之爬蟲任務中 period 開頭的函式**
+**呼叫函式時請務必接上（demo=True），否則會完整執行爬蟲**
+**可以再有資料之後直接中斷爬蟲以節省時間**
+
+```python
+from celery_app.crawlers.gov_datas import period_crawl_government_datasets
+```
+
+```python
+period_crawl_government_datasets(demo=True)
+```
 
 ---
 
