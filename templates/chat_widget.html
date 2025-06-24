@@ -592,7 +592,24 @@ class ChatManager {
             messageContent = `<div class="text-sm whitespace-pre-wrap">${this.formatMessage(displayText)}</div>`;
         }
 
-        messageDiv.innerHTML = `<div class="flex ${alignment}"><div class="${messageClass}"><div class="flex items-start space-x-2"><div class="w-8 h-8 ${iconColor} rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">${icon}</div><div class="flex-1"><div class="${bgColor} ${textColor} p-3 rounded-lg shadow-sm">${messageContent}</div><div class="text-xs text-gray-500 mt-1 px-1">${data.timestamp}</div></div></div></div></div>`;
+        // 根據訊息類型調整頭像位置
+        let avatarOrder = '';
+        let contentOrder = '';
+        let spaceDirection = 'space-x-2';
+        
+        if (messageType === 'user_message' || messageType === 'user') {
+            // 使用者訊息：頭像在右側
+            avatarOrder = 'order-2';
+            contentOrder = 'order-1';
+            spaceDirection = 'space-x-reverse space-x-2';
+        } else {
+            // 其他訊息：頭像在左側
+            avatarOrder = 'order-1';
+            contentOrder = 'order-2';
+            spaceDirection = 'space-x-2';
+        }
+
+        messageDiv.innerHTML = `<div class="flex ${alignment}"><div class="${messageClass}"><div class="flex items-start ${spaceDirection}"><div class="w-8 h-8 ${iconColor} rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0 ${avatarOrder}">${icon}</div><div class="flex-1 ${contentOrder}"><div class="${bgColor} ${textColor} p-3 rounded-lg shadow-sm">${messageContent}</div><div class="text-xs text-gray-500 mt-1 px-1">${data.timestamp}</div></div></div></div></div>`;
         
         // 為工具結果按鈕添加事件監聽器
         const showResultBtn = messageDiv.querySelector('.show-tool-result-btn');
