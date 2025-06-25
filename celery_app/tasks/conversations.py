@@ -44,16 +44,14 @@ class StreamingCallbackHandler(BaseCallbackHandler):
 
 
 @app.task()
-def process_conversation_async(user_id, user_question, reference_id_list=None, data_type="Mixed", user_message_id=None, ai_message_id=None):
+def process_conversation_async(user_id, user_question, reference_id_list=None, data_type="Mixed"):
     try:
         user = User.objects.get(id=user_id)
         
         session = Session.get_or_create_user_session(user)
         
-        if ai_message_id:
-            ai_message = Message.objects.get(id=ai_message_id)
-        else:
-            ai_message = Message.create_ai_message(session, user, "")
+        # 在此函數內建立 AI Message
+        ai_message = Message.create_ai_message(session, user, "正在思考中...")
         
         if reference_id_list:
             user_question_with_refs = f"請使用我指定的參考資料ID：\n{reference_id_list}\n我的問題是：\n{user_question}"
@@ -141,7 +139,6 @@ def process_conversation_async(user_id, user_question, reference_id_list=None, d
         return {
             'status': 'completed',
             'response': result.get('output', ai_message.text),
-            'user_message_id': user_message_id,
             'ai_message_id': ai_message.id,
             'tool_results': callback_handler.tool_results,
             'session_id': session.id

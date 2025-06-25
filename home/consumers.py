@@ -53,27 +53,25 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.send_error('訊息內容不能為空')
             return
         
-        user_message_id, ai_message_id = await self.create_conversation_messages(user_message)
+        # 只建立 user message，AI message 由 celery task 建立
+        await self.create_user_message(user_message)
         
         process_conversation_async.delay(
             user_id=self.user.id,
             user_question=user_message,
             reference_id_list=reference_id_list,
-            data_type=data_type,
-            user_message_id=user_message_id,
-            ai_message_id=ai_message_id
+            data_type=data_type
         )
 
     @sync_to_async
-    def create_conversation_messages(self, user_message):
+    def create_user_message(self, user_message):
         from conversations.models import Session, Message
         
         session = Session.get_or_create_user_session(self.user)
         
         user_msg = Message.create_user_message(session, self.user, user_message)
-        ai_msg = Message.create_ai_message(session, self.user, "正在思考中...")
         
-        return user_msg.id, ai_msg.id
+        return user_msg.id
 
     async def handle_clear_conversation(self):
         try:
