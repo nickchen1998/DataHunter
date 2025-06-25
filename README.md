@@ -77,8 +77,8 @@ GOOGLE_OAUTH2_CLIENT_SECRET=your-google-client-secret
 ### 3️⃣ 啟動資料庫服務
 
 ```bash
-# 使用 Docker 啟動 PostgreSQL 和 Redis
-docker-compose up -d
+# 啟動基本服務（PostgreSQL + Redis + Selenium Hub + Chrome + Conversation Queue）
+docker-compose up -d --build
 ```
 
 ### 4️⃣ 資料庫初始化
@@ -146,8 +146,8 @@ daphne -p 8000 -b 0.0.0.0 RAGPilot.asgi:application
 ### 啟動所有服務
 
 ```bash
-# 啟動基本服務（PostgreSQL + Redis + Selenium Hub + Chrome）
-docker-compose up -d
+# 啟動基本服務（PostgreSQL + Redis + Selenium Hub + Chrome + Conversation Queue）
+docker-compose up -d --build
 
 # 啟動完整服務（包含爬蟲、站台），在本地開發時不需要使用
 docker-compose --profile production up -d
