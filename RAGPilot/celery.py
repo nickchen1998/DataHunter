@@ -11,18 +11,19 @@ app = Celery(
 app.conf.imports = (
     "celery_app.crawlers.symptoms",
     "celery_app.crawlers.gov_datas",
+    "celery_app.tasks.conversations",
 )
 app.conf.timezone = 'Asia/Taipei'
 app.conf.enable_utc = True
 app.conf.beat_schedule = {
     'symptoms-crawler-weekly': {
         'task': 'celery_app.crawlers.symptoms.period_send_symptom_crawler_task',
-        'schedule': crontab(hour=1, minute=0, day_of_week=0),  # 每週日凌晨1點執行
+        'schedule': crontab(hour=1, minute=0, day_of_week=0),
         'options': {'queue': 'dynamic_crawler_queue'},
     },
     'gov-data-crawler-daily': {
         'task': 'celery_app.crawlers.gov_datas.period_crawl_government_datasets',
-        'schedule': crontab(hour=1, minute=0),  # 每天凌晨1點執行
+        'schedule': crontab(hour=1, minute=0),
         'options': {'queue': 'static_crawler_queue'},
     },
 }
@@ -30,6 +31,7 @@ app.conf.beat_schedule = {
 app.conf.task_routes = {
     'celery_app.crawlers.symptoms.*': {'queue': 'dynamic_crawler_queue'},
     'celery_app.crawlers.gov_datas.*': {'queue': 'static_crawler_queue'},
+    'celery_app.tasks.conversations.*': {'queue': 'conversation_queue'},
 }
 
 app.conf.task_default_queue = 'default'

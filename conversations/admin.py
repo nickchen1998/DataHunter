@@ -13,15 +13,15 @@ class SessionAdmin(admin.ModelAdmin):
 
 @admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):
-    list_display = ['id', 'session', 'user', 'sender', 'content_type', 'tool_name', 'is_deleted', 'created_at']
-    list_filter = ['sender', 'content_type', 'is_deleted', 'created_at', 'tool_name']
+    list_display = ['session', 'user', 'sender', 'content_type', 'tool_name', 'is_deleted', 'updated_at']
+    list_filter = ['sender', 'content_type', 'is_deleted', 'updated_at', 'tool_name']
     search_fields = ['user__email', 'user__username', 'text', 'tool_name']
-    readonly_fields = ['created_at']
-    ordering = ['-created_at']
+    readonly_fields = ['created_at', 'updated_at']
+    ordering = ['-updated_at']
     
     fieldsets = (
         ('基本資訊', {
-            'fields': ('session', 'user', 'sender', 'content_type', 'is_deleted', 'created_at')
+            'fields': ('session', 'user', 'sender', 'content_type', 'is_deleted', 'created_at', 'updated_at')
         }),
         ('內容', {
             'fields': ('text', 'file_url', 'file_path')

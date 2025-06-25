@@ -41,7 +41,7 @@ class Session(models.Model):
         """取得或建立使用者的 session（目前每位使用者只有一個 session）"""
         session, created = cls.objects.get_or_create(
             user=user,
-            defaults={'title': f'{user.email} 的對話'}
+            defaults={'title': 'default'}
         )
         return session
 
@@ -72,11 +72,12 @@ class Message(models.Model):
     is_deleted = models.BooleanField(default=False, help_text="軟刪除標記")
 
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "對話訊息"
         verbose_name_plural = "對話訊息"
-        ordering = ['-created_at']
+        ordering = ['-updated_at']
 
     def __str__(self):
         sender_display = self.get_sender_display()

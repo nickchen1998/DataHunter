@@ -121,7 +121,7 @@ class ChatManager {
         this.chatInput = document.getElementById('chat-input');
         this.sendButton = document.getElementById('send-button');
         this.connectionStatus = document.getElementById('connection-status');
-        this.references = new Map(); // 存儲參考資料
+        this.references = new Map();
         
         this.init();
     }
@@ -130,19 +130,17 @@ class ChatManager {
         this.connectWebSocket();
         this.setupEventListeners();
         this.setupReferenceSystem();
-        this.loadReferencesFromStorage(); // 載入保存的參考資料
-        this.updateButtonStates(); // 更新按鈕狀態
+        this.loadReferencesFromStorage();
+        this.updateButtonStates();
         this.setupNavigationListener();
-        this.loadConversationHistory(); // 載入對話歷史
+        this.loadConversationHistory();
     }
 
     setupReferenceSystem() {
-        // 顯示參考資料按鈕
         document.getElementById('show-references-btn').addEventListener('click', () => {
             this.showReferencesModal();
         });
         
-        // 關閉彈窗按鈕
         document.getElementById('close-modal-btn').addEventListener('click', () => {
             this.hideReferencesModal();
         });
@@ -151,24 +149,20 @@ class ChatManager {
             this.hideReferencesModal();
         });
         
-        // 清空所有參考資料
         document.getElementById('clear-all-references-btn').addEventListener('click', () => {
             this.clearAllReferences();
         });
         
-        // 清空對話
         document.getElementById('clear-conversation-btn').addEventListener('click', () => {
             this.clearConversation();
         });
         
-        // 點擊彈窗外部關閉
         document.getElementById('references-modal').addEventListener('click', (e) => {
             if (e.target.id === 'references-modal') {
                 this.hideReferencesModal();
             }
         });
         
-        // 監聽添加參考資料按鈕
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('add-reference-btn')) {
                 this.addReference(e.target);
@@ -177,21 +171,17 @@ class ChatManager {
     }
 
     addReference(button) {
-        // 構建參考資料物件 - 支援不同資料類型
         const referenceData = {
             id: button.dataset.id
         };
         
-        // 檢測資料類型並構建相應的資料結構
         if (button.dataset.department && button.dataset.gender && button.dataset.symptom) {
-            // 症狀資料
             referenceData.department = button.dataset.department;
             referenceData.gender = button.dataset.gender;
             referenceData.symptom = button.dataset.symptom;
             referenceData.question = button.dataset.question;
             referenceData.answer = button.dataset.answer;
         } else if (button.dataset.name && button.dataset.category) {
-            // 政府資料 - 注意：這裡只儲存顯示用的資訊，主鍵仍是 Django 的 id
             referenceData.name = button.dataset.name;
             referenceData.category = button.dataset.category;
             referenceData.department = button.dataset.department;
@@ -200,27 +190,23 @@ class ChatManager {
             referenceData.license = button.dataset.license;
             referenceData.price = button.dataset.price;
             referenceData.url = button.dataset.url;
-            // 如果需要顯示政府資料集識別碼，可以額外儲存
             referenceData.dataset_id = button.getAttribute('data-dataset-id');
         } else {
-            // 通用資料結構 - 複製所有 data 屬性
             Object.keys(button.dataset).forEach(key => {
                 referenceData[key] = button.dataset[key];
             });
         }
         
         if (this.references.has(referenceData.id)) {
-            // 已存在，顯示提示
             this.showToast('此資料已在參考資料中', 'warning');
             return;
         }
         
         this.references.set(referenceData.id, referenceData);
         this.updateReferenceCount();
-        this.saveReferencesToStorage(); // 保存到 localStorage
+        this.saveReferencesToStorage();
         this.showToast('已添加到參考資料', 'success');
         
-        // 更新按鈕狀態
         button.textContent = '已添加';
         button.classList.remove('btn-outline', 'btn-success');
         button.classList.add('btn-success');
@@ -231,10 +217,10 @@ class ChatManager {
         this.references.delete(id);
         this.updateReferenceCount();
         this.updateReferencesModal();
-        this.saveReferencesToStorage(); // 保存到 localStorage
+        this.saveReferencesToStorage(); 
         this.showToast('已移除參考資料', 'info');
         
-        // 恢復按鈕狀態
+        
         const button = document.querySelector(`[data-id="${id}"]`);
         if (button) {
             button.textContent = '加入對話當中作為參考資料';
@@ -248,9 +234,9 @@ class ChatManager {
         this.references.clear();
         this.saveReferencesToStorage();
         this.updateReferenceCount();
-        this.updateReferencesModal(); // 更新彈窗內容
+        this.updateReferencesModal(); 
         this.updateButtonStates();
-        this.hideReferencesModal(); // 關閉彈窗
+        this.hideReferencesModal(); 
         if (showToast) {
             this.showToast('已清空所有參考資料', 'info');
         }
@@ -275,17 +261,17 @@ class ChatManager {
         
         if (this.references.size === 0) {
             noReferences.classList.remove('hidden');
-            // 清空其他內容
+            
             const existingItems = referencesList.querySelectorAll('.reference-item');
             existingItems.forEach(item => item.remove());
         } else {
             noReferences.classList.add('hidden');
             
-            // 清空現有內容
+            
             const existingItems = referencesList.querySelectorAll('.reference-item');
             existingItems.forEach(item => item.remove());
             
-            // 添加參考資料項目
+            
             this.references.forEach((data, id) => {
                 const referenceItem = this.createReferenceItem(data);
                 referencesList.appendChild(referenceItem);
@@ -299,9 +285,9 @@ class ChatManager {
         
         let contentHTML = '';
         
-        // 根據資料類型決定顯示內容
+        
         if (data.gender && data.symptom && data.question && data.answer) {
-            // 症狀資料
+            
             contentHTML = `
                 <div class="flex-1 space-y-2 text-sm text-gray-800">
                     <div><span class="font-semibold">參考ID：</span>${data.id}</div>
@@ -319,7 +305,7 @@ class ChatManager {
                 </div>
             `;
         } else if (data.name && data.category && data.description) {
-            // 政府資料
+            
             contentHTML = `
                 <div class="flex-1 space-y-2 text-sm text-gray-800">
                     <div><span class="font-semibold">參考ID：</span>${data.id}${data.dataset_id ? ` (資料集識別碼：${data.dataset_id})` : ''}</div>
@@ -335,7 +321,7 @@ class ChatManager {
                 </div>
             `;
         } else {
-            // 通用資料 - 顯示所有可用欄位
+            
             const fields = Object.keys(data).filter(key => key !== 'id' && data[key]);
             contentHTML = `
                 <div class="flex-1 space-y-2 text-sm text-gray-800">
@@ -363,7 +349,7 @@ class ChatManager {
             </div>
         `;
         
-        // 添加移除按鈕事件
+        
         div.querySelector('.remove-reference-btn').addEventListener('click', () => {
             this.removeReference(data.id);
         });
@@ -372,7 +358,7 @@ class ChatManager {
     }
 
     showToast(message, type = 'info') {
-        // 創建 toast 通知
+        
         const toast = document.createElement('div');
         toast.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg text-white max-w-sm transform transition-all duration-300 translate-x-full`;
         
@@ -403,12 +389,12 @@ class ChatManager {
         
         document.body.appendChild(toast);
         
-        // 顯示動畫
+        
         setTimeout(() => {
             toast.classList.remove('translate-x-full');
         }, 100);
         
-        // 自動移除
+        
         setTimeout(() => {
             toast.classList.add('translate-x-full');
             setTimeout(() => {
@@ -490,22 +476,17 @@ class ChatManager {
             return;
         }
         
-        // 立即顯示用戶訊息
-        const userMessageData = {
-            type: 'user_message',
-            message: message,
-            timestamp: this.getCurrentTimestamp()
-        };
-        this.handleMessage(userMessageData);
         
-        // 準備參考資料ID列表
+        
+        
         const referenceIdList = Array.from(this.references.keys()).map(id => parseInt(id));
         
-        // 檢測當前頁面的資料源類型
+        
         const dataType = this.detectCurrentDataType();
         
-        // 發送訊息到後端
+        
         this.socket.send(JSON.stringify({
+            'type': 'message',
             'message': message,
             'reference_id_list': referenceIdList,
             'data_type': dataType
@@ -524,18 +505,63 @@ class ChatManager {
     }
 
     handleMessage(data) {
-        const messageElement = this.createMessageElement(data);
-        this.chatMessages.appendChild(messageElement);
+        
+        if (data.type === 'conversation_cleared') {
+            
+            this.chatMessages.innerHTML = '';
+            this.showToast(data.message, 'success');
+            return;
+        } else if (data.type === 'error') {
+            
+            this.showToast(data.message, 'error');
+            return;
+        }
+        
+        
+        const existingMessage = document.querySelector(`[data-message-id="${data.id}"]`);
+        if (existingMessage) {
+            
+            const newMessageElement = this.createMessageElement(data);
+            existingMessage.replaceWith(newMessageElement);
+            
+            
+            this.reorderMessages();
+        } else {
+            
+            const messageElement = this.createMessageElement(data);
+            this.chatMessages.appendChild(messageElement);
+        }
         this.scrollToBottom();
+    }
+
+    reorderMessages() {
+        
+        const messages = Array.from(this.chatMessages.children);
+        
+        
+        messages.sort((a, b) => {
+            const timestampA = parseFloat(a.getAttribute('data-updated-timestamp') || '0');
+            const timestampB = parseFloat(b.getAttribute('data-updated-timestamp') || '0');
+            
+            return timestampA - timestampB;
+        });
+        
+        
+        this.chatMessages.innerHTML = '';
+        messages.forEach(message => {
+            this.chatMessages.appendChild(message);
+        });
     }
 
     createMessageElement(data) {
         const messageDiv = document.createElement('div');
         messageDiv.className = 'mb-4';
+        messageDiv.setAttribute('data-message-id', data.id);
+        messageDiv.setAttribute('data-updated-timestamp', data.updated_at_timestamp || '0');
         
         let messageClass, iconColor, bgColor, textColor, alignment, icon, messageType;
         
-        // 處理從API載入的歷史訊息格式
+        
         if (data.sender) {
             messageType = data.sender === 'user' ? 'user_message' : 
                          data.sender === 'ai' ? 'ai_message' : 
@@ -572,6 +598,7 @@ class ChatManager {
                 textColor = 'text-purple-800';
                 icon = '🔧';
                 break;
+
             case 'error':
                 alignment = 'justify-center';
                 messageClass = 'max-w-2xl';
@@ -589,33 +616,37 @@ class ChatManager {
                 icon = '💬';
         }
         
-        // 根據訊息類型準備內容
+        
         let messageContent = '';
         const displayText = data.text || data.message || '';
         
         if (messageType === 'tool_message' || messageType === 'tool') {
-            // 工具訊息的特殊格式
+            
             const toolName = data.tool_name || '未知工具';
             const messageId = data.id || Math.random().toString(36).substr(2, 9);
+            const hasResult = displayText && displayText.trim() !== '';
             
-            messageContent = `<div class="text-sm"><div class="font-semibold text-purple-700 mb-2">🔧 工具調用：${toolName}</div>${displayText ? `<div><button class="btn btn-sm btn-outline text-purple-600 border-purple-300 hover:bg-purple-50 hover:border-purple-400 show-tool-result-btn" data-message-id="${messageId}">📄 顯示結果</button></div>` : ''}</div>`;
+            messageContent = `<div class="text-sm">
+                <div class="font-semibold text-purple-700 mb-2">🔧 工具調用：${toolName}</div>
+                ${hasResult ? `<div><button class="btn btn-sm btn-outline text-purple-600 border-purple-300 hover:bg-purple-50 hover:border-purple-400 show-tool-result-btn" data-message-id="${messageId}">📄 顯示結果</button></div>` : '<div class="text-purple-600">執行中...</div>'}
+            </div>`;
         } else {
-            // 一般訊息格式
+            
             messageContent = `<div class="text-sm whitespace-pre-wrap">${this.formatMessage(displayText)}</div>`;
         }
 
-        // 根據訊息類型調整頭像位置
+        
         let avatarOrder = '';
         let contentOrder = '';
         let spaceDirection = 'space-x-2';
         
         if (messageType === 'user_message' || messageType === 'user') {
-            // 使用者訊息：頭像在右側
+            
             avatarOrder = 'order-2';
             contentOrder = 'order-1';
             spaceDirection = 'space-x-reverse space-x-2';
         } else {
-            // 其他訊息：頭像在左側
+            
             avatarOrder = 'order-1';
             contentOrder = 'order-2';
             spaceDirection = 'space-x-2';
@@ -623,10 +654,10 @@ class ChatManager {
 
         messageDiv.innerHTML = `<div class="flex ${alignment}"><div class="${messageClass}"><div class="flex items-start ${spaceDirection}"><div class="w-8 h-8 ${iconColor} rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0 ${avatarOrder}">${icon}</div><div class="flex-1 ${contentOrder}"><div class="${bgColor} ${textColor} p-3 rounded-lg shadow-sm">${messageContent}</div><div class="text-xs text-gray-500 mt-1 px-1">${data.timestamp}</div></div></div></div></div>`;
         
-        // 為工具結果按鈕添加事件監聽器
+        
         const showResultBtn = messageDiv.querySelector('.show-tool-result-btn');
         if (showResultBtn && displayText) {
-            // 將工具結果存儲在按鈕元素的屬性中
+            
             showResultBtn._toolResult = displayText;
             showResultBtn.addEventListener('click', (e) => {
                 this.showToolResult(e.target);
@@ -639,10 +670,10 @@ class ChatManager {
     formatMessage(message) {
         if (!message) return '';
         
-        // 先進行 HTML 轉義，防止 HTML 注入
+        
         const escaped = this.escapeHtml(message);
         
-        // 然後應用基本的 markdown 樣式
+        
         return escaped
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
@@ -653,7 +684,7 @@ class ChatManager {
     escapeHtml(text) {
         if (!text) return '';
         
-        // 使用更安全的方式轉義 HTML 特殊字符
+        
         return text
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
@@ -667,15 +698,15 @@ class ChatManager {
         const toolResult = button._toolResult;
         if (!toolResult) return;
 
-        // 創建彈窗顯示工具結果
+        
         const modal = document.createElement('div');
         modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
         
-        // 創建彈窗結構
+        
         const modalContent = document.createElement('div');
         modalContent.className = 'bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] flex flex-col';
         
-        // 標題欄
+        
         const header = document.createElement('div');
         header.className = 'flex items-center justify-between p-6 border-b';
         header.innerHTML = `
@@ -687,17 +718,17 @@ class ChatManager {
             </button>
         `;
         
-        // 內容區域
+        
         const body = document.createElement('div');
         body.className = 'flex-1 p-6 overflow-y-auto';
         
         const contentDiv = document.createElement('div');
         contentDiv.className = 'whitespace-pre-wrap text-sm text-gray-800 bg-gray-50 p-4 rounded-lg';
-        // 使用 textContent 避免 HTML 解析問題
+        
         contentDiv.textContent = toolResult;
         body.appendChild(contentDiv);
         
-        // 底部按鈕
+        
         const footer = document.createElement('div');
         footer.className = 'flex justify-end p-6 border-t bg-gray-50';
         footer.innerHTML = '<button class="btn btn-primary close-tool-result-btn">關閉</button>';
@@ -707,7 +738,7 @@ class ChatManager {
         modalContent.appendChild(footer);
         modal.appendChild(modalContent);
 
-        // 添加關閉事件
+        
         const closeButtons = modal.querySelectorAll('.close-tool-result-btn');
         closeButtons.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -715,14 +746,14 @@ class ChatManager {
             });
         });
 
-        // 點擊背景關閉
+        
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 modal.remove();
             }
         });
 
-        // ESC 鍵關閉
+        
         const handleEsc = (e) => {
             if (e.key === 'Escape') {
                 modal.remove();
@@ -761,7 +792,7 @@ class ChatManager {
                 const referencesData = JSON.parse(savedReferences);
                 this.references.clear();
                 
-                // 重新載入參考資料
+                
                 Object.entries(referencesData).forEach(([id, data]) => {
                     this.references.set(id, data);
                 });
@@ -784,7 +815,7 @@ class ChatManager {
     }
 
     detectCurrentDataType() {
-        // 檢測當前頁面的資料源類型
+        
         const currentPath = window.location.pathname;
         
         if (currentPath.includes('/symptoms/')) {
@@ -792,12 +823,12 @@ class ChatManager {
         } else if (currentPath.includes('/gov-data/')) {
             return 'Dataset';
         } else {
-            return 'Mixed'; // 預設值
+            return 'Mixed'; 
         }
     }
 
     updateButtonStates() {
-        // 更新所有按鈕的狀態
+        
         document.querySelectorAll('.add-reference-btn').forEach(button => {
             const id = button.dataset.id;
             if (this.references.has(id)) {
@@ -827,16 +858,16 @@ class ChatManager {
             if (response.ok) {
                 const data = await response.json();
                 if (data.success && data.messages && data.messages.length > 0) {
-                    // 清空現有訊息
+                    
                     this.chatMessages.innerHTML = '';
                     
-                    // 載入歷史訊息
+                    
                     data.messages.forEach(message => {
                         const messageElement = this.createMessageElement(message);
                         this.chatMessages.appendChild(messageElement);
                     });
                     
-                    // 滾動到底部
+                    
                     this.scrollToBottom();
                 }
             }
@@ -845,54 +876,26 @@ class ChatManager {
         }
     }
 
-    getCSRFToken() {
-        const cookies = document.cookie.split(';');
-        for (let cookie of cookies) {
-            const [name, value] = cookie.trim().split('=');
-            if (name === 'csrftoken') {
-                return value;
-            }
-        }
-        return '';
-    }
+    
 
-    async clearConversation() {
-        // 顯示確認對話框
+    clearConversation() {
+        
         if (!confirm('確定要清空所有對話記錄嗎？此操作不可恢復。')) {
             return;
         }
 
-        try {
-            const response = await fetch('/conversations/clear/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': this.getCSRFToken()
-                }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success) {
-                    // 清空聊天訊息區域
-                    this.chatMessages.innerHTML = '';
-                    
-                    // 顯示成功提示
-                    this.showToast(data.message, 'success');
-                } else {
-                    this.showToast(data.error || '清空對話失敗', 'error');
-                }
-            } else {
-                this.showToast('清空對話請求失敗', 'error');
-            }
-        } catch (error) {
-            console.error('清空對話時發生錯誤:', error);
-            this.showToast('清空對話時發生錯誤', 'error');
+        
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            this.socket.send(JSON.stringify({
+                type: 'clear_conversation'
+            }));
+        } else {
+            this.showToast('連線中斷，請重新載入頁面', 'error');
         }
     }
 
     setupNavigationListener() {
-        // 監聽導航連結點擊，切換資料源時清空參考資料
+        
         document.addEventListener('click', (event) => {
             const link = event.target.closest('a');
             if (link && (
@@ -904,25 +907,25 @@ class ChatManager {
                 link.classList.contains('nav-link') ||
                 link.getAttribute('href')?.startsWith('/')
             )) {
-                // 檢查是否切換到不同的資料源
+                
                 const currentPath = window.location.pathname;
                 const newPath = new URL(link.href, window.location.origin).pathname;
                 
                 const currentSource = this.getDataSource(currentPath);
                 const newSource = this.getDataSource(newPath);
                 
-                // 只要切換到不同頁面且有參考資料，就清空
+                
                 if (currentPath !== newPath && this.references.size > 0) {
-                    // 特別處理：如果是相同資料源內的分頁，不清空
+                    
                     if (currentSource === newSource && 
                         (link.href.includes('page=') || link.classList.contains('pagination-link'))) {
                         return;
                     }
                     
-                    // 阻止預設行為
+                    
                     event.preventDefault();
                     
-                    // 如果切換資料源，顯示確認對話框
+                    
                     if (currentSource !== newSource) {
                         const confirmed = confirm(`您目前有 ${this.references.size} 筆參考資料，切換資料源將會清空所有參考資料。確定要繼續嗎？`);
                         if (!confirmed) {
@@ -930,7 +933,7 @@ class ChatManager {
                         }
                     }
                     
-                    // 切換頁面，清空參考資料（不顯示預設通知）
+                    
                     this.clearAllReferences(false);
                     
                     if (currentSource !== newSource) {
@@ -939,28 +942,28 @@ class ChatManager {
                         this.showToast('已切換頁面，參考資料已清空', 'info');
                     }
                     
-                    // 手動導航到新頁面
+                    
                     window.location.href = link.href;
                 }
             }
         });
         
-        // 監聽資料源下拉選單變更
+        
         this.setupSourceSelectListener();
     }
     
     setupSourceSelectListener() {
-        // 使用延遲執行確保在 home.html 的監聽器設置之後執行
+        
         setTimeout(() => {
             const sourceSelect = document.getElementById('source-select');
             if (sourceSelect) {
                 console.log('設置資料源選單監聽器，當前參考資料數量:', this.references.size);
                 
-                // 完全移除所有現有的事件監聽器
+                
                 const newSelect = sourceSelect.cloneNode(true);
                 sourceSelect.parentNode.replaceChild(newSelect, sourceSelect);
                 
-                // 為新的 select 元素添加我們的監聽器
+                
                 newSelect.addEventListener('change', (event) => {
                     console.log('資料源選單變更被觸發，新值:', event.target.value);
                     
@@ -975,21 +978,21 @@ class ChatManager {
                     
                     console.log('資料源切換:', currentSource, '->', newSource, '參考資料數量:', this.references.size);
                     
-                    // 如果有參考資料且切換到不同資料源
+                    
                     if (this.references.size > 0 && currentSource !== newSource) {
                         const confirmed = confirm(`您目前有 ${this.references.size} 筆參考資料，切換資料源將會清空所有參考資料。確定要繼續嗎？`);
                         if (!confirmed) {
-                            // 恢復下拉選單的選擇
+                            
                             event.target.value = this.getCurrentSelectValue(currentPath);
                             return;
                         }
                         
-                        // 清空參考資料
+                        
                         this.clearAllReferences(false);
                         this.showToast('已切換資料源，參考資料已清空', 'info');
                     }
                     
-                    // 導航到新頁面
+                    
                     window.location.href = newUrl;
                 });
                 
@@ -997,7 +1000,7 @@ class ChatManager {
             } else {
                 console.log('未找到 source-select 元素');
             }
-        }, 500); // 增加延遲時間
+        }, 500); 
     }
     
     getCurrentSelectValue(currentPath) {
@@ -1016,16 +1019,16 @@ class ChatManager {
     }
 }
 
-// 初始化對話管理器
+
 document.addEventListener('DOMContentLoaded', function() {
     window.chatManager = new ChatManager();
     
-    // 監聽頁面內容變化（分頁等）
+    
     const observer = new MutationObserver(function(mutations) {
         let shouldUpdate = false;
         mutations.forEach(function(mutation) {
             if (mutation.type === 'childList') {
-                // 檢查是否有新的參考資料按鈕
+                
                 const newButtons = mutation.target.querySelectorAll('.add-reference-btn');
                 if (newButtons.length > 0) {
                     shouldUpdate = true;
@@ -1034,32 +1037,32 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         if (shouldUpdate) {
-            // 延遲更新按鈕狀態，確保 DOM 完全載入
+            
             setTimeout(() => {
                 window.chatManager.updateButtonStates();
             }, 100);
         }
     });
     
-    // 開始觀察頁面變化
+    
     const targetNode = document.querySelector('.data-table') || document.body;
     observer.observe(targetNode, {
         childList: true,
         subtree: true
     });
     
-    // 監聽分頁連結點擊
+    
     document.addEventListener('click', function(event) {
         const link = event.target.closest('a');
         if (link && (link.href.includes('page=') || link.classList.contains('pagination-link'))) {
-            // 分頁連結被點擊，延遲更新按鈕狀態
+            
             setTimeout(() => {
                 window.chatManager.updateButtonStates();
-            }, 500); // 給更多時間讓新內容載入
+            }, 500); 
         }
     });
     
-    // 監聽 URL 變化（用於 AJAX 分頁）
+    
     let currentUrl = window.location.href;
     setInterval(() => {
         if (window.location.href !== currentUrl) {
@@ -1070,14 +1073,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 500);
     
-    // 也監聽 window 的 load 事件，確保所有內容都載入完成
+    
     window.addEventListener('load', function() {
         setTimeout(() => {
             window.chatManager.updateButtonStates();
         }, 200);
     });
     
-    // 監聽 popstate 事件（瀏覽器前進後退）
+    
     window.addEventListener('popstate', function() {
         setTimeout(() => {
             window.chatManager.updateButtonStates();

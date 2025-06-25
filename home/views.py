@@ -53,5 +53,3 @@ class CustomLogoutView(View):
         response['Expires'] = '0'
         
         return response
-
-

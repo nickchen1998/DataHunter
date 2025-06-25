@@ -134,7 +134,7 @@ services:
   celery-conversation-worker:
     build: .
     container_name: celery-conversation-worker
-    command: celery -A RAGPilot worker -Q conversation -l info -c 2
+    command: celery -A RAGPilot worker -Q conversation_queue -l info -c 2
     volumes:
       - .:/app
     working_dir: /app
