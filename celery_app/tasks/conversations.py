@@ -2,7 +2,7 @@ import json
 from django.contrib.auth import get_user_model
 from langchain.agents import create_openai_functions_agent, AgentExecutor
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import SystemMessage
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.callbacks import BaseCallbackHandler
 from RAGPilot.celery import app
@@ -13,6 +13,31 @@ from gov_datas.models import Dataset, GOV_DATA_SYSTEM_PROMPT
 from gov_datas.tools import GovDataDatasetQueryTool
 from conversations.models import Session, Message
 User = get_user_model()
+
+
+def get_chat_history(session, limit=10):
+    """
+    獲取對話歷史記錄，返回 LangChain 消息格式
+    Args:
+        session: Session 對象
+        limit: 限制返回的消息數量（預設10條）
+    """
+    # 獲取該 session 下最近的對話記錄，排除 Tool 類型的消息
+    messages = Message.objects.filter(
+        session=session,
+        is_deleted=False,
+        sender__in=[Message.SenderChoices.USER, Message.SenderChoices.AI]
+    ).order_by('-updated_at')[:limit]
+    
+    # 將消息轉換為 LangChain 格式並按時間順序排列
+    chat_history = []
+    for message in reversed(messages):
+        if message.sender == Message.SenderChoices.USER:
+            chat_history.append(HumanMessage(content=message.text))
+        elif message.sender == Message.SenderChoices.AI:
+            chat_history.append(AIMessage(content=message.text))
+    
+    return chat_history
 
 
 class StreamingCallbackHandler(BaseCallbackHandler):
@@ -71,8 +96,12 @@ def process_conversation_async(user_id, user_question, reference_id_list=None, d
         tool = tool_factory[data_type]()
         llm = ChatOpenAI(model="gpt-4o", temperature=0.7)
         
+        # 獲取歷史對話記錄
+        chat_history = get_chat_history(session)
+        
         prompt = ChatPromptTemplate.from_messages([
             SystemMessage(content=system_prompt_factory[data_type]),
+            MessagesPlaceholder(variable_name="chat_history"),
             ("user", "{input}"),
             MessagesPlaceholder(variable_name="agent_scratchpad"),
         ])
@@ -98,7 +127,10 @@ def process_conversation_async(user_id, user_question, reference_id_list=None, d
         )
         
         print(f"🚀 開始處理對話: {user_question[:50]}...")
-        result = agent_executor.invoke({"input": user_question_with_refs})
+        result = agent_executor.invoke({
+            "input": user_question_with_refs,
+            "chat_history": chat_history
+        })
         print(f"🎉 對話處理完成!")
         
         # 記錄 Tool 執行結果到資料庫（但不顯示在前端）
