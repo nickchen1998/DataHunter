@@ -133,7 +133,6 @@ class ChatManager {
         this.loadReferencesFromStorage();
         this.updateButtonStates();
         this.setupNavigationListener();
-        this.loadConversationHistory();
     }
 
     setupReferenceSystem() {
@@ -632,7 +631,18 @@ class ChatManager {
             </div>`;
         } else {
             
-            messageContent = `<div class="text-sm whitespace-pre-wrap">${this.formatMessage(displayText)}</div>`;
+            let toolButton = '';
+            if (messageType === 'ai_message' || messageType === 'ai') {
+                if (data.has_tool_calls && data.tool_calls_count > 0) {
+                    toolButton = `<div class="mt-2 text-right">
+                        <button class="btn btn-sm btn-outline text-green-600 border-green-300 hover:bg-green-50 hover:border-green-400 show-tool-calls-btn" data-message-id="${data.id}">
+                            🔧 查看工具調用 (${data.tool_calls_count})
+                        </button>
+                    </div>`;
+                }
+            }
+            
+            messageContent = `<div class="text-sm whitespace-pre-wrap">${this.formatMessage(displayText)}</div>${toolButton}`;
         }
 
         
@@ -661,6 +671,15 @@ class ChatManager {
             showResultBtn._toolResult = displayText;
             showResultBtn.addEventListener('click', (e) => {
                 this.showToolResult(e.target);
+            });
+        }
+
+        
+        const showToolCallsBtn = messageDiv.querySelector('.show-tool-calls-btn');
+        if (showToolCallsBtn) {
+            showToolCallsBtn.addEventListener('click', (e) => {
+                const messageId = e.target.getAttribute('data-message-id');
+                this.showToolCalls(messageId);
             });
         }
         
@@ -765,6 +784,116 @@ class ChatManager {
         document.body.appendChild(modal);
     }
 
+    async showToolCalls(messageId) {
+        try {
+            // 獲取工具調用資訊
+            const response = await fetch(`/conversations/api/messages/${messageId}/tool-calls/`);
+            if (!response.ok) {
+                throw new Error('無法獲取工具調用資訊');
+            }
+            
+            const toolCalls = await response.json();
+            
+            // 創建模態框
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+            
+            const modalContent = document.createElement('div');
+            modalContent.className = 'bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] flex flex-col';
+            
+            // 標題
+            const header = document.createElement('div');
+            header.className = 'flex items-center justify-between p-6 border-b';
+            header.innerHTML = `
+                <h3 class="text-lg font-semibold text-gray-900">🔧 工具調用過程 (${toolCalls.length} 個)</h3>
+                <button class="text-gray-400 hover:text-gray-600 close-tool-calls-btn">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            `;
+            
+            // 內容
+            const body = document.createElement('div');
+            body.className = 'flex-1 p-6 overflow-y-auto space-y-4';
+            
+            toolCalls.forEach((toolCall, index) => {
+                const toolDiv = document.createElement('div');
+                toolDiv.className = 'border border-gray-200 rounded-lg p-4 bg-gray-50';
+                
+                toolDiv.innerHTML = `
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-semibold text-gray-800">步驟 ${index + 1}: ${toolCall.tool_name}</h4>
+                        <span class="text-xs text-gray-500">${toolCall.timestamp}</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5 class="text-sm font-medium text-gray-700 mb-2">📥 輸入參數:</h5>
+                        <div class="bg-blue-50 p-3 rounded border text-sm">
+                            <pre class="whitespace-pre-wrap text-blue-800">${this.formatJson(toolCall.tool_keywords)}</pre>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h5 class="text-sm font-medium text-gray-700 mb-2">📤 執行結果:</h5>
+                        <div class="bg-green-50 p-3 rounded border text-sm max-h-40 overflow-y-auto">
+                            <pre class="whitespace-pre-wrap text-green-800">${this.escapeHtml(toolCall.text || '無結果')}</pre>
+                        </div>
+                    </div>
+                `;
+                
+                body.appendChild(toolDiv);
+            });
+            
+            // 底部
+            const footer = document.createElement('div');
+            footer.className = 'flex justify-end p-6 border-t bg-gray-50';
+            footer.innerHTML = '<button class="btn btn-primary close-tool-calls-btn">關閉</button>';
+            
+            modalContent.appendChild(header);
+            modalContent.appendChild(body);
+            modalContent.appendChild(footer);
+            modal.appendChild(modalContent);
+
+            // 關閉事件
+            const closeButtons = modal.querySelectorAll('.close-tool-calls-btn');
+            closeButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    modal.remove();
+                });
+            });
+
+            // 點擊背景關閉
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+
+            document.body.appendChild(modal);
+            
+        } catch (error) {
+            console.error('獲取工具調用資訊失敗:', error);
+            this.showToast('無法獲取工具調用資訊', 'error');
+        }
+    }
+
+    formatJson(obj) {
+        if (typeof obj === 'string') {
+            try {
+                obj = JSON.parse(obj);
+            } catch (e) {
+                return obj;
+            }
+        }
+        return JSON.stringify(obj, null, 2);
+    }
+
+    getCSRFToken() {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        return csrfToken ? csrfToken.value : '';
+    }
+
     scrollToBottom() {
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
     }
@@ -846,34 +975,9 @@ class ChatManager {
     }
 
     async loadConversationHistory() {
-        try {
-            const response = await fetch('/conversations/history/', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': this.getCSRFToken()
-                }
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success && data.messages && data.messages.length > 0) {
-                    
-                    this.chatMessages.innerHTML = '';
-                    
-                    
-                    data.messages.forEach(message => {
-                        const messageElement = this.createMessageElement(message);
-                        this.chatMessages.appendChild(messageElement);
-                    });
-                    
-                    
-                    this.scrollToBottom();
-                }
-            }
-        } catch (error) {
-            console.error('載入對話歷史時發生錯誤:', error);
-        }
+        // 由於我們現在使用 WebSocket 來載入對話歷史，這個方法已不再需要
+        // Consumer 在連接時會自動載入現有訊息
+        console.log('對話歷史由 WebSocket Consumer 自動載入');
     }
 
     

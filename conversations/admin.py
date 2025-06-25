@@ -13,7 +13,7 @@ class SessionAdmin(admin.ModelAdmin):
 
 @admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):
-    list_display = ['session', 'user', 'sender', 'content_type', 'tool_name', 'is_deleted', 'updated_at']
+    list_display = ['session', 'user', 'sender', 'content_type', 'tool_name', 'parent_message_display', 'is_deleted', 'updated_at']
     list_filter = ['sender', 'content_type', 'is_deleted', 'updated_at', 'tool_name']
     search_fields = ['user__email', 'user__username', 'text', 'tool_name']
     readonly_fields = ['created_at', 'updated_at']
@@ -21,7 +21,7 @@ class MessageAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('基本資訊', {
-            'fields': ('session', 'user', 'sender', 'content_type', 'is_deleted', 'created_at', 'updated_at')
+            'fields': ('session', 'user', 'message', 'sender', 'content_type', 'is_deleted', 'created_at', 'updated_at')
         }),
         ('內容', {
             'fields': ('text', 'file_url', 'file_path')
@@ -31,6 +31,13 @@ class MessageAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+    def parent_message_display(self, obj):
+        """顯示父訊息資訊"""
+        if obj.message:
+            return f"{obj.message.sender} (ID: {obj.message.id})"
+        return "-"
+    parent_message_display.short_description = "父訊息"
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('session', 'user')

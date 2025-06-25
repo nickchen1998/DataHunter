@@ -108,10 +108,11 @@ def process_conversation_async(user_id, user_question, reference_id_list=None, d
             print(f"🔧 記錄 {len(result['intermediate_steps'])} 個工具調用結果到資料庫")
             
             for i, (action, observation) in enumerate(result['intermediate_steps']):
-                # 寫入資料庫
-                tool_message = Message.create_tool_message(
+                # 寫入資料庫，並關聯到 AI Message
+                tool_message = Message.create_tool_message_with_parent(
                     session=session,
                     user=user,
+                    parent_message=ai_message,
                     tool_name=action.tool,
                     tool_params=action.tool_input,
                     tool_result=str(observation)
@@ -123,10 +124,11 @@ def process_conversation_async(user_id, user_question, reference_id_list=None, d
                     'tool_input': action.tool_input,
                     'tool_output': str(observation),
                     'index': i,
-                    'message_id': tool_message.id
+                    'message_id': tool_message.id,
+                    'parent_message_id': ai_message.id
                 })
                 
-                print(f"💾 工具 {i+1} 已寫入資料庫: ID={tool_message.id}, Tool={action.tool}")
+                print(f"💾 工具 {i+1} 已寫入資料庫: ID={tool_message.id}, Tool={action.tool}, 關聯到 AI Message={ai_message.id}")
                 print(f"📄 結果預覽: {str(observation)[:200]}...")
         
         # 最後更新 AI 訊息，確保它的 updated_at 是最新的

@@ -49,6 +49,7 @@ class Session(models.Model):
 class Message(models.Model):
     session = models.ForeignKey(Session, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    message = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='child_messages')
     
     sender = models.CharField(
         max_length=16,
@@ -61,6 +62,7 @@ class Message(models.Model):
         default=ContentTypeChoices.TEXT,
     )
     text = models.TextField(blank=True, null=True, default=None)
+    citations = models.JSONField(default=list, blank=True)
     file_url = models.URLField(blank=True, null=True, default=None)
     file_path = models.CharField(max_length=256, blank=True, null=True, default=None)
 
@@ -90,6 +92,20 @@ class Message(models.Model):
         """軟刪除訊息"""
         self.is_deleted = True
         self.save(update_fields=['is_deleted'])
+
+    def get_child_messages(self):
+        """取得子訊息（通常是相關的 Tool Messages）"""
+        return self.child_messages.filter(is_deleted=False).order_by('created_at')
+
+    def get_parent_message(self):
+        """取得父訊息"""
+        return self.message
+
+    def get_related_tool_messages(self):
+        """取得相關的工具訊息（如果這是 AI Message）"""
+        if self.sender == SenderChoices.AI:
+            return self.get_child_messages().filter(sender=SenderChoices.TOOL)
+        return Message.objects.none()
 
     @classmethod
     def clear_conversation(cls, session):
@@ -124,6 +140,20 @@ class Message(models.Model):
         return cls.objects.create(
             session=session,
             user=user,
+            sender=SenderChoices.TOOL,
+            content_type=ContentTypeChoices.TEXT,
+            tool_name=tool_name,
+            tool_keywords=tool_params,
+            text=tool_result
+        )
+
+    @classmethod
+    def create_tool_message_with_parent(cls, session, user, parent_message, tool_name, tool_params, tool_result=None):
+        """建立 Tool 調用訊息記錄，並關聯到父訊息（通常是 AI Message）"""
+        return cls.objects.create(
+            session=session,
+            user=user,
+            message=parent_message,  # 設置父訊息關聯
             sender=SenderChoices.TOOL,
             content_type=ContentTypeChoices.TEXT,
             tool_name=tool_name,

@@ -213,6 +213,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if msg.sender == 'tool':
             message_data['tool_name'] = msg.tool_name
             message_data['tool_keywords'] = msg.tool_keywords
+        elif msg.sender == 'ai':
+            # 檢查是否有相關的工具調用
+            tool_messages = msg.get_related_tool_messages()
+            message_data['has_tool_calls'] = tool_messages.exists()
+            message_data['tool_calls_count'] = tool_messages.count()
         
         return message_data
 
