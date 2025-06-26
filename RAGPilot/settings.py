@@ -51,8 +51,7 @@ INSTALLED_APPS = [
     
     'home.apps.HomeConfig',
     'profiles.apps.ProfilesConfig',
-    'symptoms.apps.SymptomsConfig',
-    'gov_datas.apps.GovDatasConfig',
+    'crawlers.apps.CrawlersConfig',
     'conversations.apps.ConversationsConfig',
 ]
 

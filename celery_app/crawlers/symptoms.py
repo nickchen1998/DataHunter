@@ -8,7 +8,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
 from fake_useragent import UserAgent
 from RAGPilot.celery import app
-from symptoms.models import Symptom
+from crawlers.models import Symptom
 from langchain_openai import OpenAIEmbeddings
 
 

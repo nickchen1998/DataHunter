@@ -7,10 +7,8 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.callbacks import BaseCallbackHandler
 from RAGPilot.celery import app
 from utils.nl_to_sql import CustomNL2SQLQueryTool
-from symptoms.models import Symptom, SYMPTOM_SYSTEM_PROMPT
-from symptoms.tools import SymptomDataRetrievalTool
-from gov_datas.models import Dataset, GOV_DATA_SYSTEM_PROMPT
-from gov_datas.tools import GovDataDatasetQueryTool
+from crawlers.models import Symptom, Dataset, SYMPTOM_SYSTEM_PROMPT, GOV_DATA_SYSTEM_PROMPT
+from crawlers.tools import SymptomDataRetrievalTool, GovDataDatasetQueryTool
 from conversations.models import Session, Message
 User = get_user_model()
 

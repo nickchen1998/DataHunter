@@ -1,10 +1,6 @@
 import pandas as pd
-import xml.etree.ElementTree as ET
 from datetime import datetime
-from gov_datas.models import Dataset
-from RAGPilot.celery import app
 from langchain_openai import ChatOpenAI
-from django.conf import settings
 
 
 def parse_datetime_string(date_string):
