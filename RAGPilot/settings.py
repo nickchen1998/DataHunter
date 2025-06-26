@@ -186,11 +186,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
 
-# 生產環境靜態檔案收集目錄
+# 由於使用 CDN，不需要本地 static 目錄
+# STATICFILES_DIRS = [
+#     BASE_DIR / 'static',
+# ]
+
+# 生產環境靜態檔案收集目錄（用於 admin 相關的 CSS）
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
