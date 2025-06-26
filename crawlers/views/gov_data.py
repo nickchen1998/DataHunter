@@ -1,12 +1,18 @@
 from django.views.generic import ListView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
 from crawlers.models import Dataset, ASSOCIATED_CATEGORIES_DATABASE_NAME
+from home.mixins import UserPlanContextMixin
 
 
-class GovDataDatasetListView(ListView):
+@method_decorator(never_cache, name='dispatch')
+class GovDataDatasetListView(LoginRequiredMixin, UserPlanContextMixin, ListView):
     model = Dataset
     template_name = 'gov_datas.html'
     context_object_name = 'datasets'
     paginate_by = 20
+    login_url = '/login/'  # 未登入時重定向的 URL
 
     def get_queryset(self):
         category = self.request.GET.get('category')

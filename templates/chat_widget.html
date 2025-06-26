@@ -10,7 +10,20 @@
         </h3>
         <div class="text-blue-100 text-sm mt-1">
             <div class="flex items-center justify-between">
-                <span>協助您查詢和分析資料</span>
+                <div class="flex flex-col">
+                    <div class="text-xs mt-1 opacity-90">
+                        {% if is_unlimited %}
+                            <span class="bg-green-500 text-white px-2 py-1 rounded text-xs">
+                                ✨ 無限制方案 - 可無限制進行問答
+                            </span>
+                        {% else %}
+                            <span class="{% if is_over_chat_limit %}bg-red-500{% else %}bg-blue-400{% endif %} text-white px-2 py-1 rounded text-xs">
+                                📊 今日使用: {{ today_chat_count }}/{{ user_limit.chat_limit_per_day }}
+                                {% if is_over_chat_limit %} - 已達上限{% endif %}
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
                 <div class="flex space-x-2">
                 <button id="show-references-btn" class="btn btn-sm btn-outline text-white border-white hover:bg-white hover:text-blue-600">
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -44,27 +57,50 @@
 
     <!-- 輸入區域 -->
     <div class="p-4 border-t border-gray-200 bg-white">
-        <div class="flex space-x-3">
-            <input 
-                type="text" 
-                id="chat-input" 
-                class="flex-1 input input-bordered focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                maxlength="500"
-            />
-            <button 
-                id="send-button" 
-                class="btn btn-primary px-6"
-                disabled
-            >
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
-                發送
-            </button>
-        </div>
-        <div class="mt-2 flex justify-between items-center text-sm text-gray-500">
-            <span>按 Enter 發送訊息 • 最多 500 字元</span>
-        </div>
+        {% if is_over_chat_limit %}
+            <!-- 超過聊天限制時的提示 -->
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                <div class="text-red-600 mb-2">
+                    <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    </svg>
+                </div>
+                <h4 class="text-red-800 font-semibold mb-1">今日對話次數已達上限</h4>
+                <p class="text-red-600 text-sm">
+                    您今日已使用 {{ today_chat_count }}/{{ user_limit.chat_limit_per_day }} 次對話額度。
+                    <br>請明日再來使用，或聯繫管理員升級您的方案。
+                </p>
+            </div>
+        {% else %}
+            <div class="flex space-x-3">
+                <input 
+                    type="text" 
+                    id="chat-input" 
+                    class="flex-1 input input-bordered focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    maxlength="500"
+                    placeholder="輸入您的問題..."
+                />
+                <button 
+                    id="send-button" 
+                    class="btn btn-primary px-6"
+                    disabled
+                >
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                    發送
+                </button>
+            </div>
+            <div class="mt-2 flex justify-between items-center text-sm text-gray-500">
+                <span>按 Enter 發送訊息 • 最多 500 字元</span>
+                {% load math_filters %}
+                {% if not is_unlimited %}
+                    <span class="text-xs">
+                        剩餘 {{ user_limit.chat_limit_per_day|subtract:today_chat_count }} 次對話
+                    </span>
+                {% endif %}
+            </div>
+        {% endif %}
     </div>
 </div>
 
@@ -122,6 +158,12 @@ class ChatManager {
         this.sendButton = document.getElementById('send-button');
         this.connectionStatus = document.getElementById('connection-status');
         this.references = new Map();
+        
+        // 方案限制相關
+        this.isOverChatLimit = {{ is_over_chat_limit|yesno:"true,false" }};
+        this.isUnlimited = {{ is_unlimited|yesno:"true,false" }};
+        this.todayChatCount = {{ today_chat_count }};
+        this.chatLimit = {{ user_limit.chat_limit_per_day }};
         
         this.init();
     }
@@ -454,6 +496,11 @@ class ChatManager {
     }
 
     updateSendButtonState() {
+        // 如果已經超過聊天限制，則不顯示發送按鈕（因為輸入區域已被替換）
+        if (this.isOverChatLimit) {
+            return;
+        }
+        
         const hasMessage = this.chatInput.value.trim().length > 0;
         const isConnected = this.socket && this.socket.readyState === WebSocket.OPEN;
         const shouldEnable = hasMessage && isConnected;
@@ -475,14 +522,39 @@ class ChatManager {
             return;
         }
         
-        
-        
+        // 檢查聊天限制
+        if (this.isOverChatLimit) {
+            // 直接在前端顯示紅色警告訊息，不發送到後端
+            const limitMessage = {
+                id: 'chat_limit_' + Date.now(),
+                type: 'error',
+                sender: 'system',
+                text: `已超過今日對話次數限制 (${this.todayChatCount}/${this.chatLimit})，請明日再來使用。`,
+                updated_at_timestamp: Date.now() / 1000
+            };
+            
+            // 顯示用戶訊息
+            const userMessage = {
+                id: 'user_' + Date.now(),
+                type: 'user_message',
+                sender: 'user',
+                text: message,
+                updated_at_timestamp: Date.now() / 1000
+            };
+            this.handleMessage(userMessage);
+            
+            // 顯示限制警告訊息（紅底）
+            setTimeout(() => {
+                this.handleMessage(limitMessage);
+            }, 500);
+            
+            this.chatInput.value = '';
+            this.updateSendButtonState();
+            return;
+        }
         
         const referenceIdList = Array.from(this.references.keys()).map(id => parseInt(id));
-        
-        
         const dataType = this.detectCurrentDataType();
-        
         
         this.socket.send(JSON.stringify({
             'type': 'message',
@@ -493,6 +565,18 @@ class ChatManager {
         
         this.chatInput.value = '';
         this.updateSendButtonState();
+        
+        // 更新對話計數（僅用於前端顯示）
+        if (!this.isUnlimited) {
+            this.todayChatCount++;
+            if (this.todayChatCount >= this.chatLimit) {
+                this.isOverChatLimit = true;
+                // 刷新頁面以更新UI狀態
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            }
+        }
     }
 
     getCurrentTimestamp() {

@@ -3,10 +3,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from crawlers.models import Symptom
+from home.mixins import UserPlanContextMixin
 
 
 @method_decorator(never_cache, name='dispatch')
-class SymptomListView(LoginRequiredMixin, ListView):
+class SymptomListView(LoginRequiredMixin, UserPlanContextMixin, ListView):
     template_name = 'symptoms.html'
     context_object_name = 'symptoms'
     queryset = Symptom.objects.all()

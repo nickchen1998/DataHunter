@@ -9,9 +9,10 @@ from django.views import View
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from .forms import EmailAuthenticationForm
+from .mixins import UserPlanContextMixin
 
 @method_decorator(never_cache, name='dispatch')
-class HomeView(LoginRequiredMixin, TemplateView):
+class HomeView(LoginRequiredMixin, UserPlanContextMixin, TemplateView):
     template_name = 'home.html'
     login_url = '/login/'  # 未登入時重定向的 URL
 
