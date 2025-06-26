@@ -74,6 +74,9 @@
                 <button class="btn btn-outline w-full border-2 tab flex items-center justify-start" data-tab="social">
                     <span class="flex items-center">🔗 第三方登入</span>
                 </button>
+                <button class="btn btn-outline w-full border-2 tab flex items-center justify-start" data-tab="plan">
+                    <span class="flex items-center">📊 使用方案</span>
+                </button>
                 <button class="btn btn-outline w-full border-2 tab flex items-center justify-start" data-tab="danger">
                     <span class="flex items-center">⚠️ 危險區域</span>
                 </button>
@@ -83,7 +86,7 @@
         <!-- 右側：編輯表單 -->
         <div class="lg:col-span-2 space-y-8">
             <!-- 固定高度的內容容器 -->
-            <div class="h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 pr-2">
+            <div class="h-[800px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 pr-2">
             <!-- 個人資料編輯 -->
             <div id="profile-content" class="tab-content" style="display: block;">
                 <div class="card bg-base-100 shadow">
@@ -316,6 +319,139 @@
                                 <div>
                                     <h4 class="font-bold">提示</h4>
                                     <p class="text-sm">連結第三方帳戶後，您可以使用該服務快速登入，無需輸入密碼。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 使用方案 -->
+            <div id="plan-content" class="tab-content" style="display: none;">
+                <div class="card bg-base-100 shadow">
+                    <div class="card-body">
+                        <h3 class="card-title text-xl flex items-center">
+                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            使用方案
+                        </h3>
+                        
+                        <div class="space-y-6 mt-6">
+                            <p class="text-gray-600">
+                                查看您目前的使用方案和使用量統計。
+                            </p>
+                            
+                            <!-- 方案資訊 -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- 每日聊天次數 -->
+                                <div class="card bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200">
+                                    <div class="card-body p-4">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <h4 class="font-semibold text-blue-800">每日聊天次數</h4>
+                                                <p class="text-sm text-blue-600">今日使用量</p>
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="text-2xl font-bold text-blue-800">
+                                                    {{ today_chat_count|default:0 }}
+                                                </div>
+                                                <div class="text-sm text-blue-600">
+                                                    / {{ user.limit.chat_limit_per_day }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3">
+                                            <div class="flex justify-between text-xs text-blue-600 mb-1">
+                                                <span>使用進度</span>
+                                                <span>{{ chat_usage_percentage|floatformat:1 }}%</span>
+                                            </div>
+                                            <progress class="progress progress-primary w-full" 
+                                                     value="{{ today_chat_count|default:0 }}" 
+                                                     max="{{ user.limit.chat_limit_per_day }}"></progress>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 私有資料源數量 -->
+                                <div class="card bg-gradient-to-br from-green-50 to-green-100 border border-green-200">
+                                    <div class="card-body p-4">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <h4 class="font-semibold text-green-800">私有資料源</h4>
+                                                <p class="text-sm text-green-600">已建立數量</p>
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="text-2xl font-bold text-green-800">
+                                                    {{ private_source_count|default:0 }}
+                                                </div>
+                                                <div class="text-sm text-green-600">
+                                                    / {{ user.limit.private_source_limit }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3">
+                                            <div class="flex justify-between text-xs text-green-600 mb-1">
+                                                <span>使用進度</span>
+                                                <span>{{ source_usage_percentage|floatformat:1 }}%</span>
+                                            </div>
+                                            <progress class="progress progress-success w-full" 
+                                                     value="{{ private_source_count|default:0 }}" 
+                                                     max="{{ user.limit.private_source_limit }}"></progress>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                            
+                            <!-- 方案詳情 -->
+                            <div class="card bg-base-200">
+                                <div class="card-body">
+                                    <h4 class="card-title text-lg">方案詳情</h4>
+                                    <div class="overflow-x-auto">
+                                        <table class="table table-zebra w-full">
+                                            <thead>
+                                                <tr>
+                                                    <th>項目</th>
+                                                    <th>限制</th>
+                                                    <th>說明</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td class="font-medium">每日聊天次數</td>
+                                                    <td><span class="badge badge-primary">{{ user.limit.chat_limit_per_day }}</span></td>
+                                                    <td class="text-sm text-gray-600">每天可進行的對話次數，每日午夜重置</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="font-medium">私有資料源數量</td>
+                                                    <td><span class="badge badge-success">{{ user.limit.private_source_limit }}</span></td>
+                                                    <td class="text-sm text-gray-600">可建立的私有知識庫數量</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="font-medium">每個資料源檔案數</td>
+                                                    <td><span class="badge badge-secondary">{{ user.limit.file_limit_per_source }}</span></td>
+                                                    <td class="text-sm text-gray-600">單一資料源最多可上傳的檔案數量</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 使用提示 -->
+                            <div class="alert alert-info">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <div>
+                                    <h4 class="font-bold">使用提示</h4>
+                                    <ul class="text-sm mt-2 space-y-1">
+                                        <li>• 聊天次數會在每日午夜 (UTC+8) 重置</li>
+                                        <li>• 私有資料源建立後可隨時刪除以釋放額度</li>
+                                        <li>• 檔案上傳支援 PDF、Word、TXT 等格式</li>
+                                        <li>• 如需提升使用額度，請聯繫管理員</li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>

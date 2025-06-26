@@ -13,4 +13,4 @@ class Limit(models.Model):
     file_limit_per_source = models.IntegerField(default=30)
     
     def __str__(self):
-        return f"{self.user.username} - {self.is_collaborator_}"
+        return f"{self.user.username} - Limit"

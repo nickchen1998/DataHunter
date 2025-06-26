@@ -6,7 +6,10 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+
 from .forms import UserProfileForm, CustomPasswordChangeForm
+from .models import Limit
+from conversations.models import Message
 
 # Create your views here.
 
@@ -22,10 +25,27 @@ class ProfileView(LoginRequiredMixin, View):
         profile_form = UserProfileForm(instance=request.user)
         password_form = CustomPasswordChangeForm(user=request.user)
         
+        # 獲取或創建使用者的 Limit 記錄
+        limit, created = Limit.objects.get_or_create(user=request.user)
+        
+        # 計算今日聊天次數（包含已刪除的訊息）
+        today_chat_count = Message.get_today_chat_amount(request.user)
+        
+        # 計算私有資料源數量（這裡假設您有相關模型，如果沒有則設為 0）
+        private_source_count = 0  # 待實作：根據您的私有資料源模型計算
+        
+        # 計算使用百分比
+        chat_usage_percentage = (today_chat_count / limit.chat_limit_per_day * 100) if limit.chat_limit_per_day > 0 else 0
+        source_usage_percentage = (private_source_count / limit.private_source_limit * 100) if limit.private_source_limit > 0 else 0
+        
         context = {
             'profile_form': profile_form,
             'password_form': password_form,
             'user': request.user,
+            'today_chat_count': today_chat_count,
+            'private_source_count': private_source_count,
+            'chat_usage_percentage': chat_usage_percentage,
+            'source_usage_percentage': source_usage_percentage,
         }
         return render(request, self.template_name, context)
     

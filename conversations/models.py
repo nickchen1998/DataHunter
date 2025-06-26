@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 import uuid
 
 # 共用內容型態 Enum
@@ -160,3 +161,35 @@ class Message(models.Model):
             tool_keywords=tool_params,
             text=tool_result
         )
+
+    @classmethod
+    def get_today_chat_amount(cls, user):
+        """
+        計算指定用戶今日的聊天次數（包含已刪除的訊息）
+        
+        Args:
+            user: Django User 物件
+            
+        Returns:
+            int: 今日聊天次數
+        """
+        if not user:
+            return 0
+            
+        today = timezone.now().date()
+        return cls.objects.filter(
+            session__user=user,
+            created_at__date=today
+        ).count()
+
+    @property
+    def today_chat_amount(self):
+        """
+        取得當前訊息所屬用戶的今日聊天次數
+        
+        Returns:
+            int: 今日聊天次數
+        """
+        if not self.session or not self.session.user:
+            return 0
+        return self.__class__.get_today_chat_amount(self.session.user)
