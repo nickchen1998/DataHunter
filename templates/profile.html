@@ -65,27 +65,25 @@
 
             <!-- 標籤導航 -->
             <div class="mt-6 space-y-4">
-                <button class="btn btn-outline w-full justify-between border-2 tab tab-active" data-tab="profile">
-                    <span>👤 個人資料</span>
-                    <span></span>
+                <button class="btn btn-outline w-full border-2 tab tab-active flex items-center justify-start" data-tab="profile">
+                    <span class="flex items-center">👤 個人資料</span>
                 </button>
-                <button class="btn btn-outline w-full justify-between border-2 tab" data-tab="password">
-                    <span>🔒 密碼修改</span>
-                    <span></span>
+                <button class="btn btn-outline w-full border-2 tab flex items-center justify-start" data-tab="password">
+                    <span class="flex items-center">🔒 密碼修改</span>
                 </button>
-                <button class="btn btn-outline w-full justify-between border-2 tab" data-tab="social">
-                    <span>🔗 第三方登入</span>
-                    <span></span>
+                <button class="btn btn-outline w-full border-2 tab flex items-center justify-start" data-tab="social">
+                    <span class="flex items-center">🔗 第三方登入</span>
                 </button>
-                <button class="btn btn-outline w-full justify-between border-2 tab" data-tab="danger">
-                    <span>⚠️ 危險區域</span>
-                    <span></span>
+                <button class="btn btn-outline w-full border-2 tab flex items-center justify-start" data-tab="danger">
+                    <span class="flex items-center">⚠️ 危險區域</span>
                 </button>
             </div>
         </div>
 
         <!-- 右側：編輯表單 -->
         <div class="lg:col-span-2 space-y-8">
+            <!-- 固定高度的內容容器 -->
+            <div class="h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 pr-2">
             <!-- 個人資料編輯 -->
             <div id="profile-content" class="tab-content" style="display: block;">
                 <div class="card bg-base-100 shadow">
@@ -96,7 +94,7 @@
                             </svg>
                             個人資料
                         </h3>
-                        <form method="post" class="space-y-6">
+                        <form method="post" class="space-y-6 mt-6">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="update_profile">
                             
@@ -174,7 +172,7 @@
                             </svg>
                             修改密碼
                         </h3>
-                        <form method="post" class="space-y-6">
+                        <form method="post" class="space-y-6 mt-6">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="change_password">
                             
@@ -256,7 +254,7 @@
                             第三方登入管理
                         </h3>
                         
-                        <div class="space-y-6">
+                        <div class="space-y-6 mt-6">
                             <p class="text-gray-600">
                                 您可以連結或取消連結第三方服務，以便更方便地登入您的帳戶。
                             </p>
@@ -336,7 +334,7 @@
                             危險區域
                         </h3>
                         
-                        <div class="alert alert-warning mb-6">
+                        <div class="alert alert-warning mb-6 mt-6">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
                             </svg>
@@ -384,6 +382,7 @@
                     </div>
                 </div>
             </div>
+            </div> <!-- 關閉固定高度容器 -->
         </div>
     </div>
 </div>
