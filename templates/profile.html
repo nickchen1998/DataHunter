@@ -357,18 +357,30 @@
                                                     {{ today_chat_count|default:0 }}
                                                 </div>
                                                 <div class="text-sm text-blue-600">
-                                                    / {{ user.limit.chat_limit_per_day }}
+                                                    {% if has_unlimited_chat %}
+                                                        / ∞ (無限制)
+                                                    {% else %}
+                                                        / {{ user_limit.chat_limit_per_day }}
+                                                    {% endif %}
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="mt-3">
-                                            <div class="flex justify-between text-xs text-blue-600 mb-1">
-                                                <span>使用進度</span>
-                                                <span>{{ chat_usage_percentage|floatformat:1 }}%</span>
-                                            </div>
-                                            <progress class="progress progress-primary w-full" 
-                                                     value="{{ today_chat_count|default:0 }}" 
-                                                     max="{{ user.limit.chat_limit_per_day }}"></progress>
+                                            {% if has_unlimited_chat %}
+                                                <div class="flex justify-between text-xs text-blue-600 mb-1">
+                                                    <span>方案狀態</span>
+                                                    <span class="text-green-600 font-semibold">✨ 無限制</span>
+                                                </div>
+                                                <progress class="progress progress-success w-full" value="100" max="100"></progress>
+                                            {% else %}
+                                                <div class="flex justify-between text-xs text-blue-600 mb-1">
+                                                    <span>使用進度</span>
+                                                    <span>{{ chat_usage_percentage|floatformat:1 }}%</span>
+                                                </div>
+                                                <progress class="progress progress-primary w-full" 
+                                                         value="{{ today_chat_count|default:0 }}" 
+                                                         max="{{ user_limit.chat_limit_per_day }}"></progress>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
@@ -386,18 +398,30 @@
                                                     {{ private_source_count|default:0 }}
                                                 </div>
                                                 <div class="text-sm text-green-600">
-                                                    / {{ user.limit.private_source_limit }}
+                                                    {% if has_unlimited_source %}
+                                                        / ∞ (無限制)
+                                                    {% else %}
+                                                        / {{ user_limit.private_source_limit }}
+                                                    {% endif %}
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="mt-3">
-                                            <div class="flex justify-between text-xs text-green-600 mb-1">
-                                                <span>使用進度</span>
-                                                <span>{{ source_usage_percentage|floatformat:1 }}%</span>
-                                            </div>
-                                            <progress class="progress progress-success w-full" 
-                                                     value="{{ private_source_count|default:0 }}" 
-                                                     max="{{ user.limit.private_source_limit }}"></progress>
+                                            {% if has_unlimited_source %}
+                                                <div class="flex justify-between text-xs text-green-600 mb-1">
+                                                    <span>方案狀態</span>
+                                                    <span class="text-green-600 font-semibold">✨ 無限制</span>
+                                                </div>
+                                                <progress class="progress progress-success w-full" value="100" max="100"></progress>
+                                            {% else %}
+                                                <div class="flex justify-between text-xs text-green-600 mb-1">
+                                                    <span>使用進度</span>
+                                                    <span>{{ source_usage_percentage|floatformat:1 }}%</span>
+                                                </div>
+                                                <progress class="progress progress-success w-full" 
+                                                         value="{{ private_source_count|default:0 }}" 
+                                                         max="{{ user_limit.private_source_limit }}"></progress>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
@@ -420,17 +444,35 @@
                                             <tbody>
                                                 <tr>
                                                     <td class="font-medium">每日聊天次數</td>
-                                                    <td><span class="badge badge-primary">{{ user.limit.chat_limit_per_day }}</span></td>
+                                                    <td>
+                                                        {% if has_unlimited_chat %}
+                                                            <span class="badge badge-success">∞</span>
+                                                        {% else %}
+                                                            <span class="badge badge-primary">{{ user_limit.chat_limit_per_day }}</span>
+                                                        {% endif %}
+                                                    </td>
                                                     <td class="text-sm text-gray-600">每天可進行的對話次數，每日午夜重置</td>
                                                 </tr>
                                                 <tr>
                                                     <td class="font-medium">私有資料源數量</td>
-                                                    <td><span class="badge badge-success">{{ user.limit.private_source_limit }}</span></td>
+                                                    <td>
+                                                        {% if has_unlimited_source %}
+                                                            <span class="badge badge-success">∞</span>
+                                                        {% else %}
+                                                            <span class="badge badge-success">{{ user_limit.private_source_limit }}</span>
+                                                        {% endif %}
+                                                    </td>
                                                     <td class="text-sm text-gray-600">可建立的私有知識庫數量</td>
                                                 </tr>
                                                 <tr>
                                                     <td class="font-medium">每個資料源檔案數</td>
-                                                    <td><span class="badge badge-secondary">{{ user.limit.file_limit_per_source }}</span></td>
+                                                    <td>
+                                                        {% if has_unlimited_files %}
+                                                            <span class="badge badge-success">∞</span>
+                                                        {% else %}
+                                                            <span class="badge badge-secondary">{{ user_limit.file_limit_per_source }}</span>
+                                                        {% endif %}
+                                                    </td>
                                                     <td class="text-sm text-gray-600">單一資料源最多可上傳的檔案數量</td>
                                                 </tr>
                                             </tbody>
@@ -449,7 +491,6 @@
                                     <ul class="text-sm mt-2 space-y-1">
                                         <li>• 聊天次數會在每日午夜 (UTC+8) 重置</li>
                                         <li>• 私有資料源建立後可隨時刪除以釋放額度</li>
-                                        <li>• 檔案上傳支援 PDF、Word、TXT 等格式</li>
                                         <li>• 如需提升使用額度，請聯繫管理員</li>
                                     </ul>
                                 </div>

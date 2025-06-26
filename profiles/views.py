@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
 from .forms import UserProfileForm, CustomPasswordChangeForm
-from .models import Limit
+from .models import Limit, Profile
 from conversations.models import Message
 
 # Create your views here.
@@ -25,8 +25,18 @@ class ProfileView(LoginRequiredMixin, View):
         profile_form = UserProfileForm(instance=request.user)
         password_form = CustomPasswordChangeForm(user=request.user)
         
-        # 獲取或創建使用者的 Limit 記錄
+        # 獲取或創建使用者的 Limit 和 Profile 記錄
         limit, created = Limit.objects.get_or_create(user=request.user)
+        profile, created = Profile.objects.get_or_create(user=request.user)
+        
+        # 檢查用戶權限層級
+        is_superuser = request.user.is_superuser
+        is_collaborator = profile.is_collaborator
+        
+        # 各項功能的限制狀態
+        has_unlimited_chat = is_superuser or is_collaborator  # 超級使用者和協作者都有無限對話
+        has_unlimited_source = is_superuser  # 只有超級使用者有無限資料源
+        has_unlimited_files = is_superuser  # 只有超級使用者有無限檔案
         
         # 計算今日聊天次數（包含已刪除的訊息）
         today_chat_count = Message.get_today_chat_amount(request.user)
@@ -35,17 +45,28 @@ class ProfileView(LoginRequiredMixin, View):
         private_source_count = 0  # 待實作：根據您的私有資料源模型計算
         
         # 計算使用百分比
-        chat_usage_percentage = (today_chat_count / limit.chat_limit_per_day * 100) if limit.chat_limit_per_day > 0 else 0
-        source_usage_percentage = (private_source_count / limit.private_source_limit * 100) if limit.private_source_limit > 0 else 0
+        chat_usage_percentage = 0 if has_unlimited_chat else (
+            (today_chat_count / limit.chat_limit_per_day * 100) if limit.chat_limit_per_day > 0 else 0
+        )
+        source_usage_percentage = 0 if has_unlimited_source else (
+            (private_source_count / limit.private_source_limit * 100) if limit.private_source_limit > 0 else 0
+        )
         
         context = {
             'profile_form': profile_form,
             'password_form': password_form,
             'user': request.user,
+            'user_limit': limit,
+            'user_profile': profile,
             'today_chat_count': today_chat_count,
             'private_source_count': private_source_count,
             'chat_usage_percentage': chat_usage_percentage,
             'source_usage_percentage': source_usage_percentage,
+            'is_superuser': is_superuser,
+            'is_collaborator': is_collaborator,
+            'has_unlimited_chat': has_unlimited_chat,
+            'has_unlimited_source': has_unlimited_source,
+            'has_unlimited_files': has_unlimited_files,
         }
         return render(request, self.template_name, context)
     

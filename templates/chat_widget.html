@@ -93,10 +93,9 @@
             </div>
             <div class="mt-2 flex justify-between items-center text-sm text-gray-500">
                 <span>按 Enter 發送訊息 • 最多 500 字元</span>
-                {% load math_filters %}
                 {% if not is_unlimited %}
                     <span class="text-xs">
-                        剩餘 {{ user_limit.chat_limit_per_day|subtract:today_chat_count }} 次對話
+                        {{ today_chat_count }} / {{ user_limit.chat_limit_per_day }} 次對話
                     </span>
                 {% endif %}
             </div>

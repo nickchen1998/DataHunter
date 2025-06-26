@@ -21,17 +21,22 @@ class UserPlanContextMixin:
             # 計算今日聊天次數
             today_chat_count = Message.get_today_chat_amount(user)
             
-            # 檢查是否為無限制用戶（superuser 或 collaborator）
-            is_unlimited = user.is_superuser or profile.is_collaborator
+            # 檢查用戶權限層級
+            is_superuser = user.is_superuser
+            is_collaborator = profile.is_collaborator
+            
+            # 各項功能的限制狀態
+            has_unlimited_chat = is_superuser or is_collaborator  # 超級使用者和協作者都有無限對話
             
             # 檢查是否超過聊天限制
-            is_over_chat_limit = not is_unlimited and today_chat_count >= limit.chat_limit_per_day
+            is_over_chat_limit = not has_unlimited_chat and today_chat_count >= limit.chat_limit_per_day
             
             context.update({
                 'user_limit': limit,
                 'user_profile': profile,
                 'today_chat_count': today_chat_count,
-                'is_unlimited': is_unlimited,
+                'is_unlimited': has_unlimited_chat,  # 為了向後相容，保留這個變數名
+                'has_unlimited_chat': has_unlimited_chat,
                 'is_over_chat_limit': is_over_chat_limit,
             })
         else:
