@@ -268,8 +268,9 @@ class Example(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    # 向量欄位 (用於語義搜尋)
-    embedding = VectorField(dimensions=1024, null=True, blank=True)
+    # 向量欄位 (必須設定，用於語義搜尋和 AI 查詢)
+    # 使用 OpenAI text-embedding-3-small 模型，維度為 1536
+    embedding = VectorField(dimensions=1536, null=True, blank=True)
     
     objects = ExampleManager()
     
@@ -524,11 +525,15 @@ def crawl_example_data_task(demo=False, crawl_count=-1):
         # 1. 發送 HTTP 請求 (使用 requests)
         # 2. 解析 HTML/JSON (使用 BeautifulSoup/json)
         # 3. 儲存到資料庫
-        # 4. 生成向量嵌入 (如需要)
+        # 4. 生成向量嵌入 (必須)
         
         # 範例：使用 requests 進行爬取
         import requests
         from bs4 import BeautifulSoup
+        from langchain_openai import OpenAIEmbeddings
+        
+        # 初始化 OpenAI Embeddings (使用專案統一的嵌入模型)
+        embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
         
         # 範例假資料 (實際開發時替換為真實爬蟲邏輯)
         sample_data = [
@@ -539,6 +544,13 @@ def crawl_example_data_task(demo=False, crawl_count=-1):
         
         created_count = 0
         for data in sample_data:
+            # 計算向量嵌入 (使用標題或內容，根據業務需求決定)
+            embedding_text = f"{data['title']} {data['content']}"  # 合併標題和內容
+            embedding_vector = embeddings.embed_query(embedding_text)
+            
+            # 將向量添加到資料中
+            data['embedding'] = embedding_vector
+            
             example, created = Example.objects.get_or_create(
                 title=data['title'],
                 defaults=data
@@ -629,10 +641,16 @@ def parse_example_page(url):
         return None
 
 def generate_example_embedding(text):
-    """生成文本向量嵌入的輔助函數"""
-    # 使用 OpenAI/Cohere 等服務生成嵌入向量
-    # 實際實作時需要根據專案使用的嵌入服務來調整
-    pass
+    """
+    生成文本向量嵌入的輔助函數 (選用)
+    
+    注意：實際開發時建議直接在任務中使用，不需要額外封裝函數
+    """
+    from langchain_openai import OpenAIEmbeddings
+    
+    # 使用專案統一的 OpenAI 嵌入模型
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+    return embeddings.embed_query(text)
 ```
 
 ### 📋 任務架構說明
@@ -727,10 +745,13 @@ app.conf.task_routes = {
 
 1. **period 任務命名**: 爬蟲主任務必須以 `period_` 開頭
 2. **demo 參數**: 所有 period 任務都必須支援 `demo=True` 參數用於測試
-3. **向量索引**: 如果使用向量搜尋，確保 HNSW 索引名稱唯一
-4. **統一查詢方法**: 使用 `build_queryset` 方法統一查詢邏輯
-5. **錯誤處理**: 確保爬蟲有適當的異常處理和日誌記錄
-6. **資料庫遷移**: 創建新模型後記得執行 `python manage.py makemigrations` 和 `python manage.py migrate`
+3. **向量欄位 (必須)**: 模型中至少要設定一個 `VectorField` 欄位用於存放向量嵌入
+4. **向量計算方式**: 務必使用 `OpenAIEmbeddings(model="text-embedding-3-small").embed_query()` 計算向量
+5. **向量維度**: 使用 `text-embedding-3-small` 模型時，向量維度設定為 1536
+6. **向量索引**: 確保 HNSW 索引名稱唯一，避免與其他模型衝突
+7. **統一查詢方法**: 使用 `build_queryset` 方法統一查詢邏輯
+8. **錯誤處理**: 確保爬蟲有適當的異常處理和日誌記錄
+9. **資料庫遷移**: 創建新模型後記得執行 `python manage.py makemigrations` 和 `python manage.py migrate`
 
 ### 🧪 測試新爬蟲
 
