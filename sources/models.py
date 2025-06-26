@@ -16,9 +16,6 @@ class Source(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return self.name
-
 
 class SourceFile(models.Model):
     source = models.ForeignKey(Source, on_delete=models.CASCADE)
@@ -32,10 +29,10 @@ class SourceFile(models.Model):
 
 
 class SourceFileChunk(models.Model):
-    file = models.ForeignKey(SourceFile, on_delete=models.CASCADE)
+    source_file = models.ForeignKey(SourceFile, on_delete=models.CASCADE)
     chunk = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.file.name
+        return self.source_file.file.name
