@@ -8,7 +8,7 @@ from django.http import HttpResponseRedirect
 from django.views import View
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
-from .forms import EmailAuthenticationForm
+from .forms import UsernameAuthenticationForm
 from .mixins import UserPlanContextMixin
 
 @method_decorator(never_cache, name='dispatch')
@@ -23,7 +23,7 @@ class HomeView(LoginRequiredMixin, UserPlanContextMixin, TemplateView):
 
 class CustomLoginView(LoginView):
     template_name = 'login.html'
-    form_class = EmailAuthenticationForm  # 使用自定義表單
+    form_class = UsernameAuthenticationForm  # 使用自定義表單
     success_url = reverse_lazy('home')  # 登入成功後重定向到首頁
     
     def dispatch(self, request, *args, **kwargs):

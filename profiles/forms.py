@@ -11,9 +11,10 @@ class UserProfileForm(forms.ModelForm):
     """
     class Meta:
         model = User
-        fields = ['username', 'first_name', 'last_name']
+        fields = ['username', 'email', 'first_name', 'last_name']
         labels = {
             'username': '使用者名稱',
+            'email': 'Email',
             'first_name': '名',
             'last_name': '姓',
         }
@@ -21,6 +22,10 @@ class UserProfileForm(forms.ModelForm):
             'username': forms.TextInput(attrs={
                 'class': 'input input-bordered w-full',
                 'placeholder': '請輸入使用者名稱'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'input input-bordered w-full',
+                'placeholder': '請輸入 Email'
             }),
             'first_name': forms.TextInput(attrs={
                 'class': 'input input-bordered w-full',
@@ -31,6 +36,18 @@ class UserProfileForm(forms.ModelForm):
                 'placeholder': '請輸入姓'
             }),
         }
+    
+    def clean_email(self):
+        """
+        驗證 email 是否已被其他用戶使用
+        """
+        email = self.cleaned_data.get('email')
+        if email:
+            # 檢查是否有其他用戶使用相同的 email（排除當前用戶）
+            existing_user = User.objects.filter(email=email).exclude(pk=self.instance.pk).first()
+            if existing_user:
+                raise forms.ValidationError('此 Email 已被其他用戶使用')
+        return email
 
 
 class CustomPasswordChangeForm(PasswordChangeForm):
