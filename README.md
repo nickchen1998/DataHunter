@@ -311,11 +311,12 @@ from django.contrib.auth.mixins import LoginRequiredMixin  # 登入驗證 Mixin�
 from django.utils.decorators import method_decorator      # 方法裝飾器，用於在類別方法上套用裝飾器
 from django.views.decorators.cache import never_cache     # 禁用快取裝飾器，確保頁面不被瀏覽器快取
 from ..models import Example                              # 匯入範例資料模型
+from home.mixins import UserPlanContextMixin
 
 
 # 禁用快取，確保每次都能取得最新資料（特別是用於即時更新的爬蟲資料）
 @method_decorator(never_cache, name='dispatch')
-class ExampleListView(LoginRequiredMixin, ListView):
+class ExampleListView(LoginRequiredMixin, UserPlanContextMixin, ListView):
     """
     範例資料列表頁面
     

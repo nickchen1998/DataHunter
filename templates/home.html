@@ -54,22 +54,38 @@
 
         <!-- 用戶操作區域 -->
         <div class="border-t pt-4 mt-4">
-            <div class="flex items-center justify-between">
-                <a href="{% url 'profile' %}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 transition-colors flex-1 mr-2">
-                    <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium mr-4" style="min-width: 32px; min-height: 32px; background-color: #3b82f6; border-radius: 50%;">
-                        {{ user.username|first|upper }}
+            <div class="flex items-center">
+                <!-- 用戶資訊區域 - 可擴展 -->
+                <div class="flex-1 min-w-0 mr-2 relative group">
+                    <a href="{% url 'profile' %}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 transition-colors w-full">
+                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium mr-3 flex-shrink-0" style="min-width: 32px; min-height: 32px; background-color: #3b82f6; border-radius: 50%;">
+                            {{ user.username|first|upper }}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <!-- 正常狀態：截斷顯示 -->
+                            <p class="text-sm font-medium text-gray-900 truncate group-hover:hidden">{{ user.username }}</p>
+                            <!-- hover 狀態：完整顯示 -->
+                            <p class="text-sm font-medium text-gray-900 hidden group-hover:block break-all">{{ user.username }}</p>
+                            <p class="text-xs text-gray-500 truncate">已登入</p>
+                        </div>
+                    </a>
+                    
+                    <!-- Tooltip 顯示完整用戶名稱 -->
+                    <div class="absolute left-0 bottom-full mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 whitespace-nowrap">
+                        {{ user.username }}
+                        <div class="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
                     </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-gray-900 truncate">{{ user.username }}</p>
-                        <p class="text-xs text-gray-500 truncate">已登入</p>
-                    </div>
-                </a>
-                <a href="{% url 'logout' %}" class="btn btn-ghost btn-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                    </svg>
-                    登出
-                </a>
+                </div>
+                
+                <!-- 登出按鈕 - 固定寬度 -->
+                <div class="flex-shrink-0">
+                    <a href="{% url 'logout' %}" class="btn btn-ghost btn-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors w-16 flex items-center justify-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                        <span class="text-xs">登出</span>
+                    </a>
+                </div>
             </div>
         </div>
     </aside>
