@@ -727,7 +727,7 @@ class ChatManager {
                                 </button>`;
                 
                 if (data.has_tool_calls && data.tool_calls_count > 0) {
-                    toolButton = `<div class="mt-2 text-right flex justify-end gap-1">
+                    toolButton = `<div class="mt-2 flex justify-start gap-1">
                         ${copyButton}
                         <button class="btn btn-sm btn-outline text-green-600 border-green-300 hover:bg-green-50 hover:border-green-400 show-tool-calls-btn flex items-center" data-message-id="${data.id}">
                             🔧 工具調用 (${data.tool_calls_count})
@@ -735,7 +735,7 @@ class ChatManager {
                     </div>`;
                 } else {
                     // 沒有工具調用時也顯示複製按鈕
-                    toolButton = `<div class="mt-2 text-right">
+                    toolButton = `<div class="mt-2">
                         ${copyButton}
                     </div>`;
                 }
