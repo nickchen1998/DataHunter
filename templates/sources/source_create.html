@@ -1,0 +1,118 @@
+{% extends 'home.html' %}
+
+{% block source-name %}建立新資料源{% endblock %}
+
+{% block source-description %}
+<div class="p-3 bg-green-50 border border-green-200 rounded">
+    <p class="text-sm font-semibold text-green-800 mb-2">🆕 建立新資料源</p>
+    <p class="text-xs text-green-600">
+        設定您的資料源名稱和描述，建立後即可開始上傳檔案。
+    </p>
+</div>
+{% endblock %}
+
+{% block filter_section %}
+<!-- 移除過濾器區域 -->
+{% endblock %}
+
+{% block data-table %}
+    <div class="h-full flex items-center justify-center">
+        <div class="w-full max-w-2xl">
+            <div class="card shadow-lg bg-white">
+                <div class="card-body">
+                    <h2 class="card-title text-2xl mb-6 text-center text-gray-800">
+                        <svg class="w-8 h-8 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        建立新資料源
+                    </h2>
+                    
+                    <!-- 顯示訊息 -->
+                    {% if messages %}
+                        <div class="mb-4">
+                            {% for message in messages %}
+                                <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-error{% else %}alert-info{% endif %}">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <form method="post" class="space-y-6">
+                        {% csrf_token %}
+                        
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text text-lg font-semibold">資料源名稱 <span class="text-red-500">*</span></span>
+                            </label>
+                            <input type="text" name="name" placeholder="例如：產品銷售報告" 
+                                   class="input input-bordered input-lg" required maxlength="100">
+                            <label class="label">
+                                <span class="label-text-alt text-gray-500">輸入一個清楚明確的資料源名稱</span>
+                            </label>
+                        </div>
+                        
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text text-lg font-semibold">資料源描述 <span class="text-red-500">*</span></span>
+                            </label>
+                            <textarea name="description" placeholder="例如：包含2024年第一季度所有產品的銷售數據和分析報告..." 
+                                      class="textarea textarea-bordered textarea-lg h-32" required maxlength="500"></textarea>
+                            <label class="label">
+                                <span class="label-text-alt text-gray-500">詳細描述這個資料源的內容和用途，最多500字</span>
+                            </label>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <svg class="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div>
+                                <h4 class="font-bold">建立說明</h4>
+                                <div class="text-sm">
+                                    <ul class="list-disc list-inside mt-2 space-y-1">
+                                        <li>資料源建立後，您可以上傳各種格式的檔案（PDF、Word、Excel、CSV等）</li>
+                                        <li>支援多檔案批量上傳，方便管理相關文件</li>
+                                        <li>建立後可隨時修改名稱和描述</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card-actions justify-end pt-4">
+                            <a href="{% url 'source_list' %}" class="btn btn-ghost btn-lg">取消</a>
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                建立資料源
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    // 表單驗證
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const name = document.querySelector('input[name="name"]').value.trim();
+        const description = document.querySelector('textarea[name="description"]').value.trim();
+        
+        if (!name || !description) {
+            e.preventDefault();
+            alert('請填寫所有必要欄位');
+            return false;
+        }
+        
+        // 顯示載入狀態
+        const submitBtn = document.querySelector('button[type="submit"]');
+        submitBtn.classList.add('loading');
+        submitBtn.disabled = true;
+    });
+</script>
+{% endblock %} 

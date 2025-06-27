@@ -1,0 +1,141 @@
+{% extends 'home.html' %}
+
+{% block source-name %}{% endblock %}
+
+{% block source-description %}
+<div class="p-3 bg-blue-50 border border-blue-200 rounded">
+    <p class="text-sm font-semibold text-blue-800 mb-2">📄 資料源詳情</p>
+    <p class="text-xs text-blue-600">
+        {{ source.description }}
+    </p>
+    <div class="mt-2 text-xs text-blue-500">
+        建立時間：{{ source.created_at }} | 檔案數量：{{ source.file_count }} 個
+    </div>
+</div>
+{% endblock %}
+
+{% block filter_section %}
+    <!-- 操作按鈕區 -->
+    <div class="flex flex-wrap gap-2 mb-4">
+        <a href="{% url 'source_list' %}" class="btn btn-ghost">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            返回列表
+        </a>
+        <a href="{% url 'source_upload' source.id %}" class="btn btn-primary">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+            </svg>
+            上傳檔案
+        </a>
+    </div>
+{% endblock %}
+
+{% block data-table %}
+    <div class="data-table h-full overflow-y-auto pr-2">
+        <!-- 顯示訊息 -->
+        {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                    <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-error{% else %}alert-info{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        <!-- 檔案列表 -->
+        {% if files %}
+            <div class="mb-4">
+                <div class="flex items-center space-x-2 text-lg font-semibold text-gray-800 mb-3">
+                    <span class="text-purple-600">{{ source.name }}</span>
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                    <span>檔案列表</span>
+                    <span class="text-sm font-normal text-gray-500">({{ files|length }} 個檔案)</span>
+                </div>
+            </div>
+            
+            <div class="space-y-3">
+                {% for file in files %}
+                    <div class="card shadow-sm bg-white border border-gray-200">
+                        <div class="card-body p-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <!-- 檔案類型圖示 -->
+                                    <div class="text-2xl">
+                                        {% if '.pdf' in file.name %}📄
+                                        {% elif '.xlsx' in file.name or '.xls' in file.name %}📊
+                                        {% elif '.docx' in file.name or '.doc' in file.name %}📝
+                                        {% elif '.pptx' in file.name or '.ppt' in file.name %}📋
+                                        {% elif '.csv' in file.name %}📈
+                                        {% else %}📁
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div>
+                                        <div class="font-semibold text-gray-800">{{ file.name }}</div>
+                                        <div class="text-sm text-gray-500">
+                                            檔案大小：{{ file.size }} | 上傳時間：{{ file.uploaded_at }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex space-x-2">
+                                    <button class="btn btn-sm btn-outline btn-info" onclick="previewFile({{ file.id }})">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        </svg>
+                                        預覽
+                                    </button>
+                                    <button class="btn btn-sm btn-outline btn-error" onclick="deleteFile({{ file.id }})">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                        刪除
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-12">
+                <div class="text-6xl text-gray-300 mb-4">📁</div>
+                <div class="text-gray-500 text-lg font-medium mb-2">還沒有上傳任何檔案</div>
+                <div class="text-gray-400 text-sm mb-6">
+                    點擊上方「上傳檔案」按鈕開始上傳您的第一個檔案
+                </div>
+                <a href="{% url 'source_upload' source.id %}" class="btn btn-primary">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    上傳檔案
+                </a>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+
+    // 預覽檔案
+    function previewFile(fileId) {
+        alert('預覽功能將在後續實現，檔案ID: ' + fileId);
+    }
+    
+    // 刪除檔案
+    function deleteFile(fileId) {
+        if (confirm('確定要刪除這個檔案嗎？此操作無法恢復。')) {
+            alert('刪除功能將在後續實現，檔案ID: ' + fileId);
+        }
+    }
+
+</script>
+{% endblock %} 

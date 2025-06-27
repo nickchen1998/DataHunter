@@ -1,0 +1,311 @@
+{% extends 'home.html' %}
+
+{% block source-name %}上傳檔案 - {{ source.name }}{% endblock %}
+
+{% block source-description %}
+<div class="p-3 bg-orange-50 border border-orange-200 rounded">
+    <p class="text-sm font-semibold text-orange-800 mb-2">📤 檔案上傳</p>
+    <p class="text-xs text-orange-600">
+        為「{{ source.name }}」上傳相關檔案，支援多種格式。
+    </p>
+</div>
+{% endblock %}
+
+{% block filter_section %}
+    <!-- 操作按鈕區 -->
+    <div class="flex flex-wrap gap-2 mb-4">
+        <a href="{% url 'source_detail' source.id %}" class="btn btn-ghost">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            返回資料源
+        </a>
+        <a href="{% url 'source_list' %}" class="btn btn-outline">
+            返回列表
+        </a>
+    </div>
+{% endblock %}
+
+{% block data-table %}
+    <div class="h-full flex items-center justify-center">
+        <div class="w-full max-w-4xl">
+            <div class="card shadow-lg bg-white">
+                <div class="card-body">
+                    <h2 class="card-title text-2xl mb-6 text-center text-gray-800">
+                        <svg class="w-8 h-8 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                        上傳檔案到「{{ source.name }}」
+                    </h2>
+                    
+                    <!-- 顯示訊息 -->
+                    {% if messages %}
+                        <div class="mb-4">
+                            {% for message in messages %}
+                                <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-error{% else %}alert-info{% endif %}">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- 上傳區域 -->
+                    <form method="post" enctype="multipart/form-data" id="upload-form" class="space-y-6">
+                        {% csrf_token %}
+                        
+                        <!-- 拖拽上傳區域 -->
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-orange-400 transition-colors" 
+                             id="drop-zone">
+                            <div class="space-y-4">
+                                <div class="text-6xl text-gray-400">📤</div>
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-700">拖拽檔案到此處上傳</h3>
+                                    <p class="text-gray-500">或點擊下方按鈕選擇檔案</p>
+                                </div>
+                                
+                                <div class="flex flex-col items-center space-y-2">
+                                    <input type="file" name="files" id="file-input" multiple class="hidden"
+                                           accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.txt,.zip,.rar">
+                                    <button type="button" onclick="document.getElementById('file-input').click()" 
+                                            class="btn btn-primary">
+                                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                        </svg>
+                                        選擇檔案
+                                    </button>
+                                    <div class="text-sm text-gray-500">支援多檔案選擇</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 檔案列表 -->
+                        <div id="file-list" class="hidden">
+                            <h4 class="font-semibold text-gray-800 mb-3">已選擇的檔案：</h4>
+                            <div id="selected-files" class="space-y-2"></div>
+                        </div>
+                        
+                        <!-- 上傳進度 -->
+                        <div id="upload-progress" class="hidden">
+                            <div class="mb-2">
+                                <span class="text-sm font-medium text-gray-700">上傳進度</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div id="progress-bar" class="bg-orange-500 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">
+                                <span id="progress-text">準備上傳...</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 支援的檔案格式說明 -->
+                        <div class="alert alert-info">
+                            <svg class="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div>
+                                <h4 class="font-bold">支援的檔案格式</h4>
+                                <div class="text-sm mt-1">
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                        <div>📄 PDF</div>
+                                        <div>📝 Word (doc, docx)</div>
+                                        <div>📊 Excel (xls, xlsx)</div>
+                                        <div>📋 PowerPoint (ppt, pptx)</div>
+                                        <div>📈 CSV</div>
+                                        <div>📄 文字檔 (txt)</div>
+                                        <div>📦 壓縮檔 (zip, rar)</div>
+                                        <div>⚡ 單檔最大 50MB</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 操作按鈕 -->
+                        <div class="card-actions justify-end pt-4 space-x-2">
+                            <a href="{% url 'source_detail' source.id %}" class="btn btn-ghost btn-lg">取消</a>
+                            <button type="submit" id="upload-btn" class="btn btn-primary btn-lg" disabled>
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                </svg>
+                                開始上傳
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const fileList = document.getElementById('file-list');
+    const selectedFiles = document.getElementById('selected-files');
+    const uploadBtn = document.getElementById('upload-btn');
+    const uploadForm = document.getElementById('upload-form');
+    const uploadProgress = document.getElementById('upload-progress');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    
+    let selectedFilesList = [];
+    
+    // 檔案拖拽功能
+    dropZone.addEventListener('drop', handleDrop);
+    dropZone.addEventListener('dragover', handleDragOver);
+    dropZone.addEventListener('dragenter', handleDragEnter);
+    dropZone.addEventListener('dragleave', handleDragLeave);
+    
+    function handleDrop(e) {
+        e.preventDefault();
+        dropZone.classList.remove('border-orange-400', 'bg-orange-50');
+        
+        const files = Array.from(e.dataTransfer.files);
+        addFiles(files);
+    }
+    
+    function handleDragOver(e) {
+        e.preventDefault();
+    }
+    
+    function handleDragEnter(e) {
+        e.preventDefault();
+        dropZone.classList.add('border-orange-400', 'bg-orange-50');
+    }
+    
+    function handleDragLeave(e) {
+        e.preventDefault();
+        if (!dropZone.contains(e.relatedTarget)) {
+            dropZone.classList.remove('border-orange-400', 'bg-orange-50');
+        }
+    }
+    
+    // 檔案選擇功能
+    fileInput.addEventListener('change', function() {
+        const files = Array.from(this.files);
+        addFiles(files);
+    });
+    
+    // 添加檔案到列表
+    function addFiles(files) {
+        files.forEach(file => {
+            if (!selectedFilesList.find(f => f.name === file.name && f.size === file.size)) {
+                selectedFilesList.push(file);
+            }
+        });
+        
+        updateFileList();
+        updateUploadButton();
+    }
+    
+    // 更新檔案列表顯示
+    function updateFileList() {
+        if (selectedFilesList.length === 0) {
+            fileList.classList.add('hidden');
+            return;
+        }
+        
+        fileList.classList.remove('hidden');
+        selectedFiles.innerHTML = '';
+        
+        selectedFilesList.forEach((file, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'flex items-center justify-between p-3 bg-gray-50 rounded border';
+            
+            const fileIcon = getFileIcon(file.name);
+            const fileSize = formatFileSize(file.size);
+            
+            fileItem.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <div class="text-2xl">${fileIcon}</div>
+                    <div>
+                        <div class="font-medium text-gray-800">${file.name}</div>
+                        <div class="text-sm text-gray-500">${fileSize}</div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-ghost text-red-500" onclick="removeFile(${index})">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            `;
+            
+            selectedFiles.appendChild(fileItem);
+        });
+    }
+    
+    // 移除檔案
+    function removeFile(index) {
+        selectedFilesList.splice(index, 1);
+        updateFileList();
+        updateUploadButton();
+    }
+    
+    // 更新上傳按鈕狀態
+    function updateUploadButton() {
+        uploadBtn.disabled = selectedFilesList.length === 0;
+    }
+    
+    // 獲取檔案圖示
+    function getFileIcon(filename) {
+        const ext = filename.toLowerCase().split('.').pop();
+        const icons = {
+            'pdf': '📄',
+            'doc': '📝', 'docx': '📝',
+            'xls': '📊', 'xlsx': '📊',
+            'ppt': '📋', 'pptx': '📋',
+            'csv': '📈',
+            'txt': '📄',
+            'zip': '📦', 'rar': '📦'
+        };
+        return icons[ext] || '📁';
+    }
+    
+    // 格式化檔案大小
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // 表單提交處理
+    uploadForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (selectedFilesList.length === 0) {
+            alert('請選擇要上傳的檔案');
+            return;
+        }
+        
+        // 模擬上傳進度
+        uploadProgress.classList.remove('hidden');
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = `
+            <span class="loading loading-spinner loading-sm mr-2"></span>
+            上傳中...
+        `;
+        
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += Math.random() * 15;
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(interval);
+                
+                // 模擬上傳完成
+                setTimeout(() => {
+                    progressText.textContent = '上傳完成！';
+                    alert(`成功上傳 ${selectedFilesList.length} 個檔案`);
+                    window.location.href = "{% url 'source_detail' source.id %}";
+                }, 500);
+            }
+            
+            progressBar.style.width = progress + '%';
+            progressText.textContent = `上傳進度: ${Math.round(progress)}%`;
+        }, 200);
+    });
+</script>
+{% endblock %} 

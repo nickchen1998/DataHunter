@@ -1,0 +1,93 @@
+{% extends 'home.html' %}
+
+{% block source-description %}
+<div class="p-3 bg-purple-50 border border-purple-200 rounded">
+    <p class="text-sm font-semibold text-purple-800 mb-2">📁 自建資料源</p>
+    <p class="text-xs text-purple-600">
+        管理您上傳的自建資料源，支援各種格式的文件上傳與管理。
+    </p>
+</div>
+{% endblock %}
+
+{% block filter_section %}
+    <!-- 建立新資料源按鈕 -->
+    <div class="mb-4">
+        <a href="{% url 'source_create' %}" class="btn btn-success">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            建立新資料源
+        </a>
+    </div>
+{% endblock %}
+
+{% block data-table %}
+    <div class="data-table h-full overflow-y-auto pr-2 space-y-4">
+        {% if sources %}
+            {% for source in sources %}
+                <div class="card shadow-md bg-white p-4 border border-gray-200">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1 space-y-2 text-sm text-gray-800">
+                            <div class="flex items-center">
+                                <span class="font-semibold text-lg text-purple-700">{{ source.name }}</span>
+                                <span class="badge badge-primary badge-sm ml-2">{{ source.file_count }} 個檔案</span>
+                            </div>
+                            <div><span class="font-semibold">描述：</span>{{ source.description }}</div>
+                            <div><span class="font-semibold">建立時間：</span>{{ source.created_at }}</div>
+                        </div>
+                        <div class="ml-4 flex-shrink-0 space-y-2">
+                            <div class="flex space-x-2">
+                                <a href="{% url 'source_detail' source.id %}" class="btn btn-sm btn-outline btn-primary flex-1">
+                                    檔案列表
+                                </a>
+                                <button class="btn btn-sm btn-outline btn-warning flex-1" onclick="editSource({{ source.id }})">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                    編輯
+                                </button>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-outline btn-success add-reference-btn w-full" 
+                                        data-id="{{ source.id }}"
+                                        data-name="{{ source.name }}"
+                                        data-description="{{ source.description }}">
+                                    加入對話參考
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="card shadow-md bg-white p-4 border border-gray-200">
+                <div class="text-center space-y-4">
+                    <div class="text-6xl text-gray-300">📁</div>
+                    <div class="space-y-2">
+                        <div class="text-gray-500 font-medium">還沒有任何自建資料源</div>
+                        <div class="text-sm text-gray-400">點擊上方「建立新資料源」按鈕開始建立您的第一個資料源</div>
+                    </div>
+                    <div>
+                        <a href="{% url 'source_create' %}" class="btn btn-primary">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            建立新資料源
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    // 編輯資料源
+    function editSource(sourceId) {
+        // 這裡可以實現編輯功能（目前顯示提示）
+        alert('編輯功能將在後續實現，資料源ID: ' + sourceId);
+    }
+</script>
+{% endblock %} 

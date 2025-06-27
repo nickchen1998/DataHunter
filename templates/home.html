@@ -18,6 +18,7 @@
                 <select id="source-select" class="select select-bordered w-full">
                     <option value="/symptoms/list/" {% if request_path == '/symptoms/list/' %}selected{% endif %}>衛福部 - 台灣 e 院</option>
                     <option value="/gov-data/list/" {% if request_path == '/gov-data/list/' %}selected{% endif %}>政府資料開放平臺</option>
+                    <option value="/sources/list/" {% if '/sources/' in request_path %}selected{% endif %}>自建資料源</option>
                 </select>
             </div>
             {% endif %}
@@ -40,6 +41,10 @@
                            class="text-xs text-blue-600 hover:text-blue-800 hover:underline">
                             政府資料開放平臺 ↗
                         </a>
+                    {% elif '/sources/' in request_path %}
+                        <div class="text-xs text-blue-600">
+                            💡 自建資料源，由您管理和上傳
+                        </div>
                     {% endif %}
                 </div>
             {% endif %}
@@ -101,7 +106,7 @@
                         <p class="text-xl text-gray-600 mb-8">您的資料探索與分析助手</p>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
                         <a href="/symptoms/list/" class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
                             <div class="text-blue-500 text-3xl mb-3">🏥</div>
                             <h3 class="text-lg font-semibold text-gray-800 mb-2">醫療症狀資料</h3>
@@ -112,6 +117,12 @@
                             <div class="text-green-500 text-3xl mb-3">🏛️</div>
                             <h3 class="text-lg font-semibold text-gray-800 mb-2">政府開放資料</h3>
                             <p class="text-gray-600 text-sm">探索政府資料開放平臺的各類統計資料</p>
+                        </a>
+                        
+                        <a href="/sources/list/" class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                            <div class="text-purple-500 text-3xl mb-3">📁</div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">自建資料源</h3>
+                            <p class="text-gray-600 text-sm">管理與瀏覽您上傳的自建資料源</p>
                         </a>
                     </div>
                     
