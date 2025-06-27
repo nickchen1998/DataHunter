@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block body_class %}h-screen bg-gray-100 overflow-hidden{% endblock %}
 
@@ -8,8 +9,8 @@
     <!-- 左側側欄 -->
     <aside class="w-64 h-full bg-white shadow-md p-6 overflow-y-auto flex flex-col">
         <div class="flex-1">
-            <a href="{% url 'home' %}">
-                <h2 class="text-xl font-bold mb-6">📑 數據領航員 - RAGPilot</h2>
+            <a href="{% url 'home' %}" class="block mb-6">
+                <img src="{% static 'sidebar_logo.png' %}" alt="數據領航員 RAGPilot" class="max-h-12 w-auto">
             </a>
 
             {% if request_path != '/' %}
