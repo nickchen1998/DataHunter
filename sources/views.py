@@ -4,9 +4,14 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.http import Http404
+from django.conf import settings
 from home.mixins import UserPlanContextMixin
-from .models import Source, SourceFile
+from .models import Source, SourceFile, SourceFileFormat
 from profiles.models import Limit, Profile
+import os
+import uuid
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
 
 
 class SourceListView(LoginRequiredMixin, UserPlanContextMixin, ListView):
@@ -167,17 +172,35 @@ class SourceDetailView(LoginRequiredMixin, UserPlanContextMixin, DetailView):
         
         source = self.get_object()
         
-        # 獲取真實的檔案列表（目前還是假資料，因為用戶要求檔案部分維持假資料）
-        fake_files = [
-            {'id': 1, 'name': '銷售報告_Q1.pdf', 'size': '2.3 MB', 'uploaded_at': '2024-01-15'},
-            {'id': 2, 'name': '產品分析_202401.xlsx', 'size': '1.8 MB', 'uploaded_at': '2024-01-16'},
-            {'id': 3, 'name': '客戶清單.csv', 'size': '0.5 MB', 'uploaded_at': '2024-01-17'},
-            {'id': 4, 'name': '營收統計.docx', 'size': '1.2 MB', 'uploaded_at': '2024-01-18'},
-            {'id': 5, 'name': '分析結果.pptx', 'size': '3.1 MB', 'uploaded_at': '2024-01-19'},
-        ]
+        # 獲取真實的檔案列表
+        files = SourceFile.objects.filter(
+            source=source, 
+            is_deleted=False
+        ).order_by('-created_at')
         
-        context['files'] = fake_files
-        context['file_count'] = len(fake_files)
+        # 檢查限制資訊（為了在 source-description 中顯示）
+        limit, _ = Limit.objects.get_or_create(user=self.request.user)
+        is_superuser = self.request.user.is_superuser
+        has_unlimited_source = is_superuser
+        has_unlimited_files = is_superuser
+        current_file_count = files.count()
+        
+        # 計算私有資料源數量
+        private_source_count = Source.objects.filter(
+            user=self.request.user, 
+            is_deleted=False
+        ).count()
+        
+        context.update({
+            'files': files,
+            'file_count': current_file_count,
+            'current_file_count': current_file_count,
+            'file_limit_per_source': limit.file_limit_per_source,
+            'has_unlimited_files': has_unlimited_files,
+            'has_unlimited_source': has_unlimited_source,
+            'private_source_count': private_source_count,
+            'private_source_limit': limit.private_source_limit,
+        })
         
         return context
 
@@ -282,8 +305,8 @@ class SourceUploadView(LoginRequiredMixin, UserPlanContextMixin, TemplateView):
         is_superuser = self.request.user.is_superuser
         has_unlimited_files = is_superuser
         
-        # 獲取當前資料源的檔案數量（使用假資料數量）
-        current_file_count = 5  # 假資料中有5個檔案
+        # 獲取當前資料源的真實檔案數量
+        current_file_count = self.get_source().file_count
         
         can_upload_files = has_unlimited_files or current_file_count < limit.file_limit_per_source
         
@@ -297,6 +320,44 @@ class SourceUploadView(LoginRequiredMixin, UserPlanContextMixin, TemplateView):
         
         return context
     
+    def _get_file_format(self, filename):
+        """根據檔案名稱獲取檔案格式"""
+        extension = filename.lower().split('.')[-1] if '.' in filename else ''
+        
+        format_mapping = {
+            'pdf': SourceFileFormat.PDF,
+            'csv': SourceFileFormat.CSV,
+            'json': SourceFileFormat.JSON,
+            'xml': SourceFileFormat.XML,
+        }
+        
+        return format_mapping.get(extension, None)  # 不支援的格式返回 None
+    
+    def _save_file(self, uploaded_file, username, file_uuid, file_format):
+        """儲存檔案到指定路徑"""
+        # 從設定獲取指定目錄
+        base_dir = settings.SOURCE_FILES_DIR
+        
+        # 根據模型說明建立路徑：/<指定目錄>/<a~z>(username 首字小寫)/<username>/<uuid>.<format>
+        first_letter = username[0].lower() if username else 'u'
+        file_path = os.path.join(
+            base_dir,
+            first_letter,
+            username,
+            f"{file_uuid}.{file_format}"
+        )
+        
+        # 建立目錄
+        directory = os.path.dirname(file_path)
+        os.makedirs(directory, exist_ok=True)
+        
+        # 儲存檔案
+        with open(file_path, 'wb') as destination:
+            for chunk in uploaded_file.chunks():
+                destination.write(chunk)
+        
+        return file_path
+    
     def post(self, request, *args, **kwargs):
         source = self.get_source()
         
@@ -305,10 +366,47 @@ class SourceUploadView(LoginRequiredMixin, UserPlanContextMixin, TemplateView):
         is_superuser = request.user.is_superuser
         has_unlimited_files = is_superuser
         
-        # 獲取當前資料源的檔案數量（使用假資料數量）
-        current_file_count = 5  # 假資料中有5個檔案
+        # 獲取當前資料源的真實檔案數量
+        current_file_count = source.file_count
         
         uploaded_files = request.FILES.getlist('files')
+        
+        if not uploaded_files:
+            messages.error(request, '請選擇要上傳的檔案。')
+            return self.get(request, *args, **kwargs)
+        
+        # 檢查一次上傳檔案數量限制（最多5個）
+        if len(uploaded_files) > 5:
+            messages.error(request, '一次最多只能上傳 5 個檔案，請分批上傳。')
+            return self.get(request, *args, **kwargs)
+        
+        # 檢查檔案大小限制（每個檔案最大20MB）
+        max_file_size = 20 * 1024 * 1024  # 20MB in bytes
+        oversized_files = []
+        for uploaded_file in uploaded_files:
+            if uploaded_file.size > max_file_size:
+                oversized_files.append(f"{uploaded_file.name} ({uploaded_file.size / (1024*1024):.1f} MB)")
+        
+        if oversized_files:
+            messages.error(
+                request, 
+                f'以下檔案超過 20MB 限制：{", ".join(oversized_files)}。請壓縮檔案後重新上傳。'
+            )
+            return self.get(request, *args, **kwargs)
+        
+        # 檢查檔案格式
+        unsupported_files = []
+        for uploaded_file in uploaded_files:
+            file_format = self._get_file_format(uploaded_file.name)
+            if file_format is None:
+                unsupported_files.append(uploaded_file.name)
+        
+        if unsupported_files:
+            messages.error(
+                request, 
+                f'不支援的檔案格式：{", ".join(unsupported_files)}。目前僅支援 PDF、CSV、JSON、XML 格式。'
+            )
+            return self.get(request, *args, **kwargs)
         
         if not has_unlimited_files and current_file_count + len(uploaded_files) > limit.file_limit_per_source:
             remaining_slots = limit.file_limit_per_source - current_file_count
@@ -319,11 +417,62 @@ class SourceUploadView(LoginRequiredMixin, UserPlanContextMixin, TemplateView):
             )
             return self.get(request, *args, **kwargs)
         
-        # 處理檔案上傳（目前還是假處理，因為用戶要求檔案部分維持假資料）
-        if uploaded_files:
-            file_names = [file.name for file in uploaded_files]
-            messages.success(request, f'成功上傳 {len(uploaded_files)} 個檔案：{", ".join(file_names)}')
-            return redirect('source_detail', pk=source.id)
-        else:
-            messages.error(request, '請選擇要上傳的檔案。')
-            return self.get(request, *args, **kwargs)
+        # 處理檔案上傳
+        successful_uploads = []
+        failed_uploads = []
+        
+        for uploaded_file in uploaded_files:
+            try:
+                # 檢查檔案名稱是否重複
+                if SourceFile.objects.filter(
+                    source=source, 
+                    filename=uploaded_file.name, 
+                    is_deleted=False
+                ).exists():
+                    failed_uploads.append(f"{uploaded_file.name}（檔案名稱重複）")
+                    continue
+                
+                # 獲取檔案資訊
+                file_format = self._get_file_format(uploaded_file.name)
+                file_size = uploaded_file.size / (1024 * 1024)  # 轉換為 MB
+                file_uuid = uuid.uuid4()
+                
+                # 儲存檔案
+                file_path = self._save_file(
+                    uploaded_file, 
+                    request.user.username, 
+                    file_uuid, 
+                    file_format
+                )
+                
+                # 建立 SourceFile 物件
+                source_file = SourceFile.objects.create(
+                    user=request.user,
+                    source=source,
+                    filename=uploaded_file.name,
+                    size=round(file_size, 2),
+                    format=file_format,
+                    path=file_path,
+                    uuid=file_uuid,
+                    summary_embedding=[0.0] * 1536  # 暫時使用零向量，後續可由背景任務處理
+                )
+                
+                successful_uploads.append(uploaded_file.name)
+                
+            except Exception as e:
+                failed_uploads.append(f"{uploaded_file.name}（{str(e)}）")
+        
+        # 顯示結果訊息
+        if successful_uploads:
+            messages.success(
+                request, 
+                f'成功上傳 {len(successful_uploads)} 個檔案：{", ".join(successful_uploads)}'
+            )
+        
+        if failed_uploads:
+            messages.error(
+                request, 
+                f'上傳失敗 {len(failed_uploads)} 個檔案：{", ".join(failed_uploads)}'
+            )
+        
+        return redirect('source_detail', pk=source.id)

@@ -4,12 +4,10 @@ from pgvector.django import VectorField, HnswIndex
 import uuid
 
 class SourceFileFormat(models.TextChoices):
-    PDF = 'pdf'
-    DOCX = 'docx'
-    TXT = 'txt'
-    CSV = 'csv'
-    XLS = 'xls'
-    JSON = 'json'
+    PDF = 'pdf', 'PDF'
+    CSV = 'csv', 'CSV'
+    JSON = 'json', 'JSON'
+    XML = 'xml', 'XML'
 
 
 class ProcessingStatus(models.TextChoices):

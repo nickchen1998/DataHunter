@@ -87,15 +87,15 @@
                             </label>
                             <input type="file" name="files" multiple 
                                    class="file-input file-input-bordered file-input-lg w-full" 
-                                   accept=".pdf,.docx,.doc,.txt,.csv,.xlsx,.xls,.json"
+                                   accept=".pdf,.csv,.json,.xml"
                                    required>
                             <label class="label">
-                                                                 <span class="label-text-alt text-gray-500">
-                                     支援格式：PDF、Word、Excel、CSV、TXT、JSON 等
-                                     {% if not has_unlimited_files %}
-                                         | 還可上傳 {{ remaining_file_count }} 個檔案
-                                     {% endif %}
-                                 </span>
+                                <span class="label-text-alt text-gray-500">
+                                    支援格式：PDF、CSV、JSON、XML
+                                    {% if not has_unlimited_files %}
+                                        | 還可上傳 {{ remaining_file_count }} 個檔案
+                                    {% endif %}
+                                </span>
                             </label>
                         </div>
                         
@@ -107,8 +107,9 @@
                             <div>
                                 <h4 class="font-bold">上傳須知：</h4>
                                 <ul class="text-sm mt-2 space-y-1">
-                                    <li>• 可以同時選擇多個檔案進行批量上傳</li>
-                                    <li>• 建議單個檔案大小不超過 50MB</li>
+                                    <li>• 支援格式：PDF、CSV、JSON、XML</li>
+                                    <li>• 一次最多上傳 5 個檔案</li>
+                                    <li>• 單個檔案大小不可超過 20MB</li>
                                     <li>• 上傳後系統會自動分析檔案內容</li>
                                     <li>• 處理完成後即可開始與AI對話分析</li>
                                 </ul>
@@ -219,30 +220,20 @@
                     icon.className += ' bg-red-100 text-red-600';
                     icon.textContent = 'PDF';
                     break;
-                case 'doc':
-                case 'docx':
-                    icon.className += ' bg-blue-100 text-blue-600';
-                    icon.textContent = 'DOC';
-                    break;
-                case 'xls':
-                case 'xlsx':
-                    icon.className += ' bg-green-100 text-green-600';
-                    icon.textContent = 'XLS';
-                    break;
                 case 'csv':
                     icon.className += ' bg-green-100 text-green-600';
                     icon.textContent = 'CSV';
-                    break;
-                case 'txt':
-                    icon.className += ' bg-gray-100 text-gray-600';
-                    icon.textContent = 'TXT';
                     break;
                 case 'json':
                     icon.className += ' bg-yellow-100 text-yellow-600';
                     icon.textContent = 'JSON';
                     break;
+                case 'xml':
+                    icon.className += ' bg-blue-100 text-blue-600';
+                    icon.textContent = 'XML';
+                    break;
                 default:
-                    icon.className += ' bg-purple-100 text-purple-600';
+                    icon.className += ' bg-gray-100 text-gray-600';
                     icon.textContent = 'FILE';
             }
             

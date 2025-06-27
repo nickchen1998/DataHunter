@@ -3,13 +3,37 @@
 {% block source-name %}{% endblock %}
 
 {% block source-description %}
-<div class="p-3 bg-blue-50 border border-blue-200 rounded">
-    <p class="text-sm font-semibold text-blue-800 mb-2">📄 資料源詳情</p>
-    <p class="text-xs text-blue-600">
-        {{ source.description }}
+<div class="p-3 bg-purple-50 border border-purple-200 rounded">
+    <p class="text-sm font-semibold text-purple-800 mb-2">📁 自建資料源</p>
+    <p class="text-xs text-purple-600">
+        建立和管理您的私有資料庫，上傳文件並進行智慧對話。
     </p>
-    <div class="mt-2 text-xs text-blue-500">
-        建立時間：{{ source.created_at }} | 檔案數量：{{ source.file_count }} 個
+    
+    <!-- 限制資訊顯示 -->
+    <div class="mt-3 text-xs text-purple-600 space-y-2">
+        {% if has_unlimited_source %}
+            <div>
+                <span class="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 rounded-full">
+                    ✨ 無限制建立資料源
+                </span>
+            </div>
+            <div>
+                <span class="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 rounded-full">
+                    ✨ 無限制上傳檔案
+                </span>
+            </div>
+        {% else %}
+            <div>
+                <span class="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
+                    已建立：{{ private_source_count }} / {{ private_source_limit }} 個資料源
+                </span>
+            </div>
+            <div>
+                <span class="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
+                    已上傳：{{ current_file_count }} / {{ file_limit_per_source }} 個檔案
+                </span>
+            </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
@@ -74,28 +98,29 @@
                 {% for file in files %}
                     <div class="card shadow-sm bg-white border border-gray-200">
                         <div class="card-body p-4">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-3">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-start space-x-3 flex-1 min-w-0">
                                     <!-- 檔案類型圖示 -->
-                                    <div class="text-2xl">
-                                        {% if '.pdf' in file.name %}📄
-                                        {% elif '.xlsx' in file.name or '.xls' in file.name %}📊
-                                        {% elif '.docx' in file.name or '.doc' in file.name %}📝
-                                        {% elif '.pptx' in file.name or '.ppt' in file.name %}📋
-                                        {% elif '.csv' in file.name %}📈
+                                    <div class="text-2xl flex-shrink-0">
+                                        {% if file.format == 'pdf' %}📄
+                                        {% elif file.format == 'csv' %}📈
+                                        {% elif file.format == 'json' %}📋
+                                        {% elif file.format == 'xml' %}📋
                                         {% else %}📁
                                         {% endif %}
                                     </div>
                                     
-                                    <div>
-                                        <div class="font-semibold text-gray-800">{{ file.name }}</div>
-                                        <div class="text-sm text-gray-500">
-                                            檔案大小：{{ file.size }} | 上傳時間：{{ file.uploaded_at }}
+                                    <div class="flex-1 min-w-0">
+                                        <div class="font-semibold text-gray-800 truncate mb-1">{{ file.filename }}</div>
+                                        <div class="text-sm text-gray-500 space-y-1">
+                                            <div>檔案大小：{{ file.size }} MB</div>
+                                            <div>格式：{{ file.get_format_display }}</div>
+                                            <div>上傳時間：{{ file.created_at|date:"Y-m-d H:i" }}</div>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <div class="flex space-x-2">
+                                <div class="flex flex-col space-y-2 flex-shrink-0 ml-3">
                                     <button class="btn btn-sm btn-outline btn-info" onclick="previewFile({{ file.id }})">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>

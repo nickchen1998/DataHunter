@@ -216,3 +216,8 @@ CHANNEL_LAYERS = {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
     },
 }
+
+# 自建資料源檔案儲存設定
+# 您可以透過環境變數 SOURCE_FILES_DIR 來設定檔案儲存目錄
+# 例如：export SOURCE_FILES_DIR="/path/to/your/source/files"
+SOURCE_FILES_DIR = os.getenv('SOURCE_FILES_DIR', str(BASE_DIR / 'source_files'))

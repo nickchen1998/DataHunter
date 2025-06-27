@@ -20,6 +20,7 @@ Datas/
 postgres_data/
 mongo_data/
 redis_data/
+source_files/
 
 # macOS 系統文件
 .DS_Store
