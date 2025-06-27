@@ -109,6 +109,15 @@
                                         <span class="label-text font-medium">{{ profile_form.username.label }}</span>
                                     </label>
                                     {{ profile_form.username }}
+                                    <label class="label">
+                                        <span class="label-text-alt text-gray-500">
+                                            {% if profile_form.username.help_text %}
+                                                {{ profile_form.username.help_text }}
+                                            {% else %}
+                                                使用者名稱不可更改，以確保系統穩定性
+                                            {% endif %}
+                                        </span>
+                                    </label>
                                     {% if profile_form.username.errors %}
                                         <label class="label">
                                             <span class="label-text-alt text-error">

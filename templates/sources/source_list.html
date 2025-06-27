@@ -73,9 +73,9 @@
 
         {% if sources %}
             {% for source in sources %}
-                <div class="card shadow-md bg-white p-4 border border-gray-200">
-                    <div class="flex justify-between items-start">
-                        <div class="flex-1 space-y-2 text-sm text-gray-800">
+                <a href="{% url 'source_detail' source.id %}" class="block">
+                    <div class="card shadow-md bg-white p-4 border border-gray-200 hover:shadow-lg hover:border-purple-300 transition-all duration-200 cursor-pointer">
+                        <div class="space-y-2 text-sm text-gray-800">
                             <div class="flex items-center">
                                 <span class="font-semibold text-lg text-purple-700">{{ source.name }}</span>
                                 <span class="badge badge-primary badge-sm ml-2">{{ source.file_count }} 個檔案</span>
@@ -83,16 +83,8 @@
                             <div><span class="font-semibold">描述：</span>{{ source.description }}</div>
                             <div><span class="font-semibold">建立時間：</span>{{ source.created_at|date:"Y-m-d H:i" }}</div>
                         </div>
-                        <div class="ml-4 flex-shrink-0 flex gap-2">
-                            <a href="{% url 'source_detail' source.id %}" class="btn btn-sm btn-outline btn-primary">
-                                檔案列表
-                            </a>
-                            <a href="{% url 'source_edit' source.id %}" class="btn btn-sm btn-outline btn-secondary">
-                                編輯資料源
-                            </a>
-                        </div>
                     </div>
-                </div>
+                </a>
             {% endfor %}
         {% else %}
             <div class="card shadow-md bg-white p-4 border border-gray-200">

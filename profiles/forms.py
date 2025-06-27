@@ -9,6 +9,13 @@ class UserProfileForm(forms.ModelForm):
     """
     用戶個人資料編輯表單
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # 將 username 欄位設為不可編輯
+        if self.instance and self.instance.pk:
+            self.fields['username'].disabled = True
+            self.fields['username'].help_text = '使用者名稱不可更改，以確保系統穩定性'
+    
     class Meta:
         model = User
         fields = ['username', 'email', 'first_name', 'last_name']
@@ -20,8 +27,9 @@ class UserProfileForm(forms.ModelForm):
         }
         widgets = {
             'username': forms.TextInput(attrs={
-                'class': 'input input-bordered w-full',
-                'placeholder': '請輸入使用者名稱'
+                'class': 'input input-bordered w-full bg-gray-100',
+                'placeholder': '使用者名稱不可更改',
+                'readonly': True
             }),
             'email': forms.EmailInput(attrs={
                 'class': 'input input-bordered w-full',
@@ -36,6 +44,15 @@ class UserProfileForm(forms.ModelForm):
                 'placeholder': '請輸入姓'
             }),
         }
+    
+    def clean_username(self):
+        """
+        確保 username 不會被更改
+        """
+        if self.instance and self.instance.pk:
+            # 如果是編輯現有用戶，返回原始的 username
+            return self.instance.username
+        return self.cleaned_data.get('username')
     
     def clean_email(self):
         """
