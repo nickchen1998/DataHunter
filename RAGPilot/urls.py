@@ -19,6 +19,8 @@ from django.urls import path
 from django.urls import include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic import RedirectView
+from django.contrib.staticfiles.storage import staticfiles_storage
 
 urlpatterns = [
     path('', include('home.urls')),
@@ -27,6 +29,7 @@ urlpatterns = [
     path('', include('crawlers.urls')),
     path('conversations/', include('conversations.urls')),
     path('accounts/', include('allauth.urls')),  # allauth URLs
+    path('favicon.ico', RedirectView.as_view(url=staticfiles_storage.url('favicon.ico')), name='favicon'),
 ]
 
 # 在開發模式下提供靜態檔案

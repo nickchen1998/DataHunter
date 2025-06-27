@@ -188,9 +188,9 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # 由於使用 CDN，不需要本地 static 目錄
-# STATICFILES_DIRS = [
-#     BASE_DIR / 'static',
-# ]
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
 
 # 生產環境靜態檔案收集目錄（用於 admin 相關的 CSS）
 STATIC_ROOT = BASE_DIR / 'staticfiles'
