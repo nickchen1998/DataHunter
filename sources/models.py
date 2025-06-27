@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from pgvector.django import VectorField, HnswIndex
-
+import uuid
 
 class SourceFileFormat(models.TextChoices):
     PDF = 'pdf'
@@ -19,12 +19,6 @@ class ProcessingStatus(models.TextChoices):
     FAILED = 'failed', '處理失敗'
 
 
-class SourceFileParserType(models.TextChoices):
-    BASE = 'base', '基礎解析'
-    LAYOUTLM = 'layoutlm', 'LayoutLM'
-    GOOGLE_DOCUMENT_AI = 'google_document_ai', 'Google Document AI'
-
-
 # Create your models here.
 class Source(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -36,6 +30,29 @@ class Source(models.Model):
     is_public = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        verbose_name = '自建資料源'
+        verbose_name_plural = '自建資料源'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} ({self.user.username})"
+
+    @property
+    def file_count(self):
+        """獲取資料源中的檔案數量"""
+        return self.sourcefile_set.filter(is_deleted=False).count()
+
+    def soft_delete(self):
+        """軟刪除資料源"""
+        self.is_deleted = True
+        self.save()
+
+    def restore(self):
+        """恢復資料源"""
+        self.is_deleted = False
+        self.save()
+
 
 class SourceFile(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -45,13 +62,51 @@ class SourceFile(models.Model):
     size = models.FloatField(help_text="檔案大小，單位為 MB")
     format = models.CharField(max_length=10, choices=SourceFileFormat.choices)
     summary = models.TextField(null=True, blank=True)
+    summary_embedding = VectorField(
+        dimensions=1536,
+        help_text="使用 OpenAI text-embedding-3-small 產生向量。"
+    )
 
-    tmp_file_name = models.CharField(max_length=255, help_text="暫存檔案名稱，用於儲存上傳的檔案")
-    chunking_status = models.CharField(max_length=20, choices=ProcessingStatus.choices, default=ProcessingStatus.PENDING)
+    path = models.CharField(
+        max_length=255, 
+        null=True, 
+        blank=True,
+        help_text="檔案路徑，用於儲存上傳的檔案，格式為 /<指定目錄>/<a~z>(username 首字小寫)/<username>/<uuid>.<format>"
+    )
+    uuid = models.UUIDField(default=uuid.uuid4, help_text="檔案唯一 ID")
+
+    status = models.CharField(max_length=20, choices=ProcessingStatus.choices, default=ProcessingStatus.PENDING)
 
     is_deleted = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = '資料源檔案'
+        verbose_name_plural = '資料源檔案'
+        ordering = ['-created_at']
+        indexes = [
+            HnswIndex(
+                name="file_summary_embedding_hnsw_idx",
+                fields=["summary_embedding"],
+                m=16,
+                ef_construction=64,
+                opclasses=["vector_l2_ops"],
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.filename} ({self.source.name})"
+
+    def soft_delete(self):
+        """軟刪除檔案"""
+        self.is_deleted = True
+        self.save()
+
+    def restore(self):
+        """恢復檔案"""
+        self.is_deleted = False
+        self.save()
 
 
 class SourceFileTable(models.Model):
@@ -61,6 +116,13 @@ class SourceFileTable(models.Model):
     database_name = models.CharField(max_length=255)
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = '資料源檔案表格'
+        verbose_name_plural = '資料源檔案表格'
+
+    def __str__(self):
+        return f"{self.table_name} ({self.database_name})"
 
 
 class SourceFileChunk(models.Model):
@@ -80,10 +142,17 @@ class SourceFileChunk(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        verbose_name = '資料源檔案片段'
+        verbose_name_plural = '資料源檔案片段'
         indexes = [
             HnswIndex(
                 name="file_chunk_embedding_hnsw_idx",
                 fields=["content_embedding"],
-                dimensions=1536,
+                m=16,
+                ef_construction=64,
+                opclasses=["vector_l2_ops"],
             )
         ]
+
+    def __str__(self):
+        return f"Chunk {self.id} ({self.source_file.filename})"

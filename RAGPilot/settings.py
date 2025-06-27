@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'profiles.apps.ProfilesConfig',
     'crawlers.apps.CrawlersConfig',
     'conversations.apps.ConversationsConfig',
+    'sources.apps.SourcesConfig',
 ]
 
 MIDDLEWARE = [
