@@ -124,7 +124,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                     <p class="text-lg font-medium">尚未選擇參考資料</p>
-                    <p class="text-sm mt-2">請從右側資料列表中點擊「加入對話當中作為參考資料」按鈕來添加參考資料</p>
+                    <p class="text-sm mt-2">請從右側資料列表中點擊「加入對話」按鈕來添加參考資料</p>
                 </div>
             </div>
             
@@ -216,12 +216,14 @@ class ChatManager {
         };
         
         if (button.dataset.department && button.dataset.gender && button.dataset.symptom) {
+            // 症狀資料
             referenceData.department = button.dataset.department;
             referenceData.gender = button.dataset.gender;
             referenceData.symptom = button.dataset.symptom;
             referenceData.question = button.dataset.question;
             referenceData.answer = button.dataset.answer;
         } else if (button.dataset.name && button.dataset.category) {
+            // 政府資料
             referenceData.name = button.dataset.name;
             referenceData.category = button.dataset.category;
             referenceData.department = button.dataset.department;
@@ -231,6 +233,13 @@ class ChatManager {
             referenceData.price = button.dataset.price;
             referenceData.url = button.dataset.url;
             referenceData.dataset_id = button.getAttribute('data-dataset-id');
+        } else if (button.dataset.name && button.dataset.description && button.dataset.fileCount) {
+            // 自建資料源
+            referenceData.name = button.dataset.name;
+            referenceData.description = button.dataset.description;
+            referenceData.file_count = button.dataset.fileCount;
+            referenceData.created_at = button.dataset.createdAt;
+            referenceData.type = 'private_source';
         } else {
             Object.keys(button.dataset).forEach(key => {
                 referenceData[key] = button.dataset[key];
@@ -263,7 +272,7 @@ class ChatManager {
         
         const button = document.querySelector(`[data-id="${id}"]`);
         if (button) {
-            button.textContent = '加入對話當中作為參考資料';
+            button.textContent = '加入對話';
             button.classList.remove('btn-success');
             button.classList.add('btn-outline', 'btn-success');
             button.disabled = false;
@@ -327,7 +336,7 @@ class ChatManager {
         
         
         if (data.gender && data.symptom && data.question && data.answer) {
-            
+            // 症狀資料
             contentHTML = `
                 <div class="flex-1 space-y-2 text-sm text-gray-800">
                     <div><span class="font-semibold">參考ID：</span>${data.id}</div>
@@ -345,7 +354,7 @@ class ChatManager {
                 </div>
             `;
         } else if (data.name && data.category && data.description) {
-            
+            // 政府資料
             contentHTML = `
                 <div class="flex-1 space-y-2 text-sm text-gray-800">
                     <div><span class="font-semibold">參考ID：</span>${data.id}${data.dataset_id ? ` (資料集識別碼：${data.dataset_id})` : ''}</div>
@@ -358,6 +367,21 @@ class ChatManager {
                     </div>
                     ${data.update_frequency ? `<div><span class="font-semibold">更新頻率：</span>${data.update_frequency}</div>` : ''}
                     ${data.license ? `<div><span class="font-semibold">授權方式：</span>${data.license}</div>` : ''}
+                </div>
+            `;
+        } else if (data.type === 'private_source' || (data.name && data.file_count !== undefined)) {
+            // 自建資料源
+            contentHTML = `
+                <div class="flex-1 space-y-2 text-sm text-gray-800">
+                    <div><span class="font-semibold">參考ID：</span>${data.id}</div>
+                    <div><span class="font-semibold">資料源名稱：</span>${data.name}</div>
+                    <div><span class="font-semibold">檔案數量：</span>${data.file_count} 個檔案</div>
+                    <div>
+                        <span class="font-semibold">資料源描述：</span>
+                        <span class="text-gray-600">${data.description && data.description.length > 100 ? data.description.substring(0, 100) + '...' : (data.description || '無描述')}</span>
+                    </div>
+                    ${data.created_at ? `<div><span class="font-semibold">建立時間：</span>${data.created_at}</div>` : ''}
+                    <div><span class="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">📁 自建資料源</span></div>
                 </div>
             `;
         } else {
@@ -1167,7 +1191,7 @@ class ChatManager {
                 button.classList.add('btn-success');
                 button.disabled = true;
             } else {
-                button.textContent = '加入對話當中作為參考資料';
+                button.textContent = '加入對話';
                 button.classList.remove('btn-success');
                 button.classList.add('btn-outline', 'btn-success');
                 button.disabled = false;

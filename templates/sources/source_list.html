@@ -73,9 +73,10 @@
 
         {% if sources %}
             {% for source in sources %}
-                <a href="{% url 'source_detail' source.id %}" class="block">
-                    <div class="card shadow-md bg-white p-4 border border-gray-200 hover:shadow-lg hover:border-purple-300 transition-all duration-200 cursor-pointer">
-                        <div class="space-y-2 text-sm text-gray-800">
+                <div class="card shadow-md bg-white p-4 border border-gray-200 hover:shadow-lg hover:border-purple-300 transition-all duration-200">
+                    <div class="flex justify-between items-start">
+                        <!-- 左側內容區域 -->
+                        <div class="flex-1 space-y-2 text-sm text-gray-800 mr-4">
                             <div class="flex items-center">
                                 <span class="font-semibold text-lg text-purple-700">{{ source.name }}</span>
                                 <span class="badge badge-primary badge-sm ml-2">{{ source.file_count }} 個檔案</span>
@@ -83,8 +84,30 @@
                             <div><span class="font-semibold">描述：</span>{{ source.description }}</div>
                             <div><span class="font-semibold">建立時間：</span>{{ source.created_at|date:"Y-m-d H:i" }}</div>
                         </div>
+                        
+                        <!-- 右側按鈕區域 -->
+                        <div class="flex flex-col space-y-2 min-w-fit">
+                            <a href="{% url 'source_detail' source.id %}" class="btn btn-sm btn-outline btn-primary">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                                查看詳情
+                            </a>
+                            <button class="btn btn-sm btn-outline btn-success add-reference-btn"
+                                    data-id="{{ source.id }}"
+                                    data-name="{{ source.name }}"
+                                    data-description="{{ source.description }}"
+                                    data-file-count="{{ source.file_count }}"
+                                    data-created-at="{{ source.created_at|date:'Y-m-d H:i' }}">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                </svg>
+                                加入對話
+                            </button>
+                        </div>
                     </div>
-                </a>
+                </div>
             {% endfor %}
         {% else %}
             <div class="card shadow-md bg-white p-4 border border-gray-200">
