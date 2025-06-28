@@ -11,10 +11,12 @@ class UserProfileForm(forms.ModelForm):
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # 將 username 欄位設為不可編輯
+        # 將 username 和 email 欄位設為不可編輯
         if self.instance and self.instance.pk:
             self.fields['username'].disabled = True
             self.fields['username'].help_text = '使用者名稱不可更改，以確保系統穩定性'
+            self.fields['email'].disabled = True
+            self.fields['email'].help_text = 'Email 不可更改，以確保帳號安全性'
     
     class Meta:
         model = User
@@ -32,8 +34,9 @@ class UserProfileForm(forms.ModelForm):
                 'readonly': True
             }),
             'email': forms.EmailInput(attrs={
-                'class': 'input input-bordered w-full',
-                'placeholder': '請輸入 Email'
+                'class': 'input input-bordered w-full bg-gray-100',
+                'placeholder': 'Email 不可更改',
+                'readonly': True
             }),
             'first_name': forms.TextInput(attrs={
                 'class': 'input input-bordered w-full',
@@ -56,15 +59,12 @@ class UserProfileForm(forms.ModelForm):
     
     def clean_email(self):
         """
-        驗證 email 是否已被其他用戶使用
+        確保 email 不會被更改
         """
-        email = self.cleaned_data.get('email')
-        if email:
-            # 檢查是否有其他用戶使用相同的 email（排除當前用戶）
-            existing_user = User.objects.filter(email=email).exclude(pk=self.instance.pk).first()
-            if existing_user:
-                raise forms.ValidationError('此 Email 已被其他用戶使用')
-        return email
+        if self.instance and self.instance.pk:
+            # 如果是編輯現有用戶，返回原始的 email
+            return self.instance.email
+        return self.cleaned_data.get('email')
 
 
 class CustomPasswordChangeForm(PasswordChangeForm):

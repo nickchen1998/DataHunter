@@ -256,7 +256,7 @@ class ChatManager {
         this.saveReferencesToStorage();
         this.showToast('已添加到參考資料', 'success');
         
-        button.textContent = '已添加';
+        button.innerHTML = '<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>已添加';
         button.classList.remove('btn-outline', 'btn-success');
         button.classList.add('btn-success');
         button.disabled = true;
@@ -272,7 +272,7 @@ class ChatManager {
         
         const button = document.querySelector(`[data-id="${id}"]`);
         if (button) {
-            button.textContent = '加入對話';
+            button.innerHTML = '<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>加入對話';
             button.classList.remove('btn-success');
             button.classList.add('btn-outline', 'btn-success');
             button.disabled = false;
@@ -1186,12 +1186,12 @@ class ChatManager {
         document.querySelectorAll('.add-reference-btn').forEach(button => {
             const id = button.dataset.id;
             if (this.references.has(id)) {
-                button.textContent = '已添加';
+                button.innerHTML = '<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>已添加';
                 button.classList.remove('btn-outline', 'btn-success');
                 button.classList.add('btn-success');
                 button.disabled = true;
             } else {
-                button.textContent = '加入對話';
+                button.innerHTML = '<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>加入對話';
                 button.classList.remove('btn-success');
                 button.classList.add('btn-outline', 'btn-success');
                 button.disabled = false;
