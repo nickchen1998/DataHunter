@@ -139,19 +139,19 @@
                                             <!-- 處理狀態標籤 -->
                                             {% if file.status == 'pending' %}
                                                 <span class="inline-flex items-center px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
-                                                    ⏳ 等待處理
+                                                    等待處理
                                                 </span>
                                             {% elif file.status == 'processing' %}
                                                 <span class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                                                    ⚙️ 處理中
+                                                    處理中
                                                 </span>
                                             {% elif file.status == 'completed' %}
                                                 <span class="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                                                    ✅ 處理完成
+                                                    處理完成
                                                 </span>
                                             {% elif file.status == 'failed' %}
                                                 <span class="inline-flex items-center px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
-                                                    ❌ 處理失敗
+                                                    處理失敗
                                                 </span>
                                             {% endif %}
                                         </div>

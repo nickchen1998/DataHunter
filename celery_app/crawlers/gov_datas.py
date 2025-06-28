@@ -1,15 +1,12 @@
 import io
-import hashlib
 import requests
 import pandas as pd
-import json
-import psycopg2
-import xml.etree.ElementTree as ET
 from crawlers.models import Dataset, File, ASSOCIATED_CATEGORIES_DATABASE_NAME
 from RAGPilot.celery import app
 from langchain_openai import OpenAIEmbeddings
 from django.conf import settings
 from utils.str_date import parse_datetime_string
+from utils.file_to_df import FileDataFrameHandler
 from fake_useragent import UserAgent
 
 
@@ -31,7 +28,6 @@ def period_crawl_government_datasets(demo=False):
     processed_datasets = 0
 
     for category in [tmp for tmp in categories if tmp in ASSOCIATED_CATEGORIES_DATABASE_NAME]:
-        _check_database_exists(category)
         sub_df = filtered_df[filtered_df['服務分類'] == category]
         for _, row in sub_df.iterrows():
             dataset, created = Dataset.objects.update_or_create(
@@ -78,6 +74,7 @@ def process_dataset_files(data: dict, dataset_id: int):
     download_urls = str(data.資料下載網址).split(';')
     encodings = str(data.編碼格式).split(';')
 
+    handler = FileDataFrameHandler()
     seen_md5 = set()
     new_tables = []
 
@@ -97,7 +94,7 @@ def process_dataset_files(data: dict, dataset_id: int):
             continue
         
         try:
-            df = _read_file_to_dataframe(response.content, file_format, encoding)
+            df = handler.convert_to_dataframe(response.content, file_format, encoding)
         except Exception as e:
             print(f"讀取失敗 {download_url}: {str(e)}")
             continue
@@ -105,334 +102,105 @@ def process_dataset_files(data: dict, dataset_id: int):
         if df is None or df.empty:
             continue
             
-        df_md5 = _get_dataframe_md5(df)
+        df_md5 = handler.get_dataframe_md5(df)
 
         if df_md5 in seen_md5:
             continue
 
-        # 檢查是否有相同內容的檔案已存在
         if File.objects.filter(content_md5=df_md5).exists():
             continue
 
         try:
             seen_md5.add(df_md5)
-            table_name = f"{dataset.dataset_id}_{df_md5}"
             
-            # 儲存資料到資料表並創建 File 記錄
-            if not df.empty and _save_dataframe_to_table(
-                dataset, df, table_name, download_url, 
-                file_format, df_md5, encoding, data.主要欄位說明.split(';') if pd.notna(data.主要欄位說明) else []
-            ):
-                new_tables.append(table_name)
+            column_description = data.主要欄位說明.split(';') if pd.notna(data.主要欄位說明) else []
+            success, result = _process_and_save_dataset_file(
+                handler, df, dataset, download_url, file_format, encoding, column_description
+            )
+            
+            if success:
+                new_tables.append(result)
             else:
-                print(f"儲存失敗: {download_url}")
+                print(f"儲存失敗 {download_url}: {result}")
         except Exception as e:
-            seen_md5.remove(df_md5)
+            seen_md5.discard(df_md5)
             print(f"處理失敗 {download_url}: {str(e)}")
     
-    # 處理完成，新資料表會透過 File model 記錄
     if new_tables:
         print(f"資料集 {dataset.name} 新增 {len(new_tables)} 個檔案")
 
 
-def _read_file_to_dataframe(content, file_format, encoding):
+def _process_and_save_dataset_file(handler: FileDataFrameHandler, df: pd.DataFrame, 
+                                 dataset: Dataset, download_url: str, file_format: str, 
+                                 encoding: str, column_description: list) -> tuple[bool, str]:
+    if df is None or df.empty:
+        return False, "DataFrame 為空"
+    
+    content_md5 = handler.get_dataframe_md5(df)
+    
+    if File.objects.filter(content_md5=content_md5).exists():
+        return False, "相同內容的檔案已存在"
+    
+    table_name = f"{dataset.dataset_id}_{content_md5}"
+    database_name = ASSOCIATED_CATEGORIES_DATABASE_NAME[dataset.category]
+    
     try:
-        decoded_content = content.decode(encoding, errors='ignore')
-        
-        if file_format == 'csv':
-            return pd.read_csv(io.StringIO(decoded_content))
-        
-        elif file_format == 'json':
-            json_data = json.loads(decoded_content)
-            
-            if isinstance(json_data, list):
-                return pd.DataFrame(json_data)
-            elif isinstance(json_data, dict):
-                for value in json_data.values():
-                    if isinstance(value, list) and len(value) > 0:
-                        return pd.DataFrame(value)
-
-                return pd.DataFrame([json_data])
-            
-        elif file_format == 'xml':
-            root = ET.fromstring(decoded_content)
-            
-            data = []
-            for child in root:
-                row = {subchild.tag: subchild.text for subchild in child}
-                if row:
-                    data.append(row)
-            
-            if data:
-                return pd.DataFrame(data)
-            else:
-                row = {child.tag: child.text for child in root}
-                if row:
-                    return pd.DataFrame([row])
-                    
-    except Exception as e:
-        print(f"讀取 {file_format} 格式失敗: {str(e)}")
-        
-    return None
-
-
-def _generate_excel_column_names(num_columns):
-    """
-    生成 Excel 樣式的欄位名稱：a, b, c, ..., z, aa, ab, ac, ..., zz
-    最多支援到 zz (702 個欄位)
-    """
-    import string
-    
-    column_names = []
-    
-    if num_columns <= 26:
-        # a-z
-        for i in range(num_columns):
-            column_names.append(string.ascii_lowercase[i])
-    else:
-        # a-z
-        for i in range(26):
-            column_names.append(string.ascii_lowercase[i])
-        
-        # aa-zz
-        remaining = num_columns - 26
-        for i in range(min(remaining, 676)):  # 最多支援到 zz (26*26)
-            first_letter = string.ascii_lowercase[i // 26]
-            second_letter = string.ascii_lowercase[i % 26]
-            column_names.append(first_letter + second_letter)
-    
-    return column_names
-
-
-def _save_dataframe_to_table(dataset, df, table_name, download_url, file_format, content_md5, encoding, column_description):      
-    try:
-        # 獲取欄位數量並生成 Excel 樣式的欄位名稱
-        num_columns = len(df.columns)
-        excel_column_names = _generate_excel_column_names(num_columns)
-        
-        # 建立欄位對應列表，優先使用 dataset.columns_description
-        column_mapping_list = []
-        for i, new_col in enumerate(excel_column_names):
-            current_column_desc = column_description[i]
-            column_mapping_list.append([new_col, current_column_desc])
-        
-        # 重新命名 DataFrame 的欄位為 Excel 格式
-        df.columns = excel_column_names
-        
-        # 在 DataFrame 中添加元資料欄位
-        df_with_meta = df.copy()
-        df_with_meta['_dataset_id'] = dataset.dataset_id
-        df_with_meta['_original_url'] = download_url
-        df_with_meta['_original_format'] = file_format
-        df_with_meta['_content_md5'] = content_md5
-        df_with_meta['_created_at'] = pd.Timestamp.now()
-        
-        # 創建資料表
-        if not create_table_from_dataframe(df_with_meta, table_name, dataset.category):
-            return False
-        
-        # 創建 File 記錄，包含 column_mapping_list
-        File.objects.create(
-            dataset=dataset,
-            original_download_url=download_url,
-            original_format=file_format,
-            encoding=encoding,
-            content_md5=content_md5,
-            table_name=table_name,
-            database_name=ASSOCIATED_CATEGORIES_DATABASE_NAME[dataset.category],
-            column_mapping_list=column_mapping_list,
+        processed_df = _prepare_dataframe_for_dataset_storage(
+            handler, df, dataset, download_url, file_format, content_md5
         )
         
-        return True
-    except Exception as e:
-        print(f"儲存失敗 {table_name}: {str(e)}")
-        return False
-
-
-def _get_dataframe_md5(df: pd.DataFrame) -> str:
-    df_copy = df.copy().astype(str)
-    df_copy = df_copy[sorted(df_copy.columns)]
-    df_copy = df_copy.sort_values(by=sorted(df_copy.columns)).reset_index(drop=True)
-    
-    content_str = df_copy.to_csv(index=False)
-    return hashlib.md5(content_str.encode('utf-8')).hexdigest()
-
-
-def create_table_from_dataframe(df: pd.DataFrame, table_name: str, category: str):
-    try:
-        db_config = settings.DATABASES['default']
-        conn = psycopg2.connect(
-            host=db_config['HOST'],
-            port=db_config['PORT'],
-            database=ASSOCIATED_CATEGORIES_DATABASE_NAME[category],
-            user=db_config['USER'],
-            password=db_config['PASSWORD']
+        column_mapping_list = _create_column_mapping_list(
+            handler, df, column_description
         )
-        create_sql = _generate_create_table_sql(df, table_name)
         
-        with conn.cursor() as cursor:
-            cursor.execute(create_sql)
-            conn.commit()
-            
-            # 插入資料
-            _insert_dataframe_to_table(cursor, df, table_name)
-            conn.commit()
-            
-        return True
-    except Exception as e:
-        print(f"建表失敗 {table_name}: {str(e)}")
-        return False
-    finally:
-        if 'conn' in locals():
-            conn.close()
-
-
-def _generate_create_table_sql(df: pd.DataFrame, table_name: str) -> str:
-    columns = []
-    for col in df.columns:
-        col_type = _infer_column_type(df[col])
-        columns.append(f'"{col}" {col_type}')
-    
-    columns_sql = ', '.join(columns)
-    return f'CREATE TABLE "{table_name}" ({columns_sql})'
-
-
-def _infer_column_type(series: pd.Series) -> str:
-    # 移除空值進行分析
-    non_null_series = series.dropna()
-    
-    if non_null_series.empty:
-        return 'TEXT'
-    
-    # 數值類型推斷
-    if series.dtype in ['int64', 'int32', 'int16', 'int8']:
-        return 'BIGINT'
-    elif series.dtype in ['float64', 'float32']:
-        return 'DOUBLE PRECISION'
-    elif series.dtype == 'bool':
-        return 'BOOLEAN'
-    elif pd.api.types.is_datetime64_any_dtype(series):
-        return 'TIMESTAMP'
-    
-    # 字串類型推斷
-    if series.dtype == 'object':
-        # 檢查是否所有值都是字串
-        str_values = non_null_series.astype(str)
-        max_length = str_values.str.len().max()
+        success, message = handler.save_to_database(
+            processed_df, table_name, database_name
+        )
         
-        # 根據最大長度決定類型
-        if max_length <= 50:
-            return 'VARCHAR(100)'  # 給一些緩衝空間
-        elif max_length <= 200:
-            return 'VARCHAR(500)'  # 給一些緩衝空間
-        elif max_length <= 1000:
-            return 'VARCHAR(2000)' # 給一些緩衝空間
+        if success:
+            File.objects.create(
+                dataset=dataset,
+                original_download_url=download_url,
+                original_format=file_format,
+                encoding=encoding,
+                content_md5=content_md5,
+                table_name=table_name,
+                database_name=database_name,
+                column_mapping_list=column_mapping_list,
+            )
+            
+            return True, table_name
         else:
-            return 'TEXT'  # 長文本使用 TEXT 類型
-    
-    # 預設使用 TEXT
-    return 'TEXT'
-
-
-def _insert_dataframe_to_table(cursor, df: pd.DataFrame, table_name: str):
-    if df.empty:
-        return
-    
-    # 準備插入語句
-    columns = [f'"{col}"' for col in df.columns]
-    placeholders = ['%s'] * len(df.columns)
-    expected_col_count = len(df.columns)
-    
-    insert_sql = f"""
-        INSERT INTO "{table_name}" ({', '.join(columns)}) 
-        VALUES ({', '.join(placeholders)})
-    """
-    
-    # 批量插入資料
-    values = []
-    for idx, row in df.iterrows():
-        row_values = []
-        
-        # 確保每行都有正確數量的欄位
-        for col in df.columns:
-            val = row.get(col)  # 使用 get 方法避免 KeyError
-            if pd.isna(val):
-                row_values.append(None)
-            else:
-                str_val = str(val)
-                # 安全截斷：如果字串太長，截斷到合理長度
-                if len(str_val) > 10000:  # 超過 10000 字元的截斷
-                    str_val = str_val[:9997] + "..."
-                row_values.append(str_val)
-        
-        # 驗證欄位數量
-        if len(row_values) != expected_col_count:
-            print(f"第 {idx+1} 行欄位數量不符 (期望: {expected_col_count}, 實際: {len(row_values)})，跳過")
-            continue
+            return False, message
             
-        values.append(tuple(row_values))
-    
-    if not values:
-        print("沒有有效的資料行可插入")
-        return
-    
-    try:
-        cursor.executemany(insert_sql, values)
     except Exception as e:
-        # 如果批量插入失敗，嘗試逐行插入以找出問題行
-        print(f"批量插入失敗，嘗試逐行插入: {str(e)}")
-        success_count = 0
-        for i, value_tuple in enumerate(values):
-            try:
-                # 再次驗證 tuple 長度
-                if len(value_tuple) != expected_col_count:
-                    print(f"第 {i+1} 行 tuple 長度不符 (期望: {expected_col_count}, 實際: {len(value_tuple)})，跳過")
-                    continue
-                    
-                cursor.execute(insert_sql, value_tuple)
-                success_count += 1
-            except Exception as row_error:
-                print(f"第 {i+1} 行插入失敗，跳過: {str(row_error)}")
-                continue
-        
-        if success_count > 0:
-            print(f"成功插入 {success_count}/{len(values)} 行資料")
+        return False, f"儲存失敗: {str(e)}"
 
 
-def _check_database_exists(category: str):
+def _prepare_dataframe_for_dataset_storage(handler: FileDataFrameHandler, df: pd.DataFrame, 
+                                         dataset: Dataset, download_url: str, 
+                                         file_format: str, content_md5: str) -> pd.DataFrame:
+    processed_df = handler.rename_dataframe_columns_to_excel_style(df)
+    
+    processed_df['_dataset_id'] = dataset.dataset_id
+    processed_df['_original_url'] = download_url
+    processed_df['_original_format'] = file_format
+    processed_df['_content_md5'] = content_md5
+    processed_df['_created_at'] = pd.Timestamp.now()
+    
+    return processed_df
 
-    try:
-        # 連到預設 postgres 資料庫
-        db_config = settings.DATABASES['default']
-        conn = psycopg2.connect(
-            host=db_config['HOST'],
-            port=db_config['PORT'],
-            database=db_config['NAME'],
-            user=db_config['USER'],
-            password=db_config['PASSWORD']
-        )
-        conn.autocommit = True
-        cursor = conn.cursor()
-        
-        db_name = ASSOCIATED_CATEGORIES_DATABASE_NAME[category]
-        cursor.execute(
-            psycopg2.sql.SQL("SELECT 1 FROM pg_database WHERE datname = %s"),
-            [db_name]
-        )
-        exists = cursor.fetchone() is not None
 
-        if not exists:
-            print(f"Database '{db_name}' does not exist. Creating...")
-            cursor.execute(psycopg2.sql.SQL("CREATE DATABASE {}").format(
-                psycopg2.sql.Identifier(db_name)
-            ))
-            print(f"Database '{db_name}' created successfully.")
-        else:
-            print(f"Database '{db_name}' already exists.")
+def _create_column_mapping_list(handler: FileDataFrameHandler, df: pd.DataFrame, 
+                              column_description: list) -> list:
+    num_columns = len(df.columns)
+    excel_column_names = handler.generate_excel_column_names(num_columns)
+    
+    column_mapping_list = []
+    for i, new_col in enumerate(excel_column_names):
+        current_column_desc = column_description[i] if i < len(column_description) else f"欄位_{i+1}"
+        column_mapping_list.append([new_col, current_column_desc])
+    
+    return column_mapping_list
 
-        cursor.close()
-        conn.close()
-
-    except Exception as e:
-        print(f"Error checking or creating database '{db_name}': {e}")
 
