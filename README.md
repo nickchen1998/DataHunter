@@ -1,4 +1,4 @@
-![sidebar_logo](https://github.com/nickchen1998/RAGPilot/blob/main/static/sidebar_logo.png?raw=true)
+![sidebar_logo](https://github.com/nickchen1998/RAGPilot/blob/main/static/w_sidebar_logo.png?raw=true)
 
 ---
 
