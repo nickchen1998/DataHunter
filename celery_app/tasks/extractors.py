@@ -1,4 +1,9 @@
 from RAGPilot.celery import app
+from sources.models import SourceFile, SourceFileChunk, SourceFileTable
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_openai import OpenAIEmbeddings
+from utils.file_to_df import FileDataFrameHandler
 
 
 @app.task()
