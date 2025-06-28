@@ -51,6 +51,12 @@ class Source(models.Model):
         self.is_deleted = False
         self.save()
 
+    def delete(self, using=None, keep_parents=False):
+        """刪除資料源時同時刪除所有相關檔案"""
+        # Django 的 CASCADE 會自動刪除相關的 SourceFile
+        # 而 SourceFile 的 delete 方法會處理實體檔案的刪除
+        super().delete(using=using, keep_parents=keep_parents)
+
 
 class SourceFile(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -105,6 +111,12 @@ class SourceFile(models.Model):
         """恢復檔案"""
         self.is_deleted = False
         self.save()
+
+    def delete(self, using=None, keep_parents=False):
+        """刪除檔案時同時刪除實體檔案"""
+        # 實體檔案的刪除由 pre_delete 信號處理器處理
+        # 這確保了無論是直接刪除還是 CASCADE 刪除都會清理實體檔案
+        super().delete(using=using, keep_parents=keep_parents)
 
 
 class SourceFileTable(models.Model):

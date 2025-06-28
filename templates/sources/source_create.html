@@ -96,22 +96,6 @@
                             </label>
                         </div>
                         
-                        <!-- 建立提示 -->
-                        <div class="alert alert-info">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <div>
-                                <h4 class="font-bold">建立後您可以：</h4>
-                                <ul class="text-sm mt-2 space-y-1">
-                                    <li>• 上傳各種格式的檔案（PDF、Word、Excel、CSV、TXT等）</li>
-                                    <li>• 每個資料源最多可上傳 {{ file_limit_per_source }} 個檔案{% if has_unlimited_files %} (您可無限上傳){% endif %}</li>
-                                    <li>• 與AI進行智慧對話，分析您的資料內容</li>
-                                    <li>• 隨時編輯資料源資訊或刪除不需要的檔案</li>
-                                </ul>
-                            </div>
-                        </div>
-                        
                         <div class="card-actions justify-end">
                             <a href="{% url 'source_list' %}" class="btn btn-ghost">取消</a>
                             <button type="submit" class="btn btn-primary">

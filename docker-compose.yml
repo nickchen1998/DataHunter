@@ -148,3 +148,21 @@ services:
     restart: unless-stopped
     deploy:
       replicas: 1
+  
+  celery-extractor-worker:
+    build: .
+    container_name: celery-extractor-worker
+    command: celery -A RAGPilot worker -Q extractor_queue -l info -c 2
+    volumes:
+      - .:/app
+    working_dir: /app
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      - REDIS_HOST=redis
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+    restart: unless-stopped
+    deploy:
+      replicas: 1

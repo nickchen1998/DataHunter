@@ -166,7 +166,15 @@
                     filePreview.classList.add('hidden');
                 }
                 
-                // 檢查檔案數量限制
+                // 檢查一次上傳檔案數量限制（最多5個）
+                if (files.length > 5) {
+                    alert('一次最多只能上傳 5 個檔案！');
+                    fileInput.value = '';
+                    filePreview.classList.add('hidden');
+                    return;
+                }
+                
+                // 檢查總檔案數量限制
                 {% if not has_unlimited_files %}
                 const maxFiles = {{ file_limit_per_source }} - {{ current_file_count }};
                 if (files.length > maxFiles) {
@@ -176,6 +184,17 @@
                     return;
                 }
                 {% endif %}
+                
+                // 檢查檔案大小限制（每個檔案不超過20MB）
+                const maxFileSize = 20 * 1024 * 1024; // 20MB in bytes
+                for (let i = 0; i < files.length; i++) {
+                    if (files[i].size > maxFileSize) {
+                        alert(`檔案「${files[i].name}」大小超過 20MB 限制！`);
+                        fileInput.value = '';
+                        filePreview.classList.add('hidden');
+                        return;
+                    }
+                }
             });
         }
         

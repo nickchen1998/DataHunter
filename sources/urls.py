@@ -8,4 +8,7 @@ urlpatterns = [
     path('<int:pk>/edit/', views.SourceEditView.as_view(), name='source_edit'),
     path('<int:pk>/upload/', views.SourceUploadView.as_view(), name='source_upload'),
     path('<int:pk>/delete/', views.SourceDeleteView.as_view(), name='source_delete'),
+    path('file/<int:file_id>/preview/', views.FilePreviewView.as_view(), name='file_preview'),
+    path('file/<int:file_id>/download/', views.FileDownloadView.as_view(), name='file_download'),
+    path('file/<int:file_id>/delete/', views.FileDeleteView.as_view(), name='file_delete'),
 ] 

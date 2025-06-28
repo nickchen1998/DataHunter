@@ -1,17 +1,19 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic import TemplateView, ListView, CreateView, DetailView, FormView
+from django.shortcuts import redirect, get_object_or_404
+from django.views.generic import TemplateView, ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse_lazy
 from django.contrib import messages
-from django.http import Http404
+from django.http import JsonResponse, FileResponse
 from django.conf import settings
 from home.mixins import UserPlanContextMixin
 from .models import Source, SourceFile, SourceFileFormat
 from profiles.models import Limit, Profile
 import os
 import uuid
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
+import json
+import pandas as pd
+import mimetypes
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 
 class SourceListView(LoginRequiredMixin, UserPlanContextMixin, ListView):
@@ -178,6 +180,15 @@ class SourceDetailView(LoginRequiredMixin, UserPlanContextMixin, DetailView):
             is_deleted=False
         ).order_by('-created_at')
         
+        # 計算處理狀態統計
+        from sources.models import ProcessingStatus
+        status_stats = {
+            'pending': files.filter(status=ProcessingStatus.PENDING).count(),
+            'processing': files.filter(status=ProcessingStatus.PROCESSING).count(),
+            'completed': files.filter(status=ProcessingStatus.COMPLETED).count(),
+            'failed': files.filter(status=ProcessingStatus.FAILED).count(),
+        }
+        
         # 檢查限制資訊（為了在 source-description 中顯示）
         limit, _ = Limit.objects.get_or_create(user=self.request.user)
         is_superuser = self.request.user.is_superuser
@@ -200,6 +211,7 @@ class SourceDetailView(LoginRequiredMixin, UserPlanContextMixin, DetailView):
             'has_unlimited_source': has_unlimited_source,
             'private_source_count': private_source_count,
             'private_source_limit': limit.private_source_limit,
+            'status_stats': status_stats,
         })
         
         return context
@@ -274,11 +286,19 @@ class SourceDeleteView(LoginRequiredMixin, UserPlanContextMixin, TemplateView):
     
     def post(self, request, *args, **kwargs):
         source = self.get_source()
+        source_name = source.name
         
-        # 軟刪除資料源
-        source.soft_delete()
+        try:
+            # 真正刪除資料源（包括所有相關檔案）
+            # Django 的 CASCADE 會自動刪除相關的 SourceFile
+            # 而信號處理器會處理實體檔案的刪除
+            source.delete()
+            
+            messages.success(request, f'資料源「{source_name}」已成功刪除。')
+            
+        except Exception as e:
+            messages.error(request, f'刪除資料源時發生錯誤：{str(e)}')
         
-        messages.success(request, f'資料源「{source.name}」已成功刪除。')
         return redirect('source_list')
 
 
@@ -476,3 +496,245 @@ class SourceUploadView(LoginRequiredMixin, UserPlanContextMixin, TemplateView):
             )
         
         return redirect('source_detail', pk=source.id)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class FilePreviewView(LoginRequiredMixin, TemplateView):
+    """檔案預覽視圖"""
+    
+    def get_file(self):
+        """獲取檔案物件，確保用戶權限"""
+        return get_object_or_404(
+            SourceFile,
+            pk=self.kwargs['file_id'],
+            user=self.request.user,
+            is_deleted=False
+        )
+    
+    def get(self, request, *args, **kwargs):
+        """處理檔案預覽請求"""
+        file_obj = self.get_file()
+        
+        try:
+            # 檢查檔案是否存在
+            if not file_obj.path or not os.path.exists(file_obj.path):
+                return JsonResponse({
+                    'success': False,
+                    'error': '檔案不存在或已被移動'
+                }, status=404)
+            
+            # 根據檔案格式處理預覽
+            if file_obj.format == SourceFileFormat.PDF:
+                return self._preview_pdf(file_obj)
+            elif file_obj.format == SourceFileFormat.CSV:
+                return self._preview_csv(file_obj)
+            elif file_obj.format == SourceFileFormat.JSON:
+                return self._preview_json(file_obj)
+            elif file_obj.format == SourceFileFormat.XML:
+                return self._preview_xml(file_obj)
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'不支援的檔案格式：{file_obj.format}'
+                }, status=400)
+                
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'預覽檔案時發生錯誤：{str(e)}'
+            }, status=500)
+    
+    def _preview_pdf(self, file_obj):
+        """預覽 PDF 檔案"""
+        try:
+            # 對於 PDF，我們返回檔案路徑讓前端使用 PDF.js 顯示
+            # 或者可以提取前幾頁的文字內容
+            return JsonResponse({
+                'success': True,
+                'file_type': 'pdf',
+                'filename': file_obj.filename,
+                'size': f"{file_obj.size} MB",
+                'message': 'PDF 檔案預覽需要下載檔案查看完整內容',
+                'preview_type': 'info',
+                'content': f"檔案名稱：{file_obj.filename}\n檔案大小：{file_obj.size} MB\n格式：PDF\n\n此為 PDF 檔案，建議下載後使用 PDF 閱讀器查看完整內容。"
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'PDF 預覽失敗：{str(e)}'
+            }, status=500)
+    
+    def _preview_csv(self, file_obj):
+        """預覽 CSV 檔案"""
+        try:
+            # 讀取 CSV 檔案的前幾行
+            df = pd.read_csv(file_obj.path, nrows=10)  # 只讀取前10行
+            
+            # 轉換為 HTML 表格
+            html_table = df.to_html(
+                classes='table table-sm table-striped', 
+                table_id='csv-preview-table',
+                escape=False,
+                index=False
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'file_type': 'csv',
+                'filename': file_obj.filename,
+                'size': f"{file_obj.size} MB",
+                'preview_type': 'table',
+                'content': html_table,
+                'total_rows': len(df),
+                'total_columns': len(df.columns),
+                'message': f'顯示前 {len(df)} 行，共 {len(df.columns)} 欄'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'CSV 預覽失敗：{str(e)}'
+            }, status=500)
+    
+    def _preview_json(self, file_obj):
+        """預覽 JSON 檔案"""
+        try:
+            with open(file_obj.path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            # 格式化 JSON 內容
+            formatted_json = json.dumps(data, ensure_ascii=False, indent=2)
+            
+            # 如果內容太長，只顯示前1000個字符
+            if len(formatted_json) > 1000:
+                preview_content = formatted_json[:1000] + '\n\n... (內容已截斷，完整內容請下載檔案查看)'
+            else:
+                preview_content = formatted_json
+            
+            return JsonResponse({
+                'success': True,
+                'file_type': 'json',
+                'filename': file_obj.filename,
+                'size': f"{file_obj.size} MB",
+                'preview_type': 'code',
+                'content': preview_content,
+                'language': 'json',
+                'message': '顯示 JSON 檔案內容預覽'
+            })
+        except json.JSONDecodeError as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'JSON 格式錯誤：{str(e)}'
+            }, status=400)
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'JSON 預覽失敗：{str(e)}'
+            }, status=500)
+    
+    def _preview_xml(self, file_obj):
+        """預覽 XML 檔案"""
+        try:
+            with open(file_obj.path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # 如果內容太長，只顯示前1000個字符
+            if len(content) > 1000:
+                preview_content = content[:1000] + '\n\n... (內容已截斷，完整內容請下載檔案查看)'
+            else:
+                preview_content = content
+            
+            return JsonResponse({
+                'success': True,
+                'file_type': 'xml',
+                'filename': file_obj.filename,
+                'size': f"{file_obj.size} MB",
+                'preview_type': 'code',
+                'content': preview_content,
+                'language': 'xml',
+                'message': '顯示 XML 檔案內容預覽'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'XML 預覽失敗：{str(e)}'
+            }, status=500)
+
+
+class FileDownloadView(LoginRequiredMixin, TemplateView):
+    """檔案下載視圖"""
+    
+    def get_file(self):
+        """獲取檔案物件，確保用戶權限"""
+        return get_object_or_404(
+            SourceFile,
+            pk=self.kwargs['file_id'],
+            user=self.request.user,
+            is_deleted=False
+        )
+    
+    def get(self, request, *args, **kwargs):
+        """處理檔案下載請求"""
+        file_obj = self.get_file()
+        
+        try:
+            # 檢查檔案是否存在
+            if not file_obj.path or not os.path.exists(file_obj.path):
+                messages.error(request, '檔案不存在或已被移動')
+                return redirect('source_detail', pk=file_obj.source.id)
+            
+            # 獲取檔案的 MIME 類型
+            mime_type, _ = mimetypes.guess_type(file_obj.filename)
+            if not mime_type:
+                # 根據檔案格式設定 MIME 類型
+                mime_mapping = {
+                    SourceFileFormat.PDF: 'application/pdf',
+                    SourceFileFormat.CSV: 'text/csv',
+                    SourceFileFormat.JSON: 'application/json',
+                    SourceFileFormat.XML: 'application/xml',
+                }
+                mime_type = mime_mapping.get(file_obj.format, 'application/octet-stream')
+            
+            # 使用 FileResponse 回傳檔案
+            response = FileResponse(
+                open(file_obj.path, 'rb'),
+                content_type=mime_type,
+                as_attachment=True,
+                filename=file_obj.filename
+            )
+            
+            return response
+            
+        except Exception as e:
+            messages.error(request, f'下載檔案時發生錯誤：{str(e)}')
+            return redirect('source_detail', pk=file_obj.source.id)
+
+
+class FileDeleteView(LoginRequiredMixin, TemplateView):
+    """檔案刪除視圖（真正刪除，包括實體檔案）"""
+    
+    def get_file(self):
+        """獲取檔案物件，確保用戶權限"""
+        return get_object_or_404(
+            SourceFile,
+            pk=self.kwargs['file_id'],
+            user=self.request.user,
+            is_deleted=False
+        )
+    
+    def post(self, request, *args, **kwargs):
+        """處理檔案刪除請求"""
+        file_obj = self.get_file()
+        source_id = file_obj.source.id
+        filename = file_obj.filename
+        
+        try:
+            # 直接刪除資料庫記錄，讓信號處理器處理實體檔案刪除
+            # 這樣避免重複刪除實體檔案
+            file_obj.delete()
+            
+            messages.success(request, f'檔案「{filename}」已成功刪除。')
+            
+        except Exception as e:
+            messages.error(request, f'刪除檔案時發生錯誤：{str(e)}')
+        
+        return redirect('source_detail', pk=source_id)
