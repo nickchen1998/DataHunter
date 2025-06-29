@@ -5,7 +5,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain.chains.summarize import load_summarize_chain
 from langchain.prompts import PromptTemplate
-from celery_app.extrators import utils
+from celery_app.extractors import utils
 
 MAP_PROMPT = PromptTemplate.from_template("""
 你是一個專業的文本摘要助手，請將以下內容進行摘要，使用繁體中文，並保持重點清晰。摘要請控制在 200 字以內：

@@ -43,7 +43,7 @@ class FileDataFrameHandler:
             if success:
                 return True, f"成功儲存到資料表 {table_name}"
             else:
-                return False, "儲存到資料庫失敗"
+                return False, "儲存到資料庫失敗，請檢查資料表欄位名稱是否符合規範"
                 
         except Exception as e:
             return False, f"儲存失敗: {str(e)}"
@@ -151,12 +151,8 @@ class FileDataFrameHandler:
                             raise ValueError(f"資料庫名稱包含不安全字符: {database_name}")
                         
                         cursor.execute(f'CREATE DATABASE "{database_name}"')
-                        print(f"成功創建資料庫 {database_name}")
                     except Exception as e:
-                        print(f"創建資料庫失敗: {str(e)}")
                         raise
-                else:
-                    print(f"資料庫 {database_name} 已存在")
             
             default_conn.close()
             
@@ -172,6 +168,10 @@ class FileDataFrameHandler:
             create_sql = self._generate_create_table_sql(df, table_name)
             
             with conn.cursor() as cursor:
+                cursor.execute(f'DROP TABLE IF EXISTS "{table_name}"')
+                conn.commit()
+                
+                # 創建新的資料表
                 cursor.execute(create_sql)
                 conn.commit()
                 
@@ -180,7 +180,6 @@ class FileDataFrameHandler:
                 
             return True
         except Exception as e:
-            print(f"創建資料庫或建表失敗 {database_name}.{table_name}: {str(e)}")
             return False
         finally:
             if 'default_conn' in locals():
@@ -279,7 +278,4 @@ class FileDataFrameHandler:
                     success_count += 1
                 except Exception as row_error:
                     print(f"第 {i+1} 行插入失敗，跳過: {str(row_error)}")
-                    continue
-            
-            if success_count > 0:
-                print(f"成功插入 {success_count}/{len(values)} 行資料") 
+                    continue 

@@ -14,8 +14,8 @@ import pandas as pd
 import mimetypes
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from celery_app.extrators.extract_pdf import extract_pdf_soruce_file_content
-from celery_app.extrators.extract_structured_file import extract_structured_data_from_source_file
+from celery_app.extractors.extract_pdf import extract_pdf_soruce_file_content
+from celery_app.extractors.extract_structured_file import extract_structured_file_content
 
 
 class SourceListView(LoginRequiredMixin, UserPlanContextMixin, ListView):

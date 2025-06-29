@@ -152,7 +152,7 @@ services:
   celery-extractor-worker:
     build: .
     container_name: celery-extractor-worker
-    command: celery -A RAGPilot worker -Q extrator_queue -l info -c 2
+    command: celery -A RAGPilot worker -Q extractor_queue -l info -c 2
     volumes:
       - .:/app
     working_dir: /app

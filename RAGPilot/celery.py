@@ -11,7 +11,7 @@ app = Celery(
 app.conf.imports = (
     "celery_app.crawlers.*",
     "celery_app.tasks.*",
-    "celery_app.extrators.*",
+    "celery_app.extractors.*",
 )
 app.conf.timezone = 'Asia/Taipei'
 app.conf.enable_utc = True
@@ -32,7 +32,7 @@ app.conf.task_routes = {
     'celery_app.crawlers.symptoms.*': {'queue': 'dynamic_crawler_queue'},
     'celery_app.crawlers.gov_datas.*': {'queue': 'static_crawler_queue'},
     'celery_app.tasks.conversations.*': {'queue': 'conversation_queue'},
-    'celery_app.extrators.*': {'queue': 'extrator_queue'},
+    'celery_app.extractors.*': {'queue': 'extractor_queue'},
 }
 
 app.conf.task_default_queue = 'default'
