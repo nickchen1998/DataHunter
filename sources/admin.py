@@ -8,8 +8,8 @@ class SourceAdmin(admin.ModelAdmin):
     """
     Source 模型的 Admin 配置
     """
-    list_display = ['name', 'user', 'is_public', 'is_deleted', 'created_at']
-    list_filter = ['is_public', 'is_deleted', 'created_at']
+    list_display = ['id', 'name', 'user', 'is_public', 'created_at']
+    list_filter = ['is_public', 'created_at']
     search_fields = ['name', 'description', 'user__username', 'user__email']
     readonly_fields = ['created_at']
     
@@ -18,7 +18,7 @@ class SourceAdmin(admin.ModelAdmin):
             'fields': ('user', 'name', 'description')
         }),
         ('狀態設定', {
-            'fields': ('is_public', 'is_deleted')
+            'fields': ('is_public',)
         }),
         ('時間資訊', {
             'fields': ('created_at',),
@@ -32,8 +32,8 @@ class SourceFileAdmin(admin.ModelAdmin):
     """
     SourceFile 模型的 Admin 配置
     """
-    list_display = ['filename', 'source', 'user', 'format', 'size', 'status', 'is_deleted', 'created_at']
-    list_filter = ['format', 'status', 'is_deleted', 'created_at']
+    list_display = ['id', 'filename', 'source', 'user', 'format', 'size', 'status', 'created_at']
+    list_filter = ['format', 'status', 'created_at']
     search_fields = ['filename', 'source__name', 'user__username', 'user__email']
     readonly_fields = ['uuid', 'created_at']
     
@@ -42,10 +42,7 @@ class SourceFileAdmin(admin.ModelAdmin):
             'fields': ('user', 'source', 'filename', 'format', 'size')
         }),
         ('內容資訊', {
-            'fields': ('summary', 'path', 'uuid', 'status')
-        }),
-        ('狀態設定', {
-            'fields': ('is_deleted',)
+            'fields': ('summary', 'path', 'uuid', 'status', 'failed_reason')
         }),
         ('時間資訊', {
             'fields': ('created_at',),

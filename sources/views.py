@@ -14,7 +14,8 @@ import pandas as pd
 import mimetypes
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from celery_app.tasks import extractors
+from celery_app.extrators.extract_pdf import extract_pdf_soruce_file_content
+from celery_app.extrators.extract_structured_file import extract_structured_data_from_source_file
 
 
 class SourceListView(LoginRequiredMixin, UserPlanContextMixin, ListView):
@@ -482,9 +483,9 @@ class SourceUploadView(LoginRequiredMixin, UserPlanContextMixin, TemplateView):
         if successful_uploads:
             # for file in successful_uploads:
             #     if file.format == SourceFileFormat.PDF:
-            #         extractors.extract_pdf_soruce_file_content.delay(file.id)
+            #         extract_pdf_soruce_file_content.delay(file.id)
             #     else:
-            #         extractors.extract_structured_data_from_source_file.delay(file.id)
+            #         extract_structured_data_from_source_file.delay(file.id)
             messages.success(
                 request, 
                 f'成功上傳 {len(successful_uploads)} 個檔案：{", ".join(successful_uploads)}'

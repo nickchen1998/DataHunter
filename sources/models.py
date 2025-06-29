@@ -80,8 +80,7 @@ class SourceFile(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, help_text="檔案唯一 ID")
 
     status = models.CharField(max_length=20, choices=ProcessingStatus.choices, default=ProcessingStatus.PENDING)
-
-    is_deleted = models.BooleanField(default=False)
+    failed_reason = models.TextField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 

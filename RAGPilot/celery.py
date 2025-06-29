@@ -9,9 +9,9 @@ app = Celery(
     broker=f"redis://{os.getenv('REDIS_HOST', 'localhost')}:6379/1"
 )
 app.conf.imports = (
-    "celery_app.crawlers.symptoms",
-    "celery_app.crawlers.gov_datas",
-    "celery_app.tasks.conversations",
+    "celery_app.crawlers.*",
+    "celery_app.tasks.*",
+    "celery_app.extrators.*",
 )
 app.conf.timezone = 'Asia/Taipei'
 app.conf.enable_utc = True
@@ -32,6 +32,7 @@ app.conf.task_routes = {
     'celery_app.crawlers.symptoms.*': {'queue': 'dynamic_crawler_queue'},
     'celery_app.crawlers.gov_datas.*': {'queue': 'static_crawler_queue'},
     'celery_app.tasks.conversations.*': {'queue': 'conversation_queue'},
+    'celery_app.extrators.*': {'queue': 'extrator_queue'},
 }
 
 app.conf.task_default_queue = 'default'
