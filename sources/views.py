@@ -14,6 +14,7 @@ import pandas as pd
 import mimetypes
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from celery_app.tasks import extractors
 
 
 class SourceListView(LoginRequiredMixin, UserPlanContextMixin, ListView):
@@ -442,57 +443,51 @@ class SourceUploadView(LoginRequiredMixin, UserPlanContextMixin, TemplateView):
         failed_uploads = []
         
         for uploaded_file in uploaded_files:
-            try:
-                # 檢查檔案名稱是否重複
-                if SourceFile.objects.filter(
-                    source=source, 
-                    filename=uploaded_file.name, 
-                    is_deleted=False
-                ).exists():
-                    failed_uploads.append(f"{uploaded_file.name}（檔案名稱重複）")
-                    continue
-                
-                # 獲取檔案資訊
-                file_format = self._get_file_format(uploaded_file.name)
-                file_size = uploaded_file.size / (1024 * 1024)  # 轉換為 MB
-                file_uuid = uuid.uuid4()
-                
-                # 儲存檔案
-                file_path = self._save_file(
-                    uploaded_file, 
-                    request.user.username, 
-                    file_uuid, 
-                    file_format
-                )
-                
-                # 建立 SourceFile 物件
-                source_file = SourceFile.objects.create(
-                    user=request.user,
-                    source=source,
-                    filename=uploaded_file.name,
-                    size=round(file_size, 2),
-                    format=file_format,
-                    path=file_path,
-                    uuid=file_uuid,
-                    summary_embedding=[0.0] * 1536  # 暫時使用零向量，後續可由背景任務處理
-                )
-                
-                successful_uploads.append(uploaded_file.name)
-                
-            except Exception as e:
-                failed_uploads.append(f"{uploaded_file.name}（{str(e)}）")
-        
-        # 顯示結果訊息
+            # 檢查檔案名稱是否重複
+            if SourceFile.objects.filter(
+                source=source, 
+                filename=uploaded_file.name, 
+                is_deleted=False
+            ).exists():
+                failed_uploads.append(f"{uploaded_file.name}（檔案名稱重複）")
+                continue
+            
+            # 獲取檔案資訊
+            file_format = self._get_file_format(uploaded_file.name)
+            file_size = uploaded_file.size / (1024 * 1024)  # 轉換為 MB
+            file_uuid = uuid.uuid4()
+            
+            # 儲存檔案
+            file_path = self._save_file(
+                uploaded_file, 
+                request.user.username, 
+                file_uuid, 
+                file_format
+            )
+            
+            # 建立 SourceFile 物件
+            source_file = SourceFile.objects.create(
+                user=request.user,
+                source=source,
+                filename=uploaded_file.name,
+                size=round(file_size, 2),
+                format=file_format,
+                path=file_path,
+                uuid=file_uuid,
+                summary_embedding=[0.0] * 1536  # 暫時使用零向量，後續可由背景任務處理
+            )
+            
+            successful_uploads.append(source_file)
+                            
         if successful_uploads:
+            # for file in successful_uploads:
+            #     if file.format == SourceFileFormat.PDF:
+            #         extractors.extract_pdf_soruce_file_content.delay(file.id)
+            #     else:
+            #         extractors.extract_structured_data_from_source_file.delay(file.id)
             messages.success(
                 request, 
                 f'成功上傳 {len(successful_uploads)} 個檔案：{", ".join(successful_uploads)}'
-            )
-        
-        if failed_uploads:
-            messages.error(
-                request, 
-                f'上傳失敗 {len(failed_uploads)} 個檔案：{", ".join(failed_uploads)}'
             )
         
         return redirect('source_detail', pk=source.id)
