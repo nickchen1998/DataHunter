@@ -19,10 +19,16 @@
     <!-- 額外的 CSS -->
     {% block extra_css %}{% endblock %}
 </head>
-<body class="{% block body_class %}min-h-screen bg-gray-50{% endblock %}">
+<body class="{% block body_class %}min-h-screen bg-gray-50 flex flex-col{% endblock %}">
     
     <!-- 主要內容區域 -->
     {% block content %}{% endblock %}
+    
+    <!-- 底部連結區域 - 可選擇性顯示 -->
+    {% block footer %}{% endblock %}
+    
+    <!-- 使用條款彈出視窗 -->
+    {% include '_terms_modal.html' %}
     
     <!-- 基礎 JavaScript -->
     <script>
@@ -54,6 +60,21 @@
                     setTimeout(() => alert.remove(), 500);
                 });
             }, 3000);
+        }
+
+        // 使用條款彈出視窗控制函數
+        function openTermsModal() {
+            const modal = document.getElementById('terms-modal');
+            if (modal) {
+                modal.classList.add('modal-open');
+            }
+        }
+        
+        function closeTermsModal() {
+            const modal = document.getElementById('terms-modal');
+            if (modal) {
+                modal.classList.remove('modal-open');
+            }
         }
 
         // 頁面載入完成後執行通用初始化
