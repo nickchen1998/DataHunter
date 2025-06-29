@@ -52,7 +52,11 @@ class GovDataDatasetListView(LoginRequiredMixin, UserPlanContextMixin, ListView)
         context['request_path'] = self.request.path
         
         return context
-    
-    def generate_suggest_questions(self) -> list[str]:
-        pass
+
+class GovDataSuggestView(LoginRequiredMixin, View):
+    def get(self, request):
+        """
+        隨機取得四個 Dataset 並且讀取其底下的 File 以及其對應的資料表的第一行資料，
+        將 Dataset 資訊以及第一行資料作為生成建議問題的素材
+        """
         

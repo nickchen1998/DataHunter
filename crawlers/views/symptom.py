@@ -8,9 +8,7 @@ from crawlers.models import Symptom
 from home.mixins import UserPlanContextMixin
 from langchain_openai import ChatOpenAI
 import json
-import logging
-
-logger = logging.getLogger(__name__)
+import random
 
 @method_decorator(never_cache, name='dispatch')
 class SymptomListView(LoginRequiredMixin, UserPlanContextMixin, ListView):
@@ -18,7 +16,7 @@ class SymptomListView(LoginRequiredMixin, UserPlanContextMixin, ListView):
     context_object_name = 'symptoms'
     queryset = Symptom.objects.all()
     paginate_by = 10
-    login_url = '/login/'  # 未登入時重定向的 URL
+    login_url = '/login/'
 
     def get_queryset(self):
         department = self.request.GET.get('department')
@@ -44,54 +42,24 @@ class SymptomListView(LoginRequiredMixin, UserPlanContextMixin, ListView):
 
 
 class SymptomSuggestView(LoginRequiredMixin, View):
-    """
-    異步生成症狀相關的建議問題
-    """
     
     def get(self, request):
         try:
-            suggestions = self.generate_suggest_questions()
-            if suggestions:
-                return JsonResponse({
-                    'success': True,
-                    'suggestions': suggestions
-                })
-            else:
-                return JsonResponse({
-                    'success': False,
-                    'message': '目前無法生成建議問題'
-                })
-        except Exception as e:
-            logger.error(f"生成建議問題時發生錯誤: {str(e)}")
-            return JsonResponse({
-                'success': False,
-                'message': '建議問題生成失敗'
-            })
-    
-    def generate_suggest_questions(self) -> list[str]:
-        """
-        基於症狀資料生成多樣化的建議問題
-        """
-        try:
-            # 獲取更多症狀資料以增加多樣性（取20筆然後隨機選擇）
-            import random
-            
             all_symptoms = list(Symptom.objects.order_by('-id').values_list(
                 'question', flat=True
             ).distinct()[:20])
             
             if not all_symptoms:
-                logger.info("沒有症狀資料可用於生成建議問題")
-                return []
+                return JsonResponse({
+                    'success': False,
+                    'message': '目前無法生成建議問題'
+                })
             
-            # 隨機選擇4-8筆資料作為參考，增加多樣性
             sample_size = min(len(all_symptoms), random.randint(4, 8))
             selected_symptoms = random.sample(all_symptoms, sample_size)
             
-            # 準備提示詞
             symptoms_text = "\n".join([f"- {q[:100]}..." if len(q) > 100 else f"- {q}" for q in selected_symptoms])
             
-            # 添加隨機性到prompt中
             variety_prompts = [
                 "生成4個多樣化的健康問題",
                 "創建4個不同類型的醫療諮詢問題", 
@@ -115,33 +83,27 @@ class SymptomSuggestView(LoginRequiredMixin, View):
 要求：請確保4個問題涵蓋不同的健康主題，避免過度集中在同一疾病或症狀上。
 請直接返回4個問題，每行一個問題，不需要編號或其他格式："""
 
-            # 提高創意性：使用較高的temperature和不同的隨機種子
             llm = ChatOpenAI(
                 model="gpt-4o-mini", 
-                temperature=0.8,  # 提高創意性
+                temperature=0.8,
                 model_kwargs={
-                    "seed": random.randint(1, 10000)  # 添加隨機種子
+                    "seed": random.randint(1, 10000)
                 }
             )
             response = llm.invoke(prompt)
             
-            # 解析回應
             questions = []
             for line in response.content.strip().split('\n'):
                 line = line.strip()
                 if line and not line.startswith('#') and len(line) <= 50:
-                    # 移除可能的編號前綴
                     line = line.lstrip('0123456789.-) ')
                     if line:
                         questions.append(line)
             
-            # 確保問題的多樣性（簡單的重複檢查）
             unique_questions = []
             for q in questions:
-                # 檢查是否與已有問題過於相似（簡單的關鍵詞檢查）
                 is_similar = False
                 for existing in unique_questions:
-                    # 如果兩個問題有超過50%的相同關鍵詞，認為相似
                     q_words = set(q.replace('？', '').replace('?', '').split())
                     existing_words = set(existing.replace('？', '').replace('?', '').split())
                     if len(q_words & existing_words) / max(len(q_words), len(existing_words)) > 0.5:
@@ -151,11 +113,23 @@ class SymptomSuggestView(LoginRequiredMixin, View):
                 if not is_similar:
                     unique_questions.append(q)
             
-            logger.info(f"生成了 {len(unique_questions)} 個建議問題")
-            return unique_questions[:4] if unique_questions else []
+            final_questions = unique_questions[:4] if unique_questions else []
             
+            if final_questions:
+                return JsonResponse({
+                    'success': True,
+                    'suggestions': final_questions
+                })
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'message': '目前無法生成建議問題'
+                })
+                
         except Exception as e:
-            logger.error(f"AI 生成建議問題失敗: {str(e)}")
-            return []
+            return JsonResponse({
+                'success': False,
+                'message': '建議問題生成失敗'
+            })
         
         
