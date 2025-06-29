@@ -27,31 +27,50 @@ def extract_pdf_soruce_file_content(source_file_id: int):
             source_file.save()
             return
                 
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=700,
-            chunk_overlap=150,
+        parent_text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=200,
             separators=["\n\n", "\n", " ", ""]
         )
-        chunks = text_splitter.split_documents(documents)
-        
+        child_text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=100,
+            chunk_overlap=20,
+            separators=["\n\n", "\n", " ", ""]
+        )
         embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-        chunk_embeddings = embeddings.embed_documents(chunks)
+
+        parent_chunks = parent_text_splitter.split_documents(documents)
+        parent_chunk_embeddings = embeddings.embed_documents(parent_chunks)
         
-        chunks_created = 0
-        for i, (chunk_text, embedding) in enumerate(zip(chunks, chunk_embeddings)):
-            SourceFileChunk.objects.create(
+        parent_chunks_created = 0
+        child_chunks_created = 0
+        for parent_chunk_text, embedding in zip(parent_chunks, parent_chunk_embeddings):
+            parent_chunk = SourceFileChunk.objects.create(
                 user=source_file.user,
                 source_file=source_file,
-                content=chunk_text,
+                content=parent_chunk_text,
                 content_embedding=embedding
             )
             chunks_created += 1
+
+            child_chunks = child_text_splitter.split_documents(parent_chunk_text)
+            child_chunk_embeddings = embeddings.embed_documents(child_chunks)
+            for child_chunk_text, child_chunk_embedding in zip(child_chunks, child_chunk_embeddings):
+                SourceFileChunk.objects.create(
+                    user=source_file.user,
+                    source_file=source_file,
+                    source_file_chunk=parent_chunk,
+                    content=child_chunk_text,
+                    content_embedding=child_chunk_embedding
+                )
+                child_chunks_created += 1
+
         
         source_file.status = ProcessingStatus.COMPLETED
         source_file.save()
         source_file.refresh_from_db()
         
-        return f"成功提取 PDF 檔案 {source_file.filename} 的內容，創建了 {chunks_created} 個文字片段"
+        return f"成功提取 PDF 檔案 {source_file.filename} 的內容，創建了 {parent_chunks_created} 個父文字片段和 {child_chunks_created} 個子文字片段。"
 
     except Exception as e:
         source_file = SourceFile.objects.get(id=source_file_id)
