@@ -41,8 +41,11 @@ class ProfileView(LoginRequiredMixin, View):
         # 計算今日聊天次數（包含已刪除的訊息）
         today_chat_count = Message.get_today_chat_amount(request.user)
         
-        # 計算私有資料源數量（這裡假設您有相關模型，如果沒有則設為 0）
-        private_source_count = 0  # 待實作：根據您的私有資料源模型計算
+        # 計算私有資料源數量
+        from sources.models import Source
+        private_source_count = Source.objects.filter(
+            user=request.user
+        ).count()
         
         # 計算使用百分比
         chat_usage_percentage = 0 if has_unlimited_chat else (

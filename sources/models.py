@@ -24,7 +24,6 @@ class Source(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
 
-    is_deleted = models.BooleanField(default=False)
     is_public = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -41,15 +40,7 @@ class Source(models.Model):
         """獲取資料源中的檔案數量"""
         return self.sourcefile_set.count()
 
-    def soft_delete(self):
-        """軟刪除資料源"""
-        self.is_deleted = True
-        self.save()
 
-    def restore(self):
-        """恢復資料源"""
-        self.is_deleted = False
-        self.save()
 
     def delete(self, using=None, keep_parents=False):
         """刪除資料源時同時刪除所有相關檔案"""
@@ -101,15 +92,7 @@ class SourceFile(models.Model):
     def __str__(self):
         return f"{self.filename} ({self.source.name})"
 
-    def soft_delete(self):
-        """軟刪除檔案"""
-        self.is_deleted = True
-        self.save()
 
-    def restore(self):
-        """恢復檔案"""
-        self.is_deleted = False
-        self.save()
 
     def delete(self, using=None, keep_parents=False):
         """刪除檔案時同時刪除實體檔案"""

@@ -24,8 +24,7 @@ class UserPlanContextMixin:
             # 計算私有資料源數量
             from sources.models import Source
             private_source_count = Source.objects.filter(
-                user=user, 
-                is_deleted=False
+                user=user
             ).count()
             
             # 檢查用戶權限層級
