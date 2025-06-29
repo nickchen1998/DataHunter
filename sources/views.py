@@ -16,6 +16,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from celery_app.extractors.extract_pdf import extract_pdf_soruce_file_content
 from celery_app.extractors.extract_structured_file import extract_structured_file_content
+from django.views import View
 
 
 class SourceListView(LoginRequiredMixin, UserPlanContextMixin, ListView):
@@ -761,3 +762,29 @@ class FileDeleteView(LoginRequiredMixin, TemplateView):
             messages.error(request, f'刪除檔案時發生錯誤：{str(e)}')
         
         return redirect('source_detail', pk=source_id)
+
+
+class SourceSuggestView(LoginRequiredMixin, View):
+    
+    def get(self, request):
+        try:
+            user_sources = Source.objects.filter(
+                user=request.user
+            ).prefetch_related('sourcefile_set')[:4]
+            
+            if not user_sources:
+                return JsonResponse({
+                    'success': False,
+                    'message': '您尚未創建任何資料源'
+                })
+            
+            return JsonResponse({
+                'success': False,
+                'message': '自建資料源建議問題功能尚未完成'
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': '建議問題生成失敗'
+            })

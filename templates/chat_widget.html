@@ -207,15 +207,20 @@ class ChatManager {
     }
 
     init() {
-        this.connectWebSocket();
         this.setupEventListeners();
         this.setupReferenceSystem();
         this.setupQuestionSuggestions();
         this.loadReferencesFromStorage();
         this.updateButtonStates();
         this.setupNavigationListener();
+        
+        // 初始化時總是顯示載入動畫
+        this.showConversationLoadingMessage();
+        
         this.updateSuggestionsDisplay();
-        this.loadSuggestedQuestions();
+        
+        // 最後建立 WebSocket 連接
+        this.connectWebSocket();
     }
 
     setupReferenceSystem() {
@@ -291,6 +296,26 @@ class ChatManager {
         }, 100);
     }
 
+    showConversationLoadingMessage() {
+        const conversationContainer = document.getElementById('conversation-messages');
+        const loadingMessage = document.createElement('div');
+        loadingMessage.id = 'conversation-loading';
+        loadingMessage.className = 'flex flex-col items-center justify-center py-12 text-gray-500';
+        loadingMessage.innerHTML = `
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+            <p class="text-sm text-gray-600 mb-2">對話記錄載入中，請稍後...</p>
+            <p class="text-xs text-gray-400">正在檢查您的歷史對話</p>
+        `;
+        conversationContainer.appendChild(loadingMessage);
+    }
+
+    hideConversationLoadingMessage() {
+        const loadingMessage = document.getElementById('conversation-loading');
+        if (loadingMessage) {
+            loadingMessage.remove();
+        }
+    }
+
     updateSuggestionsDisplay() {
         const emptySuggestionsElement = document.getElementById('empty-chat-suggestions');
         const conversationMessagesElement = document.getElementById('conversation-messages');
@@ -306,6 +331,9 @@ class ChatManager {
             // 沒有對話記錄時的顯示
             emptySuggestionsElement.classList.remove('hidden');
             conversationMessagesElement.classList.add('hidden');
+            
+            // 只有在沒有對話記錄時才載入建議問題
+            this.loadSuggestedQuestions();
         }
     }
 
@@ -317,18 +345,40 @@ class ChatManager {
 
     async loadSuggestedQuestions() {
         const container = document.getElementById('suggestions-container');
-        const loading = document.getElementById('suggestions-loading');
+        
+        // 立即清空容器，避免顯示舊問題
+        container.innerHTML = '';
+        
+        // 創建並顯示載入狀態
+        const loading = document.createElement('div');
+        loading.id = 'suggestions-loading';
+        loading.className = 'flex flex-col items-center justify-center py-8 text-gray-500';
+        loading.innerHTML = `
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+            <p class="text-sm text-gray-600 mb-2">正在生成建議問題...</p>
+            <p id="loading-timestamp" class="text-xs text-gray-400"></p>
+        `;
+        container.appendChild(loading);
         
         try {
-            // 顯示載入狀態和時間戳記
-            loading.classList.remove('hidden');
+            // 更新時間戳記
             const timestampElement = document.getElementById('loading-timestamp');
             if (timestampElement) {
                 timestampElement.textContent = `載入時間: ${new Date().toLocaleTimeString()}`;
             }
             
+            // 根據當前頁面路徑決定 API 端點
+            let apiUrl = '/api/symptoms-suggestions/'; // 預設為症狀建議
+            const currentPath = window.location.pathname;
+            
+            if (currentPath.includes('/gov-data/')) {
+                apiUrl = '/api/gov-data-suggestions/';
+            } else if (currentPath.includes('/sources/')) {
+                apiUrl = '/sources/api/sources-suggestions/';
+            }
+            
             // 發送 API 請求
-            const response = await fetch('/api/suggestions/', {
+            const response = await fetch(apiUrl, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -354,16 +404,28 @@ class ChatManager {
             this.renderNoSuggestions('無法載入建議問題');
         } finally {
             // 隱藏載入狀態
-            loading.classList.add('hidden');
+            const loadingElement = document.getElementById('suggestions-loading');
+            if (loadingElement) {
+                loadingElement.classList.add('hidden');
+            }
         }
     }
 
     renderSuggestedQuestions(questions) {
         const container = document.getElementById('suggestions-container');
         
-        // 清空容器（除了載入狀態）
-        const loadingElement = document.getElementById('suggestions-loading');
+        // 完全清空容器
         container.innerHTML = '';
+        
+        // 重新創建載入狀態元素
+        const loadingElement = document.createElement('div');
+        loadingElement.id = 'suggestions-loading';
+        loadingElement.className = 'hidden flex flex-col items-center justify-center py-8 text-gray-500';
+        loadingElement.innerHTML = `
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+            <p class="text-sm text-gray-600 mb-2">正在生成建議問題...</p>
+            <p id="loading-timestamp" class="text-xs text-gray-400"></p>
+        `;
         container.appendChild(loadingElement);
         
         // 添加生成提示
@@ -402,9 +464,18 @@ class ChatManager {
     renderNoSuggestions(message) {
         const container = document.getElementById('suggestions-container');
         
-        // 清空容器（除了載入狀態）
-        const loadingElement = document.getElementById('suggestions-loading');
+        // 完全清空容器
         container.innerHTML = '';
+        
+        // 重新創建載入狀態元素
+        const loadingElement = document.createElement('div');
+        loadingElement.id = 'suggestions-loading';
+        loadingElement.className = 'hidden flex flex-col items-center justify-center py-8 text-gray-500';
+        loadingElement.innerHTML = `
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+            <p class="text-sm text-gray-600 mb-2">正在生成建議問題...</p>
+            <p id="loading-timestamp" class="text-xs text-gray-400"></p>
+        `;
         container.appendChild(loadingElement);
         
         // 顯示無建議狀態
@@ -704,6 +775,17 @@ class ChatManager {
         this.socket.onopen = (event) => {
             this.hideConnectionStatus();
             this.updateSendButtonState();
+            
+            // 設置一個標記來追蹤是否已收到訊息
+            this.hasReceivedMessages = false;
+            
+            // 設置一個較短的超時時間，如果沒收到任何訊息就隱藏載入動畫
+            this.loadingTimeout = setTimeout(() => {
+                if (!this.hasReceivedMessages) {
+                    this.hideConversationLoadingMessage();
+                    this.updateSuggestionsDisplay();
+                }
+            }, 800); // 縮短等待時間
         };
         
         this.socket.onmessage = (event) => {
@@ -715,7 +797,18 @@ class ChatManager {
             this.showConnectionStatus('連線已斷開，正在重新連線...');
             this.sendButton.disabled = true;
             
+            // 清理載入相關的狀態
+            if (this.loadingTimeout) {
+                clearTimeout(this.loadingTimeout);
+            }
+            this.hasReceivedMessages = false;
+            
             setTimeout(() => {
+                // 重連時只有在沒有現有對話記錄時才顯示載入動畫
+                const hasExistingConversation = this.hasConversationHistory();
+                if (!hasExistingConversation) {
+                    this.showConversationLoadingMessage();
+                }
                 this.connectWebSocket();
             }, 3000);
         };
@@ -835,14 +928,25 @@ class ChatManager {
     }
 
     handleMessage(data) {
+        // 標記已收到訊息，並隱藏載入動畫
+        if (!this.hasReceivedMessages) {
+            this.hasReceivedMessages = true;
+            if (this.loadingTimeout) {
+                clearTimeout(this.loadingTimeout);
+            }
+            this.hideConversationLoadingMessage();
+            
+            // 只在第一次收到訊息時更新顯示狀態
+            setTimeout(() => {
+                this.updateSuggestionsDisplay();
+            }, 100);
+        }
         
         if (data.type === 'conversation_cleared') {
             
             const conversationContainer = document.getElementById('conversation-messages');
             conversationContainer.innerHTML = '';
             this.updateSuggestionsDisplay();
-            // 重新載入建議問題以獲取最新內容
-            this.loadSuggestedQuestions();
             this.showToast(data.message, 'success');
             return;
         } else if (data.type === 'error') {
@@ -851,8 +955,11 @@ class ChatManager {
             return;
         }
         
-        // 確保對話容器可見
-        this.updateSuggestionsDisplay();
+        // 確保對話容器可見（但不重新載入建議問題）
+        const emptySuggestionsElement = document.getElementById('empty-chat-suggestions');
+        const conversationMessagesElement = document.getElementById('conversation-messages');
+        emptySuggestionsElement.classList.add('hidden');
+        conversationMessagesElement.classList.remove('hidden');
         
         const conversationContainer = document.getElementById('conversation-messages');
         const existingMessage = conversationContainer.querySelector(`[data-message-id="${data.id}"]`);
@@ -1056,15 +1163,40 @@ class ChatManager {
     formatMessage(message) {
         if (!message) return '';
         
+        // 使用佔位符保護 Markdown 連結
+        const linkPlaceholders = [];
+        let formatted = message;
         
-        const escaped = this.escapeHtml(message);
+        // 先處理 Markdown 格式的連結 [text](url)，用佔位符替換
+        formatted = formatted.replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g, (match, text, url) => {
+            const placeholder = `__LINK_PLACEHOLDER_${linkPlaceholders.length}__`;
+            linkPlaceholders.push(`<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${text}</a>`);
+            return placeholder;
+        });
         
+        // 處理純 URL（簡化處理，只處理明顯的獨立 URL）
+        formatted = formatted.replace(/(^|\s)(https?:\/\/[^\s<>]+)/g, (match, prefix, url) => {
+            const placeholder = `__LINK_PLACEHOLDER_${linkPlaceholders.length}__`;
+            linkPlaceholders.push(`<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${url}</a>`);
+            return prefix + placeholder;
+        });
         
-        return escaped
+        // 轉義 HTML
+        formatted = this.escapeHtml(formatted);
+        
+        // 處理其他 Markdown 格式
+        formatted = formatted
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
             .replace(/`(.*?)`/g, '<code class="bg-gray-200 px-1 rounded text-xs">$1</code>')
             .replace(/\n/g, '<br>');
+        
+        // 恢復連結佔位符
+        linkPlaceholders.forEach((link, index) => {
+            formatted = formatted.replace(`__LINK_PLACEHOLDER_${index}__`, link);
+        });
+        
+        return formatted;
     }
 
     escapeHtml(text) {

@@ -11,4 +11,5 @@ urlpatterns = [
     path('file/<int:file_id>/preview/', views.FilePreviewView.as_view(), name='file_preview'),
     path('file/<int:file_id>/download/', views.FileDownloadView.as_view(), name='file_download'),
     path('file/<int:file_id>/delete/', views.FileDeleteView.as_view(), name='file_delete'),
+    path('api/sources-suggestions/', views.SourceSuggestView.as_view(), name='source_suggestions'),
 ] 
