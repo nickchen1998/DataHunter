@@ -95,19 +95,7 @@
 
     <!-- 輸入區域 -->
     <div class="p-4 border-t border-gray-200 bg-white">
-        <!-- 問題建議 - 有對話記錄時顯示 -->
-        <div id="compact-suggestions" class="hidden mb-3">
-            <div class="flex flex-wrap gap-2">
-                <button class="suggested-question-btn inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-full hover:bg-blue-100 hover:border-blue-300 transition-colors duration-200" 
-                        data-question="總結一下這個資料集的特點">
-                    <span class="truncate">總結一下這個資料集的特點</span>
-                </button>
-                <button class="suggested-question-btn inline-flex items-center px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-full hover:bg-purple-100 hover:border-purple-300 transition-colors duration-200" 
-                        data-question="有什麼有趣的發現嗎？">
-                    <span class="truncate">有什麼有趣的發現嗎？</span>
-                </button>
-            </div>
-        </div>
+
         
         {% if is_over_chat_limit %}
             <!-- 超過聊天限制時的提示 -->
@@ -297,7 +285,6 @@ class ChatManager {
 
     updateSuggestionsDisplay() {
         const emptySuggestionsElement = document.getElementById('empty-chat-suggestions');
-        const compactSuggestionsElement = document.getElementById('compact-suggestions');
         const conversationMessagesElement = document.getElementById('conversation-messages');
         
         // 檢查是否有對話記錄
@@ -307,15 +294,10 @@ class ChatManager {
             // 有對話記錄時的顯示
             emptySuggestionsElement.classList.add('hidden');
             conversationMessagesElement.classList.remove('hidden');
-            compactSuggestionsElement.classList.remove('hidden');
-            
-            // 更新緊湊版建議問題
-            this.updateCompactSuggestions();
         } else {
             // 沒有對話記錄時的顯示
             emptySuggestionsElement.classList.remove('hidden');
             conversationMessagesElement.classList.add('hidden');
-            compactSuggestionsElement.classList.add('hidden');
         }
     }
 
@@ -325,69 +307,7 @@ class ChatManager {
         return conversationContainer && conversationContainer.children.length > 0;
     }
 
-    updateCompactSuggestions() {
-        // 根據當前參考資料更新緊湊版建議問題
-        const compactContainer = document.querySelector('#compact-suggestions .flex');
-        if (!compactContainer) return;
-        
-        // 清空現有建議
-        compactContainer.innerHTML = '';
-        
-        // 根據參考資料類型生成建議問題
-        const suggestions = this.generateContextualSuggestions();
-        
-        suggestions.forEach((suggestion, index) => {
-            const colors = [
-                { text: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200', hover: 'hover:bg-blue-100 hover:border-blue-300' },
-                { text: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-200', hover: 'hover:bg-purple-100 hover:border-purple-300' }
-            ];
-            const color = colors[index % colors.length];
-            
-            const button = document.createElement('button');
-            button.className = `suggested-question-btn inline-flex items-center px-3 py-1.5 text-xs font-medium ${color.text} ${color.bg} border ${color.border} rounded-full ${color.hover} transition-colors duration-200`;
-            button.dataset.question = suggestion.question;
-            
-            button.innerHTML = `
-                <span class="truncate">${suggestion.question}</span>
-            `;
-            
-            compactContainer.appendChild(button);
-        });
-    }
 
-    generateContextualSuggestions() {
-        const suggestions = [];
-        
-        // 基本建議問題
-        if (this.references.size === 0) {
-            suggestions.push(
-                { question: '請介紹一下可用的資料類型' },
-                { question: '如何有效利用這些資料？' }
-            );
-        } else {
-            // 根據參考資料類型生成建議
-            const hasGovData = Array.from(this.references.values()).some(ref => ref.category);
-            const hasSymptomData = Array.from(this.references.values()).some(ref => ref.symptom);
-            const hasPrivateData = Array.from(this.references.values()).some(ref => ref.type === 'private_source');
-            
-            if (hasGovData) {
-                suggestions.push({ question: '分析這些政府資料的特點' });
-            }
-            
-            if (hasSymptomData) {
-                suggestions.push({ question: '總結症狀相關的醫療建議' });
-            }
-            
-            if (hasPrivateData) {
-                suggestions.push({ question: '解讀這些自建資料的內容' });
-            }
-            
-            // 通用建議
-            suggestions.push({ question: '有什麼值得注意的發現嗎？' });
-        }
-        
-        return suggestions.slice(0, 2); // 最多顯示2個建議
-    }
 
     addReference(button) {
         const referenceData = {
@@ -823,8 +743,6 @@ class ChatManager {
             conversationContainer.appendChild(messageElement);
         }
         
-        // 更新緊湊版建議
-        this.updateCompactSuggestions();
         this.scrollToBottom();
     }
 

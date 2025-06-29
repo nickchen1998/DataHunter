@@ -35,3 +35,6 @@ class SymptomListView(LoginRequiredMixin, UserPlanContextMixin, ListView):
         context['genders'] = Symptom.objects.values_list('gender', flat=True).distinct().order_by('gender')
           
         return context 
+    
+    def generate_suggest_questions(self) -> list[str]:
+        pass
