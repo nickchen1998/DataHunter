@@ -4,7 +4,6 @@ from langchain.agents import create_openai_functions_agent, AgentExecutor
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.callbacks import BaseCallbackHandler
 from RAGPilot.celery import app
 from utils.nl_to_sql import CustomNL2SQLQueryTool
 from crawlers.models import Symptom, Dataset, SYMPTOM_SYSTEM_PROMPT, GOV_DATA_SYSTEM_PROMPT
@@ -36,33 +35,6 @@ def get_chat_history(session, limit=10):
             chat_history.append(AIMessage(content=message.text))
     
     return chat_history
-
-
-class StreamingCallbackHandler(BaseCallbackHandler):
-    def __init__(self, session, user, ai_message):
-        self.session = session
-        self.user = user
-        self.ai_message = ai_message
-        self.tool_results = []
-
-        
-    def on_llm_start(self, serialized, prompts, **kwargs):
-        print("🤖 LLM 開始處理...")
-        
-    def on_llm_end(self, response, **kwargs):
-        print("🎯 LLM 完成回應")
-        if hasattr(response, 'generations') and response.generations:
-            content = response.generations[0][0].text
-            self.ai_message.text = content
-            self.ai_message.save()
-            print(f"💬 AI 回應: {content[:100]}...")
-            
-    def on_agent_action(self, action, **kwargs):
-        print(f"🎬 Agent 動作: {action.tool} - {action.tool_input}")
-        
-    def on_agent_finish(self, finish, **kwargs):
-        print(f"🏁 Agent 完成: {finish.return_values.get('output', '')[:100]}...")
-    
 
 
 
@@ -112,16 +84,13 @@ def process_conversation_async(user_id, user_question, reference_id_list=None, d
             prompt=prompt
         )
         
-        callback_handler = StreamingCallbackHandler(session, user, ai_message)
-        
         agent_executor = AgentExecutor(
             agent=agent,
             tools=tools,
             verbose=True,
             return_intermediate_steps=True,
             handle_parsing_errors=True,
-            max_iterations=3,
-            callbacks=[callback_handler]
+            max_iterations=3
         )
         
         print(f"🚀 開始處理對話: {user_question[:50]}...")
@@ -132,6 +101,7 @@ def process_conversation_async(user_id, user_question, reference_id_list=None, d
         print(f"🎉 對話處理完成!")
         
         # 記錄 Tool 執行結果到資料庫（但不顯示在前端）
+        tool_results = []
         if 'intermediate_steps' in result and result['intermediate_steps']:
             print(f"🔧 記錄 {len(result['intermediate_steps'])} 個工具調用結果到資料庫")
             
@@ -146,8 +116,8 @@ def process_conversation_async(user_id, user_question, reference_id_list=None, d
                     tool_result=str(observation)
                 )
                 
-                # 同時記錄到 callback handler
-                callback_handler.tool_results.append({
+                # 收集工具結果
+                tool_results.append({
                     'tool_name': action.tool,
                     'tool_input': action.tool_input,
                     'tool_output': str(observation),
@@ -170,7 +140,7 @@ def process_conversation_async(user_id, user_question, reference_id_list=None, d
             'status': 'completed',
             'response': result.get('output', ai_message.text),
             'ai_message_id': ai_message.id,
-            'tool_results': callback_handler.tool_results,
+            'tool_results': tool_results,
             'session_id': session.id
         }
     except Exception as e:
