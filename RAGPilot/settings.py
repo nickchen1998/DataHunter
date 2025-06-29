@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from django.contrib.messages import constants as messages_constants
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -222,3 +223,6 @@ CHANNEL_LAYERS = {
 # 您可以透過環境變數 SOURCE_FILES_DIR 來設定檔案儲存目錄
 # 例如：export SOURCE_FILES_DIR="/path/to/your/source/files"
 SOURCE_FILES_DIR = os.getenv('SOURCE_FILES_DIR', str(BASE_DIR / 'source_files'))
+
+# Django Messages Framework 設定
+MESSAGE_LEVEL = messages_constants.WARNING

@@ -31,6 +31,42 @@
     <!-- 使用條款彈出視窗 -->
     {% include '_terms_modal.html' %}
     
+    <!-- 顯示 Django messages -->
+    {% if messages %}
+        <div id="django-messages" class="fixed top-4 right-4 z-50 space-y-2">
+            {% for message in messages %}
+                <div class="alert 
+                    {% if message.tags == 'error' %}alert-error{% endif %}
+                    {% if message.tags == 'warning' %}alert-warning{% endif %}
+                    {% if message.tags == 'success' %}alert-success{% endif %}
+                    {% if message.tags == 'info' %}alert-info{% endif %}
+                    shadow-lg" 
+                    data-message="{{ message|escapejs }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+        
+        <script>
+            // 過濾登入成功訊息
+            document.addEventListener('DOMContentLoaded', function() {
+                const messageElements = document.querySelectorAll('#django-messages .alert');
+                const loginKeywords = ['登入成功', 'logged in', 'successfully signed in', 'nickchen'];
+                
+                messageElements.forEach(function(element) {
+                    const messageText = element.textContent || element.innerText;
+                    const shouldHide = loginKeywords.some(keyword => 
+                        messageText.toLowerCase().includes(keyword.toLowerCase())
+                    );
+                    
+                    if (shouldHide) {
+                        element.style.display = 'none';
+                    }
+                });
+            });
+        </script>
+    {% endif %}
+    
     <!-- 基礎 JavaScript -->
     <script>
         // 通用的表單提交載入狀態

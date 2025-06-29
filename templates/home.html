@@ -61,6 +61,16 @@
                     查看使用條款與隱私政策 ↗
                 </a>
             </div>
+            
+            <!-- 管理員功能區塊 - 僅超級使用者可見 -->
+            {% if user.is_superuser %}
+            <div class="mt-4 p-3 bg-red-50 border border-red-200 rounded">
+                <p class="text-sm font-semibold text-red-800 mb-2">⚙️ 管理員功能</p>
+                <a href="/admin/" target="_blank" class="text-xs text-red-600 hover:text-red-800 hover:underline">
+                    進入 Django Admin 後台 ↗
+                </a>
+            </div>
+            {% endif %}
         </div>
 
         <!-- 用戶操作區域 -->

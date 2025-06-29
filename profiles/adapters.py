@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 import re
 import uuid
+from django.http import HttpResponseRedirect
 
 User = get_user_model()
 
@@ -31,15 +32,42 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         # 一般登入跳轉到首頁
         return '/'
     
+    def add_message(self, request, level, message_tag, message, **kwargs):
+        """
+        覆蓋訊息添加方法，禁用登入成功訊息
+        """
+        # 檢查各種可能的登入成功訊息標籤
+        login_message_tags = [
+            'account_logged_in',
+            'socialaccount_logged_in', 
+            'logged_in',
+            'login_success'
+        ]
+        
+        # 如果是登入成功相關訊息，直接忽略
+        if message_tag in login_message_tags:
+            return
+            
+        # 也可以檢查訊息內容是否包含登入成功的關鍵字
+        if message and isinstance(message, str):
+            login_keywords = ['登入成功', 'logged in', 'successfully signed in', 'nickchen']
+            if any(keyword.lower() in message.lower() for keyword in login_keywords):
+                return
+        
+        # 其他訊息正常處理
+        super().add_message(request, level, message_tag, message, **kwargs)
+    
     def authentication_error(self, request, provider_id, error=None, exception=None, extra_context=None):
         """
         處理認證錯誤
         """
-        messages.error(
-            request,
-            f'❌ {provider_id.capitalize()} 登入失敗，請稍後再試。'
-        )
-        return super().authentication_error(request, provider_id, error, exception, extra_context)
+        error_message = f'⚠️ {provider_id.capitalize()} 登入失敗'
+        if error:
+            error_message += f'：{error}'
+        messages.error(request, error_message)
+        
+        # 返回到登入頁面
+        return HttpResponseRedirect(reverse('account_login'))
     
     def generate_unique_username(self, txts):
         """
