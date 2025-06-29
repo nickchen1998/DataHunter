@@ -9,9 +9,11 @@ app = Celery(
     broker=f"redis://{os.getenv('REDIS_HOST', 'localhost')}:6379/1"
 )
 app.conf.imports = (
-    "celery_app.crawlers.*",
-    "celery_app.tasks.*",
-    "celery_app.extractors.*",
+    "celery_app.crawlers.gov_datas",
+    "celery_app.crawlers.symptoms",
+    "celery_app.extractors.extract_pdf",
+    "celery_app.extractors.extract_structured_file",
+    "celery_app.tasks.conversations",
 )
 app.conf.timezone = 'Asia/Taipei'
 app.conf.enable_utc = True
