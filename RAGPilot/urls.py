@@ -29,6 +29,7 @@ urlpatterns = [
     path('', include('crawlers.urls')),
     path('conversations/', include('conversations.urls')),
     path('sources/', include('sources.urls')),
+    path('websites/', include('websites.urls')),  # websites URLs
     path('accounts/', include('allauth.urls')),  # allauth URLs
     path('favicon.ico', RedirectView.as_view(url=staticfiles_storage.url('favicon.ico')), name='favicon'),
 ]

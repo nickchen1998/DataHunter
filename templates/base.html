@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <title>數據領航員 RAGPilot</title>
     
     <!-- Favicon -->
@@ -60,21 +61,6 @@
                     setTimeout(() => alert.remove(), 500);
                 });
             }, 3000);
-        }
-
-        // 使用條款彈出視窗控制函數
-        function openTermsModal() {
-            const modal = document.getElementById('terms-modal');
-            if (modal) {
-                modal.classList.add('modal-open');
-            }
-        }
-        
-        function closeTermsModal() {
-            const modal = document.getElementById('terms-modal');
-            if (modal) {
-                modal.classList.remove('modal-open');
-            }
         }
 
         // 頁面載入完成後執行通用初始化

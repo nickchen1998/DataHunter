@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'crawlers.apps.CrawlersConfig',
     'conversations.apps.ConversationsConfig',
     'sources.apps.SourcesConfig',
+    'websites.apps.WebsitesConfig',
 ]
 
 MIDDLEWARE = [
