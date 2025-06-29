@@ -39,7 +39,7 @@ class Source(models.Model):
     @property
     def file_count(self):
         """獲取資料源中的檔案數量"""
-        return self.sourcefile_set.filter(is_deleted=False).count()
+        return self.sourcefile_set.count()
 
     def soft_delete(self):
         """軟刪除資料源"""

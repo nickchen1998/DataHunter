@@ -26,10 +26,9 @@ class SourceListView(LoginRequiredMixin, UserPlanContextMixin, ListView):
     paginate_by = 10
     
     def get_queryset(self):
-        # 只顯示當前用戶的非刪除資料源
+        # 只顯示當前用戶的資料源
         return Source.objects.filter(
-            user=self.request.user, 
-            is_deleted=False
+            user=self.request.user
         ).order_by('-created_at')
     
     def get_context_data(self, **kwargs):
@@ -42,8 +41,7 @@ class SourceListView(LoginRequiredMixin, UserPlanContextMixin, ListView):
         
         # 計算私有資料源數量
         private_source_count = Source.objects.filter(
-            user=self.request.user, 
-            is_deleted=False
+            user=self.request.user
         ).count()
         
         # 檢查用戶權限層級
@@ -77,8 +75,7 @@ class SourceCreateView(LoginRequiredMixin, UserPlanContextMixin, TemplateView):
         profile, _ = Profile.objects.get_or_create(user=self.request.user)
         
         private_source_count = Source.objects.filter(
-            user=self.request.user, 
-            is_deleted=False
+            user=self.request.user
         ).count()
         
         is_superuser = self.request.user.is_superuser
@@ -99,8 +96,7 @@ class SourceCreateView(LoginRequiredMixin, UserPlanContextMixin, TemplateView):
         # 檢查是否可以建立新資料源
         limit, _ = Limit.objects.get_or_create(user=request.user)
         private_source_count = Source.objects.filter(
-            user=request.user, 
-            is_deleted=False
+            user=request.user
         ).count()
         
         is_superuser = request.user.is_superuser
@@ -117,8 +113,7 @@ class SourceCreateView(LoginRequiredMixin, UserPlanContextMixin, TemplateView):
         # 再次檢查限制（防止併發建立）
         limit, _ = Limit.objects.get_or_create(user=request.user)
         private_source_count = Source.objects.filter(
-            user=request.user, 
-            is_deleted=False
+            user=request.user
         ).count()
         
         is_superuser = request.user.is_superuser
@@ -138,7 +133,7 @@ class SourceCreateView(LoginRequiredMixin, UserPlanContextMixin, TemplateView):
             return self.get(request, *args, **kwargs)
         
         # 檢查名稱是否重複
-        if Source.objects.filter(user=request.user, name=name, is_deleted=False).exists():
+        if Source.objects.filter(user=request.user, name=name).exists():
             messages.error(request, f'資料源名稱「{name}」已存在，請使用不同的名稱。')
             return self.get(request, *args, **kwargs)
         
@@ -165,8 +160,7 @@ class SourceDetailView(LoginRequiredMixin, UserPlanContextMixin, DetailView):
         source = get_object_or_404(
             Source, 
             pk=self.kwargs['pk'], 
-            user=self.request.user, 
-            is_deleted=False
+            user=self.request.user
         )
         return source
     
@@ -178,8 +172,7 @@ class SourceDetailView(LoginRequiredMixin, UserPlanContextMixin, DetailView):
         
         # 獲取真實的檔案列表
         files = SourceFile.objects.filter(
-            source=source, 
-            is_deleted=False
+            source=source
         ).order_by('-created_at')
         
         # 計算處理狀態統計
@@ -200,8 +193,7 @@ class SourceDetailView(LoginRequiredMixin, UserPlanContextMixin, DetailView):
         
         # 計算私有資料源數量
         private_source_count = Source.objects.filter(
-            user=self.request.user, 
-            is_deleted=False
+            user=self.request.user
         ).count()
         
         context.update({
@@ -228,8 +220,7 @@ class SourceEditView(LoginRequiredMixin, UserPlanContextMixin, TemplateView):
         return get_object_or_404(
             Source, 
             pk=self.kwargs['pk'], 
-            user=self.request.user, 
-            is_deleted=False
+            user=self.request.user
         )
     
     def get_context_data(self, **kwargs):
@@ -252,8 +243,7 @@ class SourceEditView(LoginRequiredMixin, UserPlanContextMixin, TemplateView):
         # 檢查名稱是否重複（排除自己）
         if Source.objects.filter(
             user=request.user, 
-            name=name, 
-            is_deleted=False
+            name=name
         ).exclude(pk=source.pk).exists():
             messages.error(request, f'資料源名稱「{name}」已存在，請使用不同的名稱。')
             return self.get(request, *args, **kwargs)
@@ -276,8 +266,7 @@ class SourceDeleteView(LoginRequiredMixin, UserPlanContextMixin, TemplateView):
         return get_object_or_404(
             Source, 
             pk=self.kwargs['pk'], 
-            user=self.request.user, 
-            is_deleted=False
+            user=self.request.user
         )
     
     def get_context_data(self, **kwargs):
@@ -313,8 +302,7 @@ class SourceUploadView(LoginRequiredMixin, UserPlanContextMixin, TemplateView):
         return get_object_or_404(
             Source, 
             pk=self.kwargs['pk'], 
-            user=self.request.user, 
-            is_deleted=False
+            user=self.request.user
         )
     
     def get_context_data(self, **kwargs):
@@ -447,8 +435,7 @@ class SourceUploadView(LoginRequiredMixin, UserPlanContextMixin, TemplateView):
             # 檢查檔案名稱是否重複
             if SourceFile.objects.filter(
                 source=source, 
-                filename=uploaded_file.name, 
-                is_deleted=False
+                filename=uploaded_file.name
             ).exists():
                 failed_uploads.append(f"{uploaded_file.name}（檔案名稱重複）")
                 continue
@@ -503,8 +490,7 @@ class FilePreviewView(LoginRequiredMixin, TemplateView):
         return get_object_or_404(
             SourceFile,
             pk=self.kwargs['file_id'],
-            user=self.request.user,
-            is_deleted=False
+            user=self.request.user
         )
     
     def get(self, request, *args, **kwargs):
@@ -523,11 +509,11 @@ class FilePreviewView(LoginRequiredMixin, TemplateView):
             if file_obj.format == SourceFileFormat.PDF:
                 return self._preview_pdf(file_obj)
             elif file_obj.format == SourceFileFormat.CSV:
-                return self._preview_csv(file_obj)
+                return self._preview_structured_data(file_obj, 'csv')
             elif file_obj.format == SourceFileFormat.JSON:
-                return self._preview_json(file_obj)
+                return self._preview_structured_data(file_obj, 'json')
             elif file_obj.format == SourceFileFormat.XML:
-                return self._preview_xml(file_obj)
+                return self._preview_structured_data(file_obj, 'xml')
             else:
                 return JsonResponse({
                     'success': False,
@@ -543,16 +529,20 @@ class FilePreviewView(LoginRequiredMixin, TemplateView):
     def _preview_pdf(self, file_obj):
         """預覽 PDF 檔案"""
         try:
-            # 對於 PDF，我們返回檔案路徑讓前端使用 PDF.js 顯示
-            # 或者可以提取前幾頁的文字內容
+            # 只保留必要的說明文字，避免與下方檔案資訊重複
+            content_info = "此為 PDF 檔案，建議下載後使用 PDF 閱讀器查看完整內容。"
+            
             return JsonResponse({
                 'success': True,
                 'file_type': 'pdf',
                 'filename': file_obj.filename,
                 'size': f"{file_obj.size} MB",
+                'status': file_obj.get_status_display(),
+                'summary': file_obj.summary or '暫無摘要',
+                'failed_reason': file_obj.failed_reason if file_obj.status == 'failed' else None,
                 'message': 'PDF 檔案預覽需要下載檔案查看完整內容',
                 'preview_type': 'info',
-                'content': f"檔案名稱：{file_obj.filename}\n檔案大小：{file_obj.size} MB\n格式：PDF\n\n此為 PDF 檔案，建議下載後使用 PDF 閱讀器查看完整內容。"
+                'content': content_info
             })
         except Exception as e:
             return JsonResponse({
@@ -560,100 +550,87 @@ class FilePreviewView(LoginRequiredMixin, TemplateView):
                 'error': f'PDF 預覽失敗：{str(e)}'
             }, status=500)
     
-    def _preview_csv(self, file_obj):
-        """預覽 CSV 檔案"""
+    def _preview_structured_data(self, file_obj, file_type):
+        """預覽結構化資料檔案（從資料庫表格讀取）"""
         try:
-            # 讀取 CSV 檔案的前幾行
-            df = pd.read_csv(file_obj.path, nrows=10)  # 只讀取前10行
+            from sources.models import SourceFileTable
+            import psycopg2
+            from django.conf import settings
+            
+            # 準備基本信息
+            basic_info = {
+                'filename': file_obj.filename,
+                'size': f"{file_obj.size} MB",
+                'status': file_obj.get_status_display(),
+                'summary': file_obj.summary or '暫無摘要',
+                'failed_reason': file_obj.failed_reason if file_obj.status == 'failed' else None
+            }
+            
+            # 如果檔案處理失敗，只顯示基本信息和失敗原因
+            if file_obj.status == 'failed':
+                return JsonResponse({
+                    'success': True,
+                    'file_type': file_type,
+                    'preview_type': 'error',
+                    'message': f'檔案處理失敗：{file_obj.failed_reason or "未知錯誤"}',
+                    **basic_info
+                })
+            
+            # 查找對應的資料表
+            try:
+                source_file_table = SourceFileTable.objects.get(source_file=file_obj)
+            except SourceFileTable.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'找不到 {file_type.upper()} 檔案對應的資料表，檔案可能尚未處理完成'
+                }, status=404)
+            
+            # 連接到對應的資料庫並讀取資料
+            db_config = settings.DATABASES['default']
+            conn = psycopg2.connect(
+                host=db_config['HOST'],
+                port=db_config['PORT'],
+                database=source_file_table.database_name,
+                user=db_config['USER'],
+                password=db_config['PASSWORD']
+            )
+            
+            # 讀取前10行資料
+            query = f'SELECT * FROM "{source_file_table.table_name}" LIMIT 10'
+            df = pd.read_sql_query(query, conn)
+            
+            # 獲取總行數
+            cursor = conn.cursor()
+            cursor.execute(f'SELECT COUNT(*) FROM "{source_file_table.table_name}"')
+            total_rows = cursor.fetchone()[0]
+            conn.close()
             
             # 轉換為 HTML 表格
             html_table = df.to_html(
                 classes='table table-sm table-striped', 
-                table_id='csv-preview-table',
+                table_id=f'{file_type}-preview-table',
                 escape=False,
                 index=False
             )
             
             return JsonResponse({
                 'success': True,
-                'file_type': 'csv',
-                'filename': file_obj.filename,
-                'size': f"{file_obj.size} MB",
+                'file_type': file_type,
                 'preview_type': 'table',
                 'content': html_table,
-                'total_rows': len(df),
+                'total_rows': total_rows,
                 'total_columns': len(df.columns),
-                'message': f'顯示前 {len(df)} 行，共 {len(df.columns)} 欄'
+                'message': f'顯示前 {len(df)} 行，共 {total_rows} 行 {len(df.columns)} 欄',
+                **basic_info
             })
+                
         except Exception as e:
             return JsonResponse({
                 'success': False,
-                'error': f'CSV 預覽失敗：{str(e)}'
+                'error': f'{file_type.upper()} 預覽失敗：{str(e)}'
             }, status=500)
-    
-    def _preview_json(self, file_obj):
-        """預覽 JSON 檔案"""
-        try:
-            with open(file_obj.path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-            
-            # 格式化 JSON 內容
-            formatted_json = json.dumps(data, ensure_ascii=False, indent=2)
-            
-            # 如果內容太長，只顯示前1000個字符
-            if len(formatted_json) > 1000:
-                preview_content = formatted_json[:1000] + '\n\n... (內容已截斷，完整內容請下載檔案查看)'
-            else:
-                preview_content = formatted_json
-            
-            return JsonResponse({
-                'success': True,
-                'file_type': 'json',
-                'filename': file_obj.filename,
-                'size': f"{file_obj.size} MB",
-                'preview_type': 'code',
-                'content': preview_content,
-                'language': 'json',
-                'message': '顯示 JSON 檔案內容預覽'
-            })
-        except json.JSONDecodeError as e:
-            return JsonResponse({
-                'success': False,
-                'error': f'JSON 格式錯誤：{str(e)}'
-            }, status=400)
-        except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'error': f'JSON 預覽失敗：{str(e)}'
-            }, status=500)
-    
-    def _preview_xml(self, file_obj):
-        """預覽 XML 檔案"""
-        try:
-            with open(file_obj.path, 'r', encoding='utf-8') as f:
-                content = f.read()
-            
-            # 如果內容太長，只顯示前1000個字符
-            if len(content) > 1000:
-                preview_content = content[:1000] + '\n\n... (內容已截斷，完整內容請下載檔案查看)'
-            else:
-                preview_content = content
-            
-            return JsonResponse({
-                'success': True,
-                'file_type': 'xml',
-                'filename': file_obj.filename,
-                'size': f"{file_obj.size} MB",
-                'preview_type': 'code',
-                'content': preview_content,
-                'language': 'xml',
-                'message': '顯示 XML 檔案內容預覽'
-            })
-        except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'error': f'XML 預覽失敗：{str(e)}'
-            }, status=500)
+
+
 
 
 class FileDownloadView(LoginRequiredMixin, TemplateView):
@@ -664,8 +641,7 @@ class FileDownloadView(LoginRequiredMixin, TemplateView):
         return get_object_or_404(
             SourceFile,
             pk=self.kwargs['file_id'],
-            user=self.request.user,
-            is_deleted=False
+            user=self.request.user
         )
     
     def get(self, request, *args, **kwargs):
@@ -713,8 +689,7 @@ class FileDeleteView(LoginRequiredMixin, TemplateView):
         return get_object_or_404(
             SourceFile,
             pk=self.kwargs['file_id'],
-            user=self.request.user,
-            is_deleted=False
+            user=self.request.user
         )
     
     def post(self, request, *args, **kwargs):
