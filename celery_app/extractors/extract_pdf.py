@@ -50,9 +50,12 @@ def extract_pdf_soruce_file_content(source_file_id: int):
         return f"載入 PDF 檔案失敗: {str(e)}"
         
     if not documents:
-        print(f"PDF 檔案 {source_file.filename} 沒有可提取的內容")
         utils.set_source_file_status(source_file, ProcessingStatus.COMPLETED)
-        return
+
+        source_file.summary = f"PDF 檔案 {source_file.filename} 沒有可提取的內容，請使用其他方式提取內容。"
+        source_file.save()
+
+        return f"PDF 檔案 {source_file.filename} 沒有可提取的內容，請使用其他方式提取內容。"
             
     parent_text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
