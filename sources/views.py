@@ -613,6 +613,9 @@ class FilePreviewView(LoginRequiredMixin, TemplateView):
                 index=False
             )
             
+            # 添加表頭置中對齊的樣式
+            html_table = f'<style>#{file_type}-preview-table th {{ text-align: center !important; }}</style>' + html_table
+            
             return JsonResponse({
                 'success': True,
                 'file_type': file_type,
