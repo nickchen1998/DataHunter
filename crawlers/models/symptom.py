@@ -87,6 +87,8 @@ class Symptom(models.Model):
     objects = SymptomManager()
 
     class Meta:
+        verbose_name = '衛福部-台灣e院-症狀'
+        verbose_name_plural = '衛福部-台灣e院-症狀'
         indexes = [
             HnswIndex(
                 name="crawlers_symp_q_emb_hnsw_idx",

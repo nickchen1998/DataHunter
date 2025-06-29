@@ -226,7 +226,32 @@ class SourceEditView(LoginRequiredMixin, UserPlanContextMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['request_path'] = self.request.path
-        context['source'] = self.get_source()
+        source = self.get_source()
+        context['source'] = source
+        
+        # 添加限制資訊
+        limit, _ = Limit.objects.get_or_create(user=self.request.user)
+        is_superuser = self.request.user.is_superuser
+        has_unlimited_source = is_superuser
+        has_unlimited_files = is_superuser
+        
+        # 計算私有資料源數量
+        private_source_count = Source.objects.filter(
+            user=self.request.user
+        ).count()
+        
+        # 獲取當前資料源的檔案數量
+        current_file_count = source.file_count
+        
+        context.update({
+            'private_source_count': private_source_count,
+            'private_source_limit': limit.private_source_limit,
+            'has_unlimited_source': has_unlimited_source,
+            'current_file_count': current_file_count,
+            'file_limit_per_source': limit.file_limit_per_source,
+            'has_unlimited_files': has_unlimited_files,
+        })
+        
         return context
     
     def post(self, request, *args, **kwargs):
@@ -273,6 +298,30 @@ class SourceDeleteView(LoginRequiredMixin, UserPlanContextMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         context['request_path'] = self.request.path
         context['source'] = self.get_source()
+        
+        # 添加限制資訊
+        limit, _ = Limit.objects.get_or_create(user=self.request.user)
+        is_superuser = self.request.user.is_superuser
+        has_unlimited_source = is_superuser
+        has_unlimited_files = is_superuser
+        
+        # 計算私有資料源數量
+        private_source_count = Source.objects.filter(
+            user=self.request.user
+        ).count()
+        
+        # 獲取當前資料源的檔案數量
+        current_file_count = self.get_source().file_count
+        
+        context.update({
+            'private_source_count': private_source_count,
+            'private_source_limit': limit.private_source_limit,
+            'has_unlimited_source': has_unlimited_source,
+            'current_file_count': current_file_count,
+            'file_limit_per_source': limit.file_limit_per_source,
+            'has_unlimited_files': has_unlimited_files,
+        })
+        
         return context
     
     def post(self, request, *args, **kwargs):

@@ -5,22 +5,18 @@
 {% block source-description %}
 <div class="p-3 bg-green-50 border border-green-200 rounded">
     <p class="text-sm font-semibold text-green-800 mb-2">🎯 建立新資料源</p>
-    <p class="text-xs text-green-600">
+    <p class="text-xs text-green-600 mb-2">
         為您的專案建立一個新的私有資料庫，可以上傳各種格式的檔案進行智慧分析。
     </p>
-    
-    <!-- 限制資訊顯示 -->
-    <div class="mt-3 text-xs text-green-600">
-        {% if has_unlimited_source %}
-            <span class="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 rounded-full">
-                ✨ 您可以無限制建立資料源
-            </span>
-        {% else %}
-            <span class="inline-flex items-center px-2 py-1 bg-green-100 text-green-700 rounded-full">
-                剩餘額度：{{ remaining_source_count }} / {{ private_source_limit }} 個資料源
-            </span>
-        {% endif %}
-    </div>
+    {% if not has_unlimited_source %}
+        <div class="text-xs text-green-700 bg-green-100 rounded px-2 py-1">
+            📊 已建立：{{ private_source_count }}/{{ private_source_limit }} 個資料源
+        </div>
+    {% else %}
+        <div class="text-xs text-green-700 bg-green-100 rounded px-2 py-1">
+            ✨ 無限制建立資料源
+        </div>
+    {% endif %}
 </div>
 {% endblock %}
 

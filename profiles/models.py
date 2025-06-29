@@ -31,5 +31,9 @@ class Limit(models.Model):
     private_source_limit = models.IntegerField(default=3)
     file_limit_per_source = models.IntegerField(default=10)
     
+    class Meta:
+        verbose_name = '使用方案'
+        verbose_name_plural = '使用方案'
+    
     def __str__(self):
-        return f"{self.user.username} - Limit"
+        return f"{self.user.username} - 使用方案"

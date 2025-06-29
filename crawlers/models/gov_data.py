@@ -143,6 +143,8 @@ class Dataset(models.Model):
     objects = DatasetManager()
 
     class Meta:
+        verbose_name = '政府資料集'
+        verbose_name_plural = '政府資料集'
         indexes = [
             HnswIndex(
                 name="crawlers_desc_emb_hnsw_idx",
@@ -190,8 +192,8 @@ class File(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
     
     class Meta:
-        verbose_name = "檔案"
-        verbose_name_plural = "檔案"
+        verbose_name = "政府資料集檔案"
+        verbose_name_plural = "政府資料集檔案"
         
     def __str__(self):
         return f"{self.dataset.name} - {self.table_name}" 

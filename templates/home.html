@@ -29,7 +29,7 @@
             </div>
 
             <!-- 原始網站 -->
-            {% if request_path != '/' %}
+            {% if request_path != '/' and '/sources/' not in request_path %}
                 <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
                     <p class="text-sm font-semibold text-blue-800 mb-2">🌐 原始網站</p>
                     {% if request_path == '/symptoms/list/' %}
@@ -42,10 +42,6 @@
                            class="text-xs text-blue-600 hover:text-blue-800 hover:underline">
                             政府資料開放平臺 ↗
                         </a>
-                    {% elif '/sources/' in request_path %}
-                        <div class="text-xs text-blue-600">
-                            💡 自建資料源，由您管理和上傳
-                        </div>
                     {% endif %}
                 </div>
             {% endif %}
