@@ -44,7 +44,45 @@
 
     <!-- 對話訊息區域 -->
     <div id="chat-messages" class="flex-1 p-4 overflow-y-auto bg-gray-50">
-        <!-- 訊息將通過 JavaScript 動態添加 -->
+        <!-- 問題建議 - 沒有對話記錄時顯示 -->
+        <div id="empty-chat-suggestions" class="h-full flex items-center justify-center">
+            <div class="text-center max-w-md">
+                <div class="mb-6">
+                    <svg class="w-16 h-16 mx-auto text-blue-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">開始您的探索之旅</h3>
+                    <p class="text-sm text-gray-500 mb-6">選擇以下問題開始對話，或直接輸入您的問題</p>
+                </div>
+                
+                <div class="space-y-3">
+                    <button class="suggested-question-btn w-full p-3 text-left bg-white hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md" 
+                            data-question="資料來源有哪些類型？">
+                        <span class="text-sm font-medium text-gray-700 truncate">資料來源有哪些類型？</span>
+                    </button>
+                    
+                    <button class="suggested-question-btn w-full p-3 text-left bg-white hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md" 
+                            data-question="如何使用這個系統進行查詢？">
+                        <span class="text-sm font-medium text-gray-700 truncate">如何使用這個系統進行查詢？</span>
+                    </button>
+                    
+                    <button class="suggested-question-btn w-full p-3 text-left bg-white hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md" 
+                            data-question="可以分析哪些類型的資料？">
+                        <span class="text-sm font-medium text-gray-700 truncate">可以分析哪些類型的資料？</span>
+                    </button>
+                    
+                    <button class="suggested-question-btn w-full p-3 text-left bg-white hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md" 
+                            data-question="系統支援哪些查詢功能？">
+                        <span class="text-sm font-medium text-gray-700 truncate">系統支援哪些查詢功能？</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 實際對話訊息容器 -->
+        <div id="conversation-messages" class="hidden space-y-4">
+            <!-- 訊息將通過 JavaScript 動態添加到這裡 -->
+        </div>
     </div>
 
     <!-- 連線狀態指示器 -->
@@ -57,6 +95,20 @@
 
     <!-- 輸入區域 -->
     <div class="p-4 border-t border-gray-200 bg-white">
+        <!-- 問題建議 - 有對話記錄時顯示 -->
+        <div id="compact-suggestions" class="hidden mb-3">
+            <div class="flex flex-wrap gap-2">
+                <button class="suggested-question-btn inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-full hover:bg-blue-100 hover:border-blue-300 transition-colors duration-200" 
+                        data-question="總結一下這個資料集的特點">
+                    <span class="truncate">總結一下這個資料集的特點</span>
+                </button>
+                <button class="suggested-question-btn inline-flex items-center px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-full hover:bg-purple-100 hover:border-purple-300 transition-colors duration-200" 
+                        data-question="有什麼有趣的發現嗎？">
+                    <span class="truncate">有什麼有趣的發現嗎？</span>
+                </button>
+            </div>
+        </div>
+        
         {% if is_over_chat_limit %}
             <!-- 超過聊天限制時的提示 -->
             <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
@@ -171,9 +223,11 @@ class ChatManager {
         this.connectWebSocket();
         this.setupEventListeners();
         this.setupReferenceSystem();
+        this.setupQuestionSuggestions();
         this.loadReferencesFromStorage();
         this.updateButtonStates();
         this.setupNavigationListener();
+        this.updateSuggestionsDisplay();
     }
 
     setupReferenceSystem() {
@@ -208,6 +262,131 @@ class ChatManager {
                 this.addReference(e.target);
             }
         });
+    }
+
+    setupQuestionSuggestions() {
+        // 設置問題建議點擊事件
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('suggested-question-btn') || 
+                e.target.closest('.suggested-question-btn')) {
+                
+                const button = e.target.classList.contains('suggested-question-btn') ? 
+                              e.target : e.target.closest('.suggested-question-btn');
+                              
+                const question = button.dataset.question;
+                if (question) {
+                    this.applySuggestedQuestion(question);
+                }
+            }
+        });
+    }
+
+    applySuggestedQuestion(question) {
+        // 將問題填入輸入框
+        this.chatInput.value = question;
+        this.chatInput.focus();
+        
+        // 更新按鈕狀態
+        this.updateSendButtonState();
+        
+        // 自動發送問題
+        setTimeout(() => {
+            this.sendMessage();
+        }, 100);
+    }
+
+    updateSuggestionsDisplay() {
+        const emptySuggestionsElement = document.getElementById('empty-chat-suggestions');
+        const compactSuggestionsElement = document.getElementById('compact-suggestions');
+        const conversationMessagesElement = document.getElementById('conversation-messages');
+        
+        // 檢查是否有對話記錄
+        const hasConversation = this.hasConversationHistory();
+        
+        if (hasConversation) {
+            // 有對話記錄時的顯示
+            emptySuggestionsElement.classList.add('hidden');
+            conversationMessagesElement.classList.remove('hidden');
+            compactSuggestionsElement.classList.remove('hidden');
+            
+            // 更新緊湊版建議問題
+            this.updateCompactSuggestions();
+        } else {
+            // 沒有對話記錄時的顯示
+            emptySuggestionsElement.classList.remove('hidden');
+            conversationMessagesElement.classList.add('hidden');
+            compactSuggestionsElement.classList.add('hidden');
+        }
+    }
+
+    hasConversationHistory() {
+        // 檢查對話容器中是否有訊息
+        const conversationContainer = document.getElementById('conversation-messages');
+        return conversationContainer && conversationContainer.children.length > 0;
+    }
+
+    updateCompactSuggestions() {
+        // 根據當前參考資料更新緊湊版建議問題
+        const compactContainer = document.querySelector('#compact-suggestions .flex');
+        if (!compactContainer) return;
+        
+        // 清空現有建議
+        compactContainer.innerHTML = '';
+        
+        // 根據參考資料類型生成建議問題
+        const suggestions = this.generateContextualSuggestions();
+        
+        suggestions.forEach((suggestion, index) => {
+            const colors = [
+                { text: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200', hover: 'hover:bg-blue-100 hover:border-blue-300' },
+                { text: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-200', hover: 'hover:bg-purple-100 hover:border-purple-300' }
+            ];
+            const color = colors[index % colors.length];
+            
+            const button = document.createElement('button');
+            button.className = `suggested-question-btn inline-flex items-center px-3 py-1.5 text-xs font-medium ${color.text} ${color.bg} border ${color.border} rounded-full ${color.hover} transition-colors duration-200`;
+            button.dataset.question = suggestion.question;
+            
+            button.innerHTML = `
+                <span class="truncate">${suggestion.question}</span>
+            `;
+            
+            compactContainer.appendChild(button);
+        });
+    }
+
+    generateContextualSuggestions() {
+        const suggestions = [];
+        
+        // 基本建議問題
+        if (this.references.size === 0) {
+            suggestions.push(
+                { question: '請介紹一下可用的資料類型' },
+                { question: '如何有效利用這些資料？' }
+            );
+        } else {
+            // 根據參考資料類型生成建議
+            const hasGovData = Array.from(this.references.values()).some(ref => ref.category);
+            const hasSymptomData = Array.from(this.references.values()).some(ref => ref.symptom);
+            const hasPrivateData = Array.from(this.references.values()).some(ref => ref.type === 'private_source');
+            
+            if (hasGovData) {
+                suggestions.push({ question: '分析這些政府資料的特點' });
+            }
+            
+            if (hasSymptomData) {
+                suggestions.push({ question: '總結症狀相關的醫療建議' });
+            }
+            
+            if (hasPrivateData) {
+                suggestions.push({ question: '解讀這些自建資料的內容' });
+            }
+            
+            // 通用建議
+            suggestions.push({ question: '有什麼值得注意的發現嗎？' });
+        }
+        
+        return suggestions.slice(0, 2); // 最多顯示2個建議
     }
 
     addReference(button) {
@@ -614,7 +793,9 @@ class ChatManager {
         
         if (data.type === 'conversation_cleared') {
             
-            this.chatMessages.innerHTML = '';
+            const conversationContainer = document.getElementById('conversation-messages');
+            conversationContainer.innerHTML = '';
+            this.updateSuggestionsDisplay();
             this.showToast(data.message, 'success');
             return;
         } else if (data.type === 'error') {
@@ -623,8 +804,12 @@ class ChatManager {
             return;
         }
         
+        // 確保對話容器可見
+        this.updateSuggestionsDisplay();
         
-        const existingMessage = document.querySelector(`[data-message-id="${data.id}"]`);
+        const conversationContainer = document.getElementById('conversation-messages');
+        const existingMessage = conversationContainer.querySelector(`[data-message-id="${data.id}"]`);
+        
         if (existingMessage) {
             
             const newMessageElement = this.createMessageElement(data);
@@ -634,15 +819,19 @@ class ChatManager {
             this.reorderMessages();
         } else {
             
-        const messageElement = this.createMessageElement(data);
-        this.chatMessages.appendChild(messageElement);
+            const messageElement = this.createMessageElement(data);
+            conversationContainer.appendChild(messageElement);
         }
+        
+        // 更新緊湊版建議
+        this.updateCompactSuggestions();
         this.scrollToBottom();
     }
 
     reorderMessages() {
         
-        const messages = Array.from(this.chatMessages.children);
+        const conversationContainer = document.getElementById('conversation-messages');
+        const messages = Array.from(conversationContainer.children);
         
         
         messages.sort((a, b) => {
@@ -653,9 +842,9 @@ class ChatManager {
         });
         
         
-        this.chatMessages.innerHTML = '';
+        conversationContainer.innerHTML = '';
         messages.forEach(message => {
-            this.chatMessages.appendChild(message);
+            conversationContainer.appendChild(message);
         });
     }
 
