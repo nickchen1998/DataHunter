@@ -52,29 +52,28 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     <h3 class="text-lg font-semibold text-gray-700 mb-2">開始您的探索之旅</h3>
-                    <p class="text-sm text-gray-500 mb-6">選擇以下問題開始對話，或直接輸入您的問題</p>
+                    <div class="flex items-center justify-center space-x-4 mb-6">
+                        <p class="text-sm text-gray-500">選擇以下問題開始對話，或直接輸入您的問題</p>
+                        <button id="refresh-suggestions-btn" class="text-xs text-blue-600 hover:text-blue-800 underline" title="重新生成問題">
+                            重新生成
+                        </button>
+                    </div>
                 </div>
                 
-                <div class="space-y-3">
-                    <button class="suggested-question-btn w-full p-3 text-left bg-white hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md" 
-                            data-question="資料來源有哪些類型？">
-                        <span class="text-sm font-medium text-gray-700 truncate">資料來源有哪些類型？</span>
-                    </button>
+                <!-- 建議問題容器 -->
+                <div id="suggestions-container" class="space-y-3">
+                    <!-- 載入狀態 -->
+                    <div id="suggestions-loading" class="flex items-center justify-center py-8">
+                        <div class="flex flex-col items-center space-y-2 text-gray-500">
+                            <div class="flex items-center space-x-3">
+                                <div class="animate-spin w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full"></div>
+                                <span class="text-sm">正在為您準備問題建議...</span>
+                            </div>
+                            <span id="loading-timestamp" class="text-xs text-gray-400"></span>
+                        </div>
+                    </div>
                     
-                    <button class="suggested-question-btn w-full p-3 text-left bg-white hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md" 
-                            data-question="如何使用這個系統進行查詢？">
-                        <span class="text-sm font-medium text-gray-700 truncate">如何使用這個系統進行查詢？</span>
-                    </button>
-                    
-                    <button class="suggested-question-btn w-full p-3 text-left bg-white hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md" 
-                            data-question="可以分析哪些類型的資料？">
-                        <span class="text-sm font-medium text-gray-700 truncate">可以分析哪些類型的資料？</span>
-                    </button>
-                    
-                    <button class="suggested-question-btn w-full p-3 text-left bg-white hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md" 
-                            data-question="系統支援哪些查詢功能？">
-                        <span class="text-sm font-medium text-gray-700 truncate">系統支援哪些查詢功能？</span>
-                    </button>
+                    <!-- 動態生成的建議問題會插入到這裡 -->
                 </div>
             </div>
         </div>
@@ -216,6 +215,7 @@ class ChatManager {
         this.updateButtonStates();
         this.setupNavigationListener();
         this.updateSuggestionsDisplay();
+        this.loadSuggestedQuestions();
     }
 
     setupReferenceSystem() {
@@ -267,6 +267,14 @@ class ChatManager {
                 }
             }
         });
+        
+        // 設置重新生成按鈕事件
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'refresh-suggestions-btn') {
+                e.preventDefault();
+                this.loadSuggestedQuestions();
+            }
+        });
     }
 
     applySuggestedQuestion(question) {
@@ -305,9 +313,126 @@ class ChatManager {
         // 檢查對話容器中是否有訊息
         const conversationContainer = document.getElementById('conversation-messages');
         return conversationContainer && conversationContainer.children.length > 0;
+        }
+
+    async loadSuggestedQuestions() {
+        const container = document.getElementById('suggestions-container');
+        const loading = document.getElementById('suggestions-loading');
+        
+        try {
+            // 顯示載入狀態和時間戳記
+            loading.classList.remove('hidden');
+            const timestampElement = document.getElementById('loading-timestamp');
+            if (timestampElement) {
+                timestampElement.textContent = `載入時間: ${new Date().toLocaleTimeString()}`;
+            }
+            
+            // 發送 API 請求
+            const response = await fetch('/api/suggestions/', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.success && data.suggestions && data.suggestions.length > 0) {
+                this.renderSuggestedQuestions(data.suggestions);
+            } else {
+                this.renderNoSuggestions(data.message || '目前暫無建議問題');
+            }
+            
+        } catch (error) {
+            console.error('載入建議問題失敗:', error);
+            this.renderNoSuggestions('無法載入建議問題');
+        } finally {
+            // 隱藏載入狀態
+            loading.classList.add('hidden');
+        }
     }
 
+    renderSuggestedQuestions(questions) {
+        const container = document.getElementById('suggestions-container');
+        
+        // 清空容器（除了載入狀態）
+        const loadingElement = document.getElementById('suggestions-loading');
+        container.innerHTML = '';
+        container.appendChild(loadingElement);
+        
+        // 添加生成提示
+        const generationInfo = document.createElement('div');
+        generationInfo.className = 'text-xs text-gray-400 mb-3 text-center';
+        generationInfo.textContent = `✨ AI 動態生成於 ${new Date().toLocaleTimeString()}`;
+        container.appendChild(generationInfo);
+        
+        // 渲染建議問題
+        questions.forEach((question, index) => {
+            const button = document.createElement('button');
+            button.className = 'suggested-question-btn w-full p-3 text-left bg-white hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md';
+            button.setAttribute('data-question', question);
+            
+            const span = document.createElement('span');
+            span.className = 'text-sm font-medium text-gray-700 truncate';
+            span.textContent = question;
+            
+            button.appendChild(span);
+            container.appendChild(button);
+            
+            // 添加動畫效果
+            setTimeout(() => {
+                button.style.opacity = '0';
+                button.style.transform = 'translateY(20px)';
+                button.style.transition = 'all 0.3s ease';
+                
+                requestAnimationFrame(() => {
+                    button.style.opacity = '1';
+                    button.style.transform = 'translateY(0)';
+                });
+            }, index * 100);
+        });
+    }
 
+    renderNoSuggestions(message) {
+        const container = document.getElementById('suggestions-container');
+        
+        // 清空容器（除了載入狀態）
+        const loadingElement = document.getElementById('suggestions-loading');
+        container.innerHTML = '';
+        container.appendChild(loadingElement);
+        
+        // 顯示無建議狀態
+        const noSuggestionsDiv = document.createElement('div');
+        noSuggestionsDiv.className = 'flex flex-col items-center justify-center py-8 text-gray-500';
+        
+        noSuggestionsDiv.innerHTML = `
+            <svg class="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <p class="text-sm text-gray-600 mb-2">尚無建議的問題</p>
+            <p class="text-xs text-gray-400 text-center">${message}</p>
+        `;
+        
+        container.appendChild(noSuggestionsDiv);
+        
+        // 添加淡入動畫
+        setTimeout(() => {
+            noSuggestionsDiv.style.opacity = '0';
+            noSuggestionsDiv.style.transition = 'all 0.3s ease';
+            
+            requestAnimationFrame(() => {
+                noSuggestionsDiv.style.opacity = '1';
+            });
+        }, 100);
+    }
+
+ 
 
     addReference(button) {
         const referenceData = {
@@ -716,6 +841,8 @@ class ChatManager {
             const conversationContainer = document.getElementById('conversation-messages');
             conversationContainer.innerHTML = '';
             this.updateSuggestionsDisplay();
+            // 重新載入建議問題以獲取最新內容
+            this.loadSuggestedQuestions();
             this.showToast(data.message, 'success');
             return;
         } else if (data.type === 'error') {

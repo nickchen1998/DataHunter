@@ -8,7 +8,7 @@ from RAGPilot.celery import app
 from utils.nl_to_sql import CustomNL2SQLQueryTool
 from crawlers.models import Symptom, Dataset, SYMPTOM_SYSTEM_PROMPT, GOV_DATA_SYSTEM_PROMPT
 from crawlers.tools import SymptomDataRetrievalTool, GovDataDatasetQueryTool
-from conversations.models import Session, Message
+from conversations.models import Session, Message, SenderChoices
 User = get_user_model()
 
 
@@ -23,15 +23,15 @@ def get_chat_history(session, limit=10):
     messages = Message.objects.filter(
         session=session,
         is_deleted=False,
-        sender__in=[Message.SenderChoices.USER, Message.SenderChoices.AI]
+        sender__in=[SenderChoices.USER, SenderChoices.AI]
     ).order_by('-updated_at')[:limit]
     
     # 將消息轉換為 LangChain 格式並按時間順序排列
     chat_history = []
     for message in reversed(messages):
-        if message.sender == Message.SenderChoices.USER:
+        if message.sender == SenderChoices.USER:
             chat_history.append(HumanMessage(content=message.text))
-        elif message.sender == Message.SenderChoices.AI:
+        elif message.sender == SenderChoices.AI:
             chat_history.append(AIMessage(content=message.text))
     
     return chat_history
@@ -40,14 +40,10 @@ def get_chat_history(session, limit=10):
 
 @app.task()
 def process_conversation_async(user_id, user_question, reference_id_list=None, data_type="Mixed"):
+    user = User.objects.get(id=user_id)
+    session = Session.get_or_create_user_session(user)    
+    ai_message = Message.create_ai_message(session, user, "正在思考中...")
     try:
-        user = User.objects.get(id=user_id)
-        
-        session = Session.get_or_create_user_session(user)
-        
-        # 在此函數內建立 AI Message
-        ai_message = Message.create_ai_message(session, user, "正在思考中...")
-        
         if reference_id_list:
             user_question_with_refs = f"請使用我指定的參考資料ID：\n{reference_id_list}\n我的問題是：\n{user_question}"
         else:
@@ -144,6 +140,8 @@ def process_conversation_async(user_id, user_question, reference_id_list=None, d
             'session_id': session.id
         }
     except Exception as e:
+        ai_message.text = "對話過程中發生錯誤，請稍後再試。"
+        ai_message.save()
         return {
             'status': 'error',
             'error': str(e)

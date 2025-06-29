@@ -51,4 +51,8 @@ class GovDataDatasetListView(LoginRequiredMixin, UserPlanContextMixin, ListView)
         context['update_end'] = self.request.GET.get('update_end', '')
         context['request_path'] = self.request.path
         
-        return context 
+        return context
+    
+    def generate_suggest_questions(self) -> list[str]:
+        pass
+        
