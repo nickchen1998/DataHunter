@@ -8,6 +8,8 @@ from RAGPilot.celery import app
 from utils.nl_to_sql import CustomNL2SQLQueryTool
 from crawlers.models import Symptom, Dataset, SYMPTOM_SYSTEM_PROMPT, GOV_DATA_SYSTEM_PROMPT
 from crawlers.tools import SymptomDataRetrievalTool, GovDataDatasetQueryTool
+from sources.models import Source, SOURCE_SYSTEM_PROMPT
+from sources.tools import SourceFileQueryTool, SourceFileChunkQueryTool
 from conversations.models import Session, Message, SenderChoices
 User = get_user_model()
 
@@ -57,22 +59,35 @@ def process_conversation_async(user_id, user_question, reference_id_list=None, d
         system_prompt_factory = {
             Symptom.__name__: SYMPTOM_SYSTEM_PROMPT,
             Dataset.__name__: GOV_DATA_SYSTEM_PROMPT,
+            Source.__name__: SOURCE_SYSTEM_PROMPT,
         }
         
-        tool = tool_factory[data_type]()
         llm = ChatOpenAI(model="gpt-4o", temperature=0.7)
         
         # 獲取歷史對話記錄
         chat_history = get_chat_history(session)
         
+        # 根據資料類型配置工具和系統提示
+        if data_type == Source.__name__:
+            # 自建資料源需要特殊處理，告訴 AI 當前用戶 ID
+            system_prompt = f"{system_prompt_factory[data_type]}\n\n重要提醒：當前用戶 ID 是 {user_id}，在使用 source_file_retrieval 工具時請務必傳入此 user_id。"
+            
+            source_file_tool = SourceFileQueryTool()
+            source_chunk_tool = SourceFileChunkQueryTool()
+            nl2sql_tool = CustomNL2SQLQueryTool()
+            tools = [source_file_tool, source_chunk_tool, nl2sql_tool]
+        else:
+            # 其他資料類型使用原本的邏輯
+            system_prompt = system_prompt_factory[data_type]
+            tool = tool_factory[data_type]()
+            tools = [tool, CustomNL2SQLQueryTool()]
+        
         prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content=system_prompt_factory[data_type]),
+            SystemMessage(content=system_prompt),
             MessagesPlaceholder(variable_name="chat_history"),
             ("user", "{input}"),
             MessagesPlaceholder(variable_name="agent_scratchpad"),
         ])
-        
-        tools = [tool, CustomNL2SQLQueryTool()]
         
         agent = create_openai_functions_agent(
             llm=llm,
