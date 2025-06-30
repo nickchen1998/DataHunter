@@ -1542,6 +1542,8 @@ class ChatManager {
             return 'Symptom';
         } else if (currentPath.includes('/gov-data/')) {
             return 'Dataset';
+        } else if (currentPath.includes('/sources/')) {
+            return 'Source';
         } else {
             return 'Mixed'; 
         }

@@ -81,7 +81,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             
             await self.send(text_data=json.dumps({
                 'type': 'conversation_cleared',
-                'message': f'已清空 {deleted_count} 筆對話記錄',
+                'message': f'已清空筆對話記錄',
                 'deleted_count': deleted_count,
                 'timestamp': datetime.now().strftime('%H:%M:%S')
             }))
