@@ -9,7 +9,6 @@ from .models import Source, SourceFile, SourceFileFormat
 from profiles.models import Limit, Profile
 import os
 import uuid
-import json
 import pandas as pd
 import mimetypes
 from django.views.decorators.csrf import csrf_exempt
@@ -767,109 +766,7 @@ class FileDeleteView(LoginRequiredMixin, TemplateView):
 class SourceSuggestView(LoginRequiredMixin, View):
     
     def get(self, request):
-        try:
-            from langchain_openai import ChatOpenAI
-            import random
-            
-            # 獲取用戶的已完成檔案
-            user_files = SourceFile.objects.filter(
-                user=request.user,
-                status='completed'
-            ).order_by('-created_at')
-            
-            if not user_files.exists():
-                return JsonResponse({
-                    'success': False,
-                    'message': '您尚未上傳任何檔案，無法生成建議問題'
-                })
-            
-            # 從最近的檔案中隨機選取樣本
-            sample_size = min(user_files.count(), random.randint(3, 6))
-            selected_files = random.sample(list(user_files[:10]), sample_size)
-            
-            # 組織檔案資訊
-            file_info_list = []
-            for file_obj in selected_files:
-                file_info = f"檔案：{file_obj.filename} ({file_obj.get_format_display()})"
-                if file_obj.summary:
-                    summary = file_obj.summary
-                    file_info += f"\n摘要：{summary}"
-                file_info_list.append(file_info)
-            
-            files_text = "\n\n".join(file_info_list)
-            
-            # 多樣化的問題生成提示
-            variety_prompts = [
-                "生成4個針對這些資料的分析問題",
-                "創建4個適合數據探索的問題",
-                "設計4個能幫助理解這些資料的問題",
-                "產生4個適合資料分析的實用問題"
-            ]
-            
-            selected_prompt = random.choice(variety_prompts)
-            
-            prompt = f"""基於以下用戶上傳的資料檔案，請{selected_prompt}，這些問題應該：
-
-1. 簡潔明瞭（不超過25個字）
-2. 主題多樣化，涵蓋不同的分析角度
-3. 適合一般用戶查詢自己的資料
-4. 能引發有意義的資料分析對話
-5. 根據檔案類型和內容特點設計
-
-用戶資料檔案：
-{files_text}
-
-要求：請確保4個問題涵蓋不同的分析方向（如：統計摘要、趨勢分析、資料篩選、比較分析等），避免過度集中在同一類型的問題上。
-請直接返回4個問題，每行一個問題，不需要編號或其他格式："""
-
-            llm = ChatOpenAI(
-                model="gpt-4o-mini", 
-                temperature=0.8,
-                model_kwargs={
-                    "seed": random.randint(1, 10000)
-                }
-            )
-            response = llm.invoke(prompt)
-            
-            # 解析生成的問題
-            questions = []
-            for line in response.content.strip().split('\n'):
-                line = line.strip()
-                if line and not line.startswith('#') and len(line) <= 60:
-                    # 移除可能的編號或符號
-                    line = line.lstrip('0123456789.-) ')
-                    if line:
-                        questions.append(line)
-            
-            # 去重類似問題
-            unique_questions = []
-            for q in questions:
-                is_similar = False
-                for existing in unique_questions:
-                    q_words = set(q.replace('？', '').replace('?', '').split())
-                    existing_words = set(existing.replace('？', '').replace('?', '').split())
-                    if len(q_words & existing_words) / max(len(q_words), len(existing_words)) > 0.5:
-                        is_similar = True
-                        break
-                
-                if not is_similar:
-                    unique_questions.append(q)
-            
-            final_questions = unique_questions[:4] if unique_questions else []
-            
-            if final_questions:
-                return JsonResponse({
-                    'success': True,
-                    'suggestions': final_questions
-                })
-            else:
-                return JsonResponse({
-                    'success': False,
-                    'message': '目前無法生成建議問題'
-                })
-                
-        except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'message': '建議問題生成失敗'
-            })
+        """使用重構後的工具生成自建資料源建議問題"""
+        from utils.question_suggestions import generate_source_suggestions
+        
+        return generate_source_suggestions(request.user)

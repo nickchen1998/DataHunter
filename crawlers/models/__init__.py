@@ -1,11 +1,9 @@
-from .gov_data import Dataset, File, ASSOCIATED_CATEGORIES_DATABASE_NAME, GOV_DATA_SYSTEM_PROMPT
-from .symptom import Symptom, SYMPTOM_SYSTEM_PROMPT
+from .gov_data import Dataset, File, ASSOCIATED_CATEGORIES_DATABASE_NAME
+from .symptom import Symptom
 
 __all__ = [
-    'Dataset', 
-    'File', 
+    'Dataset',
+    'File',
     'Symptom',
     'ASSOCIATED_CATEGORIES_DATABASE_NAME',
-    'GOV_DATA_SYSTEM_PROMPT',
-    'SYMPTOM_SYSTEM_PROMPT'
 ]

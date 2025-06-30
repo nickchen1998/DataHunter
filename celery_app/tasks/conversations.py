@@ -6,9 +6,11 @@ from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from RAGPilot.celery import app
 from utils.nl_to_sql import CustomNL2SQLQueryTool
-from crawlers.models import Symptom, Dataset, SYMPTOM_SYSTEM_PROMPT, GOV_DATA_SYSTEM_PROMPT
+from crawlers.models import Symptom, Dataset
+from crawlers.prompts import SYMPTOM_SYSTEM_PROMPT, GOV_DATA_SYSTEM_PROMPT
 from crawlers.tools import SymptomDataRetrievalTool, GovDataDatasetQueryTool
-from sources.models import Source, SOURCE_SYSTEM_PROMPT
+from sources.models import Source
+from sources.prompts import SOURCE_SYSTEM_PROMPT
 from sources.tools import SourceFileQueryTool, SourceFileChunkQueryTool
 from conversations.models import Session, Message, SenderChoices
 User = get_user_model()
