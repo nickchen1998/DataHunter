@@ -71,7 +71,7 @@
                     <span class="flex items-center">👤 個人資料</span>
                 </button>
                 <button class="btn btn-outline w-full border-2 tab flex items-center justify-start" data-tab="password">
-                    <span class="flex items-center">🔒 密碼修改</span>
+                                            <span class="flex items-center">🔒 密碼管理</span>
                 </button>
                 <button class="btn btn-outline w-full border-2 tab flex items-center justify-start" data-tab="social">
                     <span class="flex items-center">🔗 第三方登入</span>
@@ -182,82 +182,148 @@
                 </div>
             </div>
 
-            <!-- 密碼修改 -->
+            <!-- 密碼管理 -->
             <div id="password-content" class="tab-content" style="display: none;">
                 <div class="card bg-base-100 shadow">
                     <div class="card-body">
-                        <h3 class="card-title text-xl flex items-center">
-                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                            </svg>
-                            修改密碼
-                        </h3>
-                        <form method="post" class="space-y-6 mt-6">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="change_password">
+                        {% if password_form_type == 'set' %}
+                            <!-- 設定密碼（適用於 Google 登入用戶） -->
+                            <h3 class="card-title text-xl flex items-center">
+                                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                                設定登入密碼
+                            </h3>
                             
-                            <div class="form-control">
-                                <label class="label">
-                                    <span class="label-text font-medium">{{ password_form.old_password.label }}</span>
-                                </label>
-                                {{ password_form.old_password }}
-                                {% if password_form.old_password.errors %}
-                                    <label class="label">
-                                        <span class="label-text-alt text-error">
-                                            {% for error in password_form.old_password.errors %}{{ error }}{% endfor %}
-                                        </span>
-                                    </label>
-                                {% endif %}
+                            <!-- 說明提示 -->
+                            <div class="alert alert-info mb-6 mt-6">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <div>
+                                    <h4 class="font-bold">密碼設定說明</h4>
+                                    <p class="text-sm">您目前是通過 Google 登入註冊的用戶。設定密碼後，您也可以使用 <strong>{{ user.username }}</strong> + 密碼的方式登入。</p>
+                                </div>
                             </div>
+
+                            <form method="post" class="space-y-6">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="set_password">
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="form-control">
+                                        <label class="label">
+                                            <span class="label-text font-medium">{{ password_form.new_password1.label }}</span>
+                                        </label>
+                                        {{ password_form.new_password1 }}
+                                        {% if password_form.new_password1.help_text %}
+                                            <label class="label">
+                                                <span class="label-text-alt text-gray-500">{{ password_form.new_password1.help_text }}</span>
+                                            </label>
+                                        {% endif %}
+                                        {% if password_form.new_password1.errors %}
+                                            <label class="label">
+                                                <span class="label-text-alt text-error">
+                                                    {% for error in password_form.new_password1.errors %}{{ error }}{% endfor %}
+                                                </span>
+                                            </label>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="form-control">
+                                        <label class="label">
+                                            <span class="label-text font-medium">{{ password_form.new_password2.label }}</span>
+                                        </label>
+                                        {{ password_form.new_password2 }}
+                                        {% if password_form.new_password2.errors %}
+                                            <label class="label">
+                                                <span class="label-text-alt text-error">
+                                                    {% for error in password_form.new_password2.errors %}{{ error }}{% endfor %}
+                                                </span>
+                                            </label>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                        {% else %}
+                            <!-- 修改密碼（適用於已有密碼的用戶） -->
+                            <h3 class="card-title text-xl flex items-center">
+                                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                                修改密碼
+                            </h3>
                             
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <form method="post" class="space-y-6 mt-6">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="change_password">
+                                
                                 <div class="form-control">
                                     <label class="label">
-                                        <span class="label-text font-medium">{{ password_form.new_password1.label }}</span>
+                                        <span class="label-text font-medium">{{ password_form.old_password.label }}</span>
                                     </label>
-                                    {{ password_form.new_password1 }}
-                                    {% if password_form.new_password1.errors %}
+                                    {{ password_form.old_password }}
+                                    {% if password_form.old_password.errors %}
                                         <label class="label">
                                             <span class="label-text-alt text-error">
-                                                {% for error in password_form.new_password1.errors %}{{ error }}{% endfor %}
+                                                {% for error in password_form.old_password.errors %}{{ error }}{% endfor %}
                                             </span>
                                         </label>
                                     {% endif %}
                                 </div>
                                 
-                                <div class="form-control">
-                                    <label class="label">
-                                        <span class="label-text font-medium">{{ password_form.new_password2.label }}</span>
-                                    </label>
-                                    {{ password_form.new_password2 }}
-                                    {% if password_form.new_password2.errors %}
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="form-control">
                                         <label class="label">
-                                            <span class="label-text-alt text-error">
-                                                {% for error in password_form.new_password2.errors %}{{ error }}{% endfor %}
-                                            </span>
+                                            <span class="label-text font-medium">{{ password_form.new_password1.label }}</span>
                                         </label>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            
-                            {% if password_form.non_field_errors %}
-                                <div class="alert alert-error">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <div>
-                                        {% for error in password_form.non_field_errors %}
-                                            <div>{{ error }}</div>
-                                        {% endfor %}
+                                        {{ password_form.new_password1 }}
+                                        {% if password_form.new_password1.errors %}
+                                            <label class="label">
+                                                <span class="label-text-alt text-error">
+                                                    {% for error in password_form.new_password1.errors %}{{ error }}{% endfor %}
+                                                </span>
+                                            </label>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="form-control">
+                                        <label class="label">
+                                            <span class="label-text font-medium">{{ password_form.new_password2.label }}</span>
+                                        </label>
+                                        {{ password_form.new_password2 }}
+                                        {% if password_form.new_password2.errors %}
+                                            <label class="label">
+                                                <span class="label-text-alt text-error">
+                                                    {% for error in password_form.new_password2.errors %}{{ error }}{% endfor %}
+                                                </span>
+                                            </label>
+                                        {% endif %}
                                     </div>
                                 </div>
-                            {% endif %}
-                            
-                            <div class="card-actions justify-end">
-                                <button type="submit" class="btn btn-primary">
-                                    💾 儲存
-                                </button>
+                        {% endif %}
+                        
+                        {% if password_form.non_field_errors %}
+                            <div class="alert alert-error">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <div>
+                                    {% for error in password_form.non_field_errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
                             </div>
+                        {% endif %}
+                        
+                        <div class="card-actions justify-end">
+                            <button type="submit" class="btn btn-primary">
+                                {% if password_form_type == 'set' %}
+                                    🔑 設定密碼
+                                {% else %}
+                                    💾 儲存修改
+                                {% endif %}
+                            </button>
+                        </div>
                         </form>
                     </div>
                 </div>
@@ -331,8 +397,15 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
                                 <div>
-                                    <h4 class="font-bold">提示</h4>
-                                    <p class="text-sm">連結第三方帳戶後，您可以使用該服務快速登入，無需輸入密碼。</p>
+                                    <h4 class="font-bold">登入方式說明</h4>
+                                    <div class="text-sm space-y-1">
+                                        <p>• 連結第三方帳戶後，您可以使用該服務快速登入</p>
+                                        {% if not has_usable_password %}
+                                            <p>• 您目前是 Google 用戶，若需要使用 username + 密碼登入，請到「密碼管理」設定密碼</p>
+                                        {% else %}
+                                            <p>• 您已設定密碼，可以使用 <strong>{{ user.username }}</strong> + 密碼的方式登入</p>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
                         </div>

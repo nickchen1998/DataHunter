@@ -5,11 +5,41 @@ from django.contrib.auth import get_user_model
 import re
 import uuid
 from django.http import HttpResponseRedirect
+from django.conf import settings
 
 User = get_user_model()
 
+# 用戶數量限制設定
+MAX_USERS_LIMIT = getattr(settings, 'MAX_USERS_LIMIT', 200)
+
 
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
+    def is_auto_signup_allowed(self, request, sociallogin):
+        """
+        控制是否允許通過社交登入自動註冊新用戶
+        """
+        # 檢查用戶數量是否超過限制
+        if self._is_user_limit_reached():
+            # 記錄嘗試註冊的資訊（用於除錯）
+            email = getattr(sociallogin.user, 'email', 'unknown')
+            print(f"用戶註冊被拒絕：已達用戶數量上限 ({MAX_USERS_LIMIT}人)，嘗試註冊的郵箱：{email}")
+            
+            # 設置錯誤訊息
+            messages.error(
+                request, 
+                f'🚫 很抱歉，系統目前已達用戶數量上限（{MAX_USERS_LIMIT}人），暫時無法接受新用戶註冊。請稍後再試或聯繫管理員。'
+            )
+            return False
+        
+        return True  # 允許註冊
+    
+    def _is_user_limit_reached(self):
+        """
+        檢查是否已達用戶數量上限
+        """
+        current_user_count = User.objects.count()
+        return current_user_count >= MAX_USERS_LIMIT
+    
     def get_connect_redirect_url(self, request, socialaccount):
         """
         當用戶連結社交帳戶後的重定向 URL

@@ -7,7 +7,7 @@ from django.views.decorators.cache import never_cache
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
-from .forms import UserProfileForm, CustomPasswordChangeForm
+from .forms import UserProfileForm, CustomPasswordChangeForm, CustomSetPasswordForm
 from .models import Limit, Profile
 from conversations.models import Message
 
@@ -23,7 +23,18 @@ class ProfileView(LoginRequiredMixin, View):
     
     def get(self, request):
         profile_form = UserProfileForm(instance=request.user)
-        password_form = CustomPasswordChangeForm(user=request.user)
+        
+        # 檢查用戶是否有可用的密碼
+        has_usable_password = request.user.has_usable_password()
+        
+        if has_usable_password:
+            # 用戶已有密碼，使用密碼修改表單
+            password_form = CustomPasswordChangeForm(user=request.user)
+            password_form_type = 'change'
+        else:
+            # 用戶沒有密碼（如 Google 登入用戶），使用設定密碼表單
+            password_form = CustomSetPasswordForm(user=request.user)
+            password_form_type = 'set'
         
         # 獲取或創建使用者的 Limit 和 Profile 記錄
         limit, created = Limit.objects.get_or_create(user=request.user)
@@ -58,6 +69,8 @@ class ProfileView(LoginRequiredMixin, View):
         context = {
             'profile_form': profile_form,
             'password_form': password_form,
+            'password_form_type': password_form_type,
+            'has_usable_password': has_usable_password,
             'user': request.user,
             'user_limit': limit,
             'user_profile': profile,
@@ -80,6 +93,8 @@ class ProfileView(LoginRequiredMixin, View):
             return self._handle_profile_update(request)
         elif action == 'change_password':
             return self._handle_password_change(request)
+        elif action == 'set_password':
+            return self._handle_password_set(request)
         elif action == 'delete_account':
             return self._handle_account_deletion(request)
         
@@ -88,7 +103,15 @@ class ProfileView(LoginRequiredMixin, View):
     def _handle_profile_update(self, request):
         """處理個人資料更新"""
         profile_form = UserProfileForm(request.POST, instance=request.user)
-        password_form = CustomPasswordChangeForm(user=request.user)
+        
+        # 根據用戶密碼狀態選擇表單
+        has_usable_password = request.user.has_usable_password()
+        if has_usable_password:
+            password_form = CustomPasswordChangeForm(user=request.user)
+            password_form_type = 'change'
+        else:
+            password_form = CustomSetPasswordForm(user=request.user)
+            password_form_type = 'set'
         
         if profile_form.is_valid():
             profile_form.save()
@@ -100,12 +123,14 @@ class ProfileView(LoginRequiredMixin, View):
         context = {
             'profile_form': profile_form,
             'password_form': password_form,
+            'password_form_type': password_form_type,
+            'has_usable_password': has_usable_password,
             'user': request.user,
         }
         return render(request, self.template_name, context)
     
     def _handle_password_change(self, request):
-        """處理密碼修改"""
+        """處理密碼修改（適用於已有密碼的用戶）"""
         profile_form = UserProfileForm(instance=request.user)
         password_form = CustomPasswordChangeForm(user=request.user, data=request.POST)
         
@@ -120,6 +145,30 @@ class ProfileView(LoginRequiredMixin, View):
         context = {
             'profile_form': profile_form,
             'password_form': password_form,
+            'password_form_type': 'change',
+            'has_usable_password': True,
+            'user': request.user,
+        }
+        return render(request, self.template_name, context)
+    
+    def _handle_password_set(self, request):
+        """處理密碼設定（適用於沒有密碼的用戶，如 Google 登入用戶）"""
+        profile_form = UserProfileForm(instance=request.user)
+        password_form = CustomSetPasswordForm(user=request.user, data=request.POST)
+        
+        if password_form.is_valid():
+            user = password_form.save()
+            update_session_auth_hash(request, user)  # 重要：更新會話，避免用戶被登出
+            messages.success(request, '🎉 密碼設定成功！您現在可以使用 username + 密碼的方式登入了。')
+            return redirect('profile')
+        else:
+            messages.error(request, '密碼設定失敗，請檢查輸入的密碼。')
+        
+        context = {
+            'profile_form': profile_form,
+            'password_form': password_form,
+            'password_form_type': 'set',
+            'has_usable_password': False,
             'user': request.user,
         }
         return render(request, self.template_name, context)

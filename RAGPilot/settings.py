@@ -156,6 +156,9 @@ SOCIALACCOUNT_PROVIDERS = {
 GOOGLE_OAUTH2_CLIENT_ID = os.getenv('GOOGLE_OAUTH2_CLIENT_ID')
 GOOGLE_OAUTH2_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH2_CLIENT_SECRET')
 
+# 用戶數量限制設定
+MAX_USERS_LIMIT = int(os.getenv('MAX_USERS_LIMIT', 200))
+
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 

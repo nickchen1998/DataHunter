@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -69,7 +69,7 @@ class UserProfileForm(forms.ModelForm):
 
 class CustomPasswordChangeForm(PasswordChangeForm):
     """
-    自定義密碼修改表單
+    自定義密碼修改表單（適用於已有密碼的用戶）
     """
     old_password = forms.CharField(
         label='當前密碼',
@@ -90,5 +90,26 @@ class CustomPasswordChangeForm(PasswordChangeForm):
         widget=forms.PasswordInput(attrs={
             'class': 'input input-bordered w-full',
             'placeholder': '請再次輸入新密碼'
+        })
+    )
+
+
+class CustomSetPasswordForm(SetPasswordForm):
+    """
+    自定義設定密碼表單（適用於沒有密碼的用戶，如 Google 登入用戶）
+    """
+    new_password1 = forms.CharField(
+        label='設定密碼',
+        widget=forms.PasswordInput(attrs={
+            'class': 'input input-bordered w-full',
+            'placeholder': '請設定您的登入密碼'
+        }),
+        help_text='設定密碼後，您可以使用 username + 密碼的方式登入'
+    )
+    new_password2 = forms.CharField(
+        label='確認密碼',
+        widget=forms.PasswordInput(attrs={
+            'class': 'input input-bordered w-full',
+            'placeholder': '請再次輸入密碼'
         })
     ) 
